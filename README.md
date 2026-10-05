@@ -7,7 +7,7 @@ ALPI is a single Ansible post-install for Linux workstations. It detects the run
 
 ## 📊 Project Status
 
-*   **Stage:** design. There is no playbook yet. The architecture is described in [`PROPOSTA.md`](PROPOSTA.md) (Portuguese) and the work plan is in [`TODO.md`](TODO.md).
+*   **Stage:** design. There is no playbook yet. The architecture is described in [`PROPOSAL.md`](PROPOSAL.md) and the work plan is in [`TODO.md`](TODO.md).
 *   **Until parity is reached, use AFPI (Fedora) or AAPI (AlmaLinux 10).**
 
 ## 🧭 Design in short

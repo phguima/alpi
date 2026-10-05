@@ -1,45 +1,45 @@
 # TODO — ALPI
 
-Só o que falta. Arquitetura e justificativas em `PROPOSTA.md`.
+Only what is left. Architecture and rationale in `PROPOSAL.md`.
 
-## 0. Decisões em aberto
+## 0. Open decisions
 
-- [ ] Criar um `packages_absent` (desinstalação explícita) ou o alpi só instala?
-- [ ] Id desconhecido no catálogo: derrubar a execução (recomendado) ou só avisar?
-- [ ] O perfil pode trazer conjuntos de pacotes, ou só política?
-- [ ] VirtualBox no Fedora: fonte fixa por distro ou o usuário escolhe o repositório da Oracle?
-- [ ] Existe VM ou testador de Debian/Ubuntu antes desses ports?
-- [ ] Primeira leva de desktops: GNOME, KDE ou os dois?
+- [ ] Add a `packages_absent` (explicit uninstall), or does ALPI only install?
+- [ ] Unknown catalog id: stop the run (recommended) or only warn?
+- [ ] Can the profile carry package sets, or only policy?
+- [ ] VirtualBox on Fedora: fixed source per distro, or can the user pick Oracle's repository?
+- [ ] Is there a Debian/Ubuntu VM or tester before those ports?
+- [ ] First batch of desktops: GNOME, KDE or both?
 
-## 1. Esqueleto
+## 1. Skeleton
 
-- [ ] `bootstrap.sh` com detecção via `/etc/os-release` (dnf/apt) e collections fixadas por versão.
-- [ ] `site.yml` + `tasks/env_setup.yml`: matriz de suporte (assert) → detecção → `group_by`.
-- [ ] `group_vars/os_*` e `group_vars/profile_*` com `ansible_group_priority`.
-- [ ] `catalog.yml` + resolução de pacotes (`set_fact` único) + validação de ids.
+- [ ] `bootstrap.sh` with detection via `/etc/os-release` (dnf/apt) and collections pinned per version.
+- [ ] `site.yml` + `tasks/env_setup.yml`: support matrix (assert) → detection → `group_by`.
+- [ ] `group_vars/os_*` and `group_vars/profile_*` with `ansible_group_priority`.
+- [ ] `catalog.yml` + package resolution (single `set_fact`) + id validation.
 - [ ] `host_vars/127.0.0.1/{bootstrap,custom}.yml` + `custom.yml.example`.
 
-## 2. Trazer o AFPI (Fedora, perfil `personal`)
+## 2. Bring in AFPI (Fedora, `personal` profile)
 
-- [ ] Portar as roles com as tasks específicas em `tasks/Fedora.yml`.
-- [ ] Role `repos` nova (RPM Fusion, COPR) rodando primeiro.
-- [ ] Aliases pessoais (`open/close-thevoid`, UUID LUKS) para `host_vars`.
-- [ ] Gates por feature: VirtualBox (hoje busca de string), ClamAV (freshclam sem condição), overrides de Flatpak só para apps instalados.
-- [ ] `flatpak_filesystem_overrides` vazio no repo, ZapZap no `custom.yml.example`.
+- [ ] Port the roles with the specific tasks in `tasks/Fedora.yml`.
+- [ ] New `repos` role (RPM Fusion, COPR) running first.
+- [ ] Personal aliases (`open/close-thevoid`, LUKS UUID) to `host_vars`.
+- [ ] Feature gates: VirtualBox (string match today), ClamAV (unconditional freshclam), Flatpak overrides only for installed apps.
+- [ ] `flatpak_filesystem_overrides` empty in the repo, ZapZap in `custom.yml.example`.
 
-## 3. Trazer o AAPI (AlmaLinux 10, perfil `work`)
+## 3. Bring in AAPI (AlmaLinux 10, `work` profile)
 
 - [ ] `group_vars/os_AlmaLinux_10` + `tasks/RedHat.yml` (dnf4, CRB/EPEL, Oracle VirtualBox).
-- [ ] Limpeza dos dois blocos legados do `.zshrc`.
+- [ ] Cleanup of both legacy `.zshrc` blocks.
 
-## 4. Paridade
+## 4. Parity
 
-- [ ] Teste de referência: conjuntos resolvidos por (distro, perfil, DE) comparados com o AFPI e o AAPI.
-- [ ] Containers `fedora:44` e `almalinux:10`, duas vezes (idempotência).
-- [ ] VM com EFI + Secure Boot.
-- [ ] Congelar o AAPI e o AFPI com README apontando para o ALPI.
+- [ ] Golden test: resolved sets per (distro, profile, DE) compared with AFPI and AAPI.
+- [ ] `fedora:44` and `almalinux:10` containers, twice (idempotency).
+- [ ] VM with EFI + Secure Boot.
+- [ ] Freeze AAPI and AFPI with a README pointing to ALPI.
 
-## 5. Novas distros (só com VM de teste)
+## 5. New distros (only with a test VM)
 
 - [ ] Debian 13.
 - [ ] Ubuntu 26.04 LTS.

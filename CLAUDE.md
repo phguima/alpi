@@ -1,32 +1,33 @@
-# ALPI — instruções para o Claude
+# ALPI — instructions for Claude
 
-ALPI (Ansible Linux Post-Install): unifica o AFPI (`phguima/afpi`, Fedora, máquina pessoal `noir`)
-e o AAPI (`phguima/aapi`, AlmaLinux 10, máquina do trabalho) num só projeto que detecta a distro.
-Repo público `phguima/alpi`, branch única `main`, GPL-3.0. O usuário conversa em português.
+ALPI (Ansible Linux Post-Install): unifies AFPI (`phguima/afpi`, Fedora, personal machine `noir`)
+and AAPI (`phguima/aapi`, AlmaLinux 10, work machine) into one project that detects the distro.
+Public repo `phguima/alpi`, single branch `main`, GPL-3.0. Talk to the user in English; all docs
+are in English.
 
-## Estado do trabalho
+## Work status
 
-Em fase de desenho (criado em 2026-10-05). `PROPOSTA.md` tem a arquitetura (revisada por um
-agente adversarial); `TODO.md` tem **só o que falta**, começando pelas decisões em aberto. **Ler
-os dois antes de começar.** Ao concluir um item, removê-lo do `TODO.md` e registrar a validação
-na mensagem do commit.
+Design stage (created on 2026-10-05). `PROPOSAL.md` holds the architecture (reviewed by an
+adversarial agent); `TODO.md` holds **only what is left**, starting with the open decisions.
+**Read both before starting.** When an item is done, remove it from `TODO.md` and record the
+validation in the commit message.
 
-Decisão de 2026-10-05: repo **novo**, sem o histórico do AFPI. O AFPI e o AAPI continuam ativos
-até a paridade; o código entra aos poucos, portado deles. Mudanças feitas lá no meio-tempo
-(ex.: `flatpak_filesystem_overrides`) precisam ser trazidas para cá.
+Decision of 2026-10-05: **new** repo, without AFPI's history. AFPI and AAPI stay active until
+parity; code comes in step by step, ported from them. Changes made there in the meantime (e.g.
+`flatpak_filesystem_overrides`) must be brought here.
 
 ## Git
 
-- Começar com `git fetch` + `git pull --ff-only`: o usuário também commita de outras máquinas.
-- Commit e push **só quando o usuário pedir**. Commits em inglês, Conventional Commits com escopo
+- Start with `git fetch` + `git pull --ff-only`: the user also commits from other machines.
+- Commit and push **only when the user asks**. Commits in English, Conventional Commits with scope
   (`feat(apps): …`, `docs(todo): …`).
 
-## Testes — em container ou VM, nunca no host
+## Tests — in a container or VM, never on the host
 
-Nada roda no host (a máquina pessoal do usuário), nem leitura, nem `--check`. Validar em podman
-(`registry.fedoraproject.org/fedora:44`, `docker.io/library/almalinux:10`, …), **duas vezes**
-(`changed=0` na 2ª). No Fedora com SELinux, montar o repo com `--security-opt label=disable`
-(sem `:z`, para não reetiquetar os arquivos). As receitas de simulação (Secure Boot falso,
-`mokutil` falso, sessão GNOME via D-Bus) estão no `CLAUDE.md` do AFPI e do AAPI. Hardware
-(Secure Boot/MOK, reboot) vai para a VM do usuário; resultados chegam como screenshots em
-`~/Pictures/Screenshots` (listar o diretório e pegar os mais novos).
+Nothing runs on the host (the user's personal machine), not reads, not `--check`. Validate in
+podman (`registry.fedoraproject.org/fedora:44`, `docker.io/library/almalinux:10`, …), **twice**
+(`changed=0` on the 2nd). On Fedora with SELinux, mount the repo with
+`--security-opt label=disable` (no `:z`, so host files are not relabeled). The simulation recipes
+(fake Secure Boot, fake `mokutil`, GNOME session via D-Bus) are in AFPI's and AAPI's `CLAUDE.md`.
+Hardware (Secure Boot/MOK, reboot) goes to the user's VM; results arrive as screenshots in
+`~/Pictures/Screenshots` (list the directory and take the newest ones).
