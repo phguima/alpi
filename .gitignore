@@ -1,0 +1,9 @@
+# Ansible temporary files
+*.retry
+*.pyc
+.vault_pass
+# Optional vault with API keys: personal, never committed
+group_vars/all/secrets.yml
+
+# Machine-specific settings: bootstrap.yml (written by bootstrap.sh) and custom.yml (user's own)
+host_vars/
