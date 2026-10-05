@@ -38,7 +38,8 @@ keeps the duplication, and every new distro would become a whole repository.
 3. **Machine/user**: lives in `host_vars`, outside git. The thevoid UUID leaves the repository and
    comes here.
 
-The **profile** (`personal`, `work`) stays small: hostname policy, Steam and personal extras.
+The **profile** (`personal`, `work`) carries policy (hostname, hardware vetoes) and package/feature
+sets (e.g. `work` skips steam and discord). It can never turn on hardware that was not detected.
 
 ### Structure
 
@@ -107,6 +108,7 @@ aliases:  {p7zip: 7zip}                  # renamed ids still resolve
 features:      {virtualbox: false, clamav: false}
 packages_add:  [vim, "rpm:sqlitebrowser", "flatpak:org.gimp.GIMP"]   # prefix = raw name, bypasses the catalog
 packages_skip: [discord]
+packages_absent: [akregator]   # explicit uninstall (see Removal)
 ```
 
 ### Rules
@@ -115,15 +117,18 @@ packages_skip: [discord]
   `packages_skip`). A single `set_fact` builds the final list:
   `(base + profile + add) | unique | difference(skip)`. The user layer is applied last. Never use
   `hash_behaviour`.
-- **Validation** (in `env_setup`):
-  - an unknown id stops the run right at the start and lists all errors;
+- **Validation** (in `env_setup`, before anything changes on the system):
+  - an unknown id stops the run and lists all unknown ids;
   - an id that is `~` on the current distro is skipped with a warning (or fails, with
     `strict: true`);
   - prefixed raw names are checked with `dnf repoquery` / `apt-cache policy`.
 - **Isolation:** the user's extras are installed in a separate task, after the base, so a typo does
   not break the whole install.
 - **Removal:** `skip` means "do not install", **never** "uninstall". Dropping a package from the
-  defaults does not uninstall it either. There is no record of what ALPI installed.
+  defaults does not uninstall it either. There is no record of what ALPI installed. Uninstalling
+  happens only through `packages_absent` (catalog ids or prefixed raw names, same validation),
+  with `autoremove: false` so dependencies are not cascaded away. An id in both an install list
+  and `packages_absent` is an error.
 - **Separate files:** bootstrap rewrites its own `bootstrap.yml` with PyYAML, which would wipe
   hand-written comments. That is why `custom.yml` is a separate file. Since both stay outside git,
   `git pull` never conflicts.
@@ -187,13 +192,15 @@ Each of these becomes a feature or is guarded by the resolved package set.
    `/var/run/reboot-required`, `update-grub`, Flatpak missing on Ubuntu, Firefox as a snap,
    extrepo/PPA, DKMS.
 
-## Open decisions
+## Decisions (2026-10-05)
 
-1. ~~Rename AFPI or create a new repository?~~ **Decided (2026-10-05):** new empty repository
-   `phguima/alpi`, public, GPL-3.0. AFPI and AAPI stay active until parity.
-2. Add a `packages_absent` for explicit uninstalls, or does ALPI only install?
-3. Unknown catalog id: stop the run (recommended) or only warn?
-4. Can the profile carry package sets, or only policy?
-5. VirtualBox on Fedora: fixed source per distro, or can the user pick Oracle's repository?
-6. Is there a Debian/Ubuntu VM or tester before we start those ports?
-7. First batch of desktops: GNOME, KDE or both?
+1. **Repository:** new empty `phguima/alpi`, public, GPL-3.0 (not a rename of AFPI). AFPI and AAPI
+   stay active until parity.
+2. **Uninstall:** yes, only through an explicit `packages_absent` list, without autoremove.
+3. **Unknown catalog id:** fail early, in `env_setup`, listing every unknown id.
+4. **Profile:** policy + package/feature sets; hardware stays detected and can only be vetoed.
+5. **VirtualBox:** fixed source per distro: RPM Fusion akmod + kmodgenca on Fedora, Oracle repo on
+   EL. No user choice.
+6. **Debian/Ubuntu:** after Fedora + AlmaLinux parity, and only with a test VM. Reserve the slots
+   (support matrix, catalog columns) now; write no tasks for them yet.
+7. **Desktops:** GNOME and KDE from the start (parity requires both).

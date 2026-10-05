@@ -1,22 +1,15 @@
 # TODO — ALPI
 
-Only what is left. Architecture and rationale in `PROPOSAL.md`.
-
-## 0. Open decisions
-
-- [ ] Add a `packages_absent` (explicit uninstall), or does ALPI only install?
-- [ ] Unknown catalog id: stop the run (recommended) or only warn?
-- [ ] Can the profile carry package sets, or only policy?
-- [ ] VirtualBox on Fedora: fixed source per distro, or can the user pick Oracle's repository?
-- [ ] Is there a Debian/Ubuntu VM or tester before those ports?
-- [ ] First batch of desktops: GNOME, KDE or both?
+Only what is left. Architecture, rationale and decisions in `PROPOSAL.md`.
 
 ## 1. Skeleton
 
 - [ ] `bootstrap.sh` with detection via `/etc/os-release` (dnf/apt) and collections pinned per version.
 - [ ] `site.yml` + `tasks/env_setup.yml`: support matrix (assert) → detection → `group_by`.
 - [ ] `group_vars/os_*` and `group_vars/profile_*` with `ansible_group_priority`.
-- [ ] `catalog.yml` + package resolution (single `set_fact`) + id validation.
+- [ ] `catalog.yml` + package resolution (single `set_fact`) + id validation (fail early).
+- [ ] `packages_absent`: explicit uninstall, no autoremove; error if an id is both installed and absent.
+- [ ] Support matrix with reserved Debian 13 / Ubuntu 26.04 slots (asserted as unsupported for now).
 - [ ] `host_vars/127.0.0.1/{bootstrap,custom}.yml` + `custom.yml.example`.
 
 ## 2. Bring in AFPI (Fedora, `personal` profile)
@@ -39,7 +32,7 @@ Only what is left. Architecture and rationale in `PROPOSAL.md`.
 - [ ] VM with EFI + Secure Boot.
 - [ ] Freeze AAPI and AFPI with a README pointing to ALPI.
 
-## 5. New distros (only with a test VM)
+## 5. New distros (after parity, only with a test VM)
 
 - [ ] Debian 13.
 - [ ] Ubuntu 26.04 LTS.
