@@ -39,6 +39,24 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - Commit and push **only when the user asks**. Commits in English, Conventional Commits with scope
   (`feat(apps): …`, `docs(todo): …`).
 
+## Tests — Molecule (mandatory)
+
+- **Every change or new feature ships with tests in the same commit**: new Molecule scenarios or
+  updates to the existing ones (and pytest unit tests for Python code such as filter plugins).
+  When behavior changes, update the scenarios that cover it. A change without tests is not done.
+- Driver: podman (`molecule-plugins[podman]`), installed with pipx on the host:
+  `pipx install molecule && pipx inject molecule 'molecule-plugins[podman]' ansible-core`.
+  The Molecule controller runs on the host, but every playbook run targets the scenario's
+  container, never the host: plays get their hosts from Molecule's inventory, not `localhost`.
+- Layout: `molecule/<scenario>/` (`molecule.yml`, `converge.yml`, `verify.yml`), one scenario per
+  distro/profile or role as needed. Use systemd-enabled images (`command: /sbin/init`) where
+  services are involved. `verify.yml` asserts the outcome (packages, files, settings), not only
+  that the run did not fail.
+- Run: `molecule test -s <scenario>` (create → converge → idempotence → verify → destroy). The
+  idempotence step replaces the manual "run twice". Hardware-only checks (Secure Boot/MOK, real
+  reboot) stay in the user's VM.
+- Until Molecule is set up (see `TODO.md`), keep using the manual podman recipes below.
+
 ## Tests — in a container or VM, never on the host
 
 Nothing runs on the host (the user's personal machine), not reads, not `--check`. Validate in

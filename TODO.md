@@ -1,6 +1,22 @@
 # TODO — ALPI
 
-Only what is left. Architecture, rationale and decisions in `PROPOSAL.md`.
+Only what is left. Architecture, rationale and decisions in `PROPOSAL.md`. Every item ships with
+its Molecule scenarios / unit tests (see `CLAUDE.md`).
+
+## 1. Molecule tests (before section 2)
+
+- [ ] Install Molecule with the podman driver (pipx, see `CLAUDE.md`) and add a `requirements`
+      note for it to the README.
+- [ ] Make the plays testable outside `localhost` (Molecule's inventory): the real run keeps
+      `inventory.ini`, the scenarios point `converge.yml` at the container.
+- [ ] pytest unit tests for `filter_plugins/alpi.py` (`alpi_resolve`, `alpi_canonical`,
+      `alpi_features`): raw prefixes, aliases, key order, `~`, missing keys, hardware veto.
+- [ ] Scenarios `fedora44-personal` and `el10-work`: resolution (`--tags resolve` output) and the
+      `packages` role (base, extras, absent), with `verify.yml` checking installed/removed packages.
+- [ ] Failure scenario(s): unknown id, conflict, unknown feature, missing profile, strict mode,
+      bad `pkg:`/`flatpak:` names, unsupported distro (`debian:13`): assert the run fails with the
+      expected message.
+- [ ] `bootstrap.sh` test (scripted answers via `script`, sudo shim; see `CLAUDE.md`).
 
 ## 2. Bring in AFPI (Fedora, `personal` profile)
 
