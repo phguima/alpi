@@ -4,17 +4,14 @@ Only what is left. Architecture, rationale and decisions in `PROPOSAL.md`.
 
 ## 1. Skeleton
 
-- [ ] `bootstrap.sh` with detection via `/etc/os-release` (dnf/apt) and collections pinned per version.
-- [ ] `site.yml` + `tasks/env_setup.yml`: support matrix (assert) → detection → `group_by`.
-- [ ] `group_vars/os_*` and `group_vars/profile_*` with `ansible_group_priority`.
-- [ ] `catalog.yml` + package resolution (single `set_fact`) + id validation (fail early).
-- [ ] `packages_absent`: explicit uninstall, no autoremove; error if an id is both installed and absent.
-- [ ] Support matrix with reserved Debian 13 / Ubuntu 26.04 slots (asserted as unsupported for now).
-- [ ] `host_vars/127.0.0.1/{bootstrap,custom}.yml` + `custom.yml.example`.
+- [ ] Check prefixed raw names (`pkg:`, `flatpak:`) in env_setup (`dnf repoquery` / `flatpak remote-info`)
+      instead of only failing at install time. Needs the `repos` role first (EPEL/RPM Fusion names).
 
 ## 2. Bring in AFPI (Fedora, `personal` profile)
 
-- [ ] Port the roles with the specific tasks in `tasks/Fedora.yml`.
+- [ ] Port the roles with the specific tasks in `tasks/Fedora.yml`; fill `catalog.yml` and
+      `packages.yml` from AFPI's lists (the catalog has only a seed today).
+- [ ] Apply `system_hostname` (only when the profile has `alpi_manage_hostname`) and the git identity.
 - [ ] New `repos` role (RPM Fusion, COPR) running first.
 - [ ] Personal aliases (`open/close-thevoid`, LUKS UUID) to `host_vars`.
 - [ ] Feature gates: VirtualBox (string match today), ClamAV (unconditional freshclam), Flatpak overrides only for installed apps.

@@ -1,0 +1,28 @@
+---
+# Copy to host_vars/127.0.0.1/custom.yml (git-ignored) and edit. Applied last: it wins over the
+# repository defaults and the profile. Ids come from group_vars/all/catalog.yml; names outside the
+# catalog use a prefix: "pkg:<native package>" or "flatpak:<app id>".
+
+# Features to switch (see group_vars/all/features.yml). Hardware ones accept only false (veto).
+features: {}
+#  steam: false
+#  nvidia: false
+
+# Extra packages, installed after the base set
+packages_add: []
+#  - "pkg:sqlitebrowser"
+#  - "flatpak:org.gimp.GIMP"
+
+# Defaults not to install (never uninstalls anything)
+packages_skip: []
+#  - telegram
+
+# Explicit uninstall (no autoremove). An id cannot be both installed and here.
+packages_absent: []
+#  - "pkg:akregator"
+
+# Extra host folders Flatpak apps may read (drag and drop from outside granted folders fails).
+# Not applied yet: comes with the apps role (TODO.md, section 2).
+flatpak_filesystem_overrides: {}
+#  com.rtosta.zapzap:
+#    - "{{ user_home }}/wks:ro"

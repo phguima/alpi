@@ -1,0 +1,15 @@
+---
+# Master playbook for ALPI (Ansible Linux Post-Install)
+# Golden test (no changes to the system): ansible-playbook site.yml --tags resolve
+
+- name: ALPI | Linux Post-Install
+  hosts: localhost
+  become: yes
+
+  pre_tasks:
+    - name: ALPI | Environment Setup
+      ansible.builtin.import_tasks: tasks/env_setup.yml
+      tags: [always]
+
+  roles:
+    - { role: packages, tags: [packages] }

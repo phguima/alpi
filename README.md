@@ -7,7 +7,7 @@ ALPI is a single Ansible post-install for Linux workstations. It detects the run
 
 ## 📊 Project Status
 
-*   **Stage:** design. There is no playbook yet. The architecture is described in [`PROPOSAL.md`](PROPOSAL.md) and the work plan is in [`TODO.md`](TODO.md).
+*   **Stage:** skeleton. Distro detection, profiles, the package catalog and user customization work (validated on Fedora 44 and AlmaLinux 10 containers); the roles from AFPI/AAPI are not ported yet. The architecture is described in [`PROPOSAL.md`](PROPOSAL.md) and the work plan is in [`TODO.md`](TODO.md).
 *   **Until parity is reached, use AFPI (Fedora) or AAPI (AlmaLinux 10).**
 
 ## 🧭 Design in short
@@ -16,6 +16,15 @@ ALPI is a single Ansible post-install for Linux workstations. It detects the run
 *   **Package catalog:** logical package ids mapped to each distribution's package, Flatpak or upstream source, so one list works everywhere.
 *   **User customization:** a git-ignored `host_vars/127.0.0.1/custom.yml` toggles features and adds or skips packages, so `git pull` never conflicts with local changes.
 *   **Explicit support matrix:** the playbook stops right away on an unsupported distribution or version.
+
+## 🚀 Usage (skeleton)
+
+```bash
+./bootstrap.sh                                   # installs Ansible, asks profile/hostname/git identity
+cp custom.yml.example host_vars/127.0.0.1/custom.yml   # optional: your packages and features
+ansible-playbook site.yml -K --tags resolve      # preview: prints what would be installed
+ansible-playbook site.yml -K
+```
 
 ## ⚖️ License
 

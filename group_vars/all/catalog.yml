@@ -1,0 +1,22 @@
+---
+# Package catalog: logical id -> what to install on each distro.
+# Keys are tried in the order of alpi_catalog_keys (group_vars/os_*), most specific first:
+#   Fedora: fedora, all        AlmaLinux 10: el10, el, all
+# Values: a native package name, a list of names, {flatpak: <app id>}, or ~ (unavailable: the id
+# is skipped with a warning). An id with no key for the current distro is a catalog bug and stops
+# the run, so every id must cover every supported distro (or use 'all').
+alpi_catalog:
+  git:       {all: git}
+  htop:      {all: htop}
+  zsh:       {all: zsh}
+  vim:       {fedora: vim, el: vim-enhanced}
+  shellcheck: {fedora: ShellCheck, el: ShellCheck}
+  7zip:      {fedora: [p7zip, p7zip-plugins], el: [7zip, 7zip-standalone]}
+  steam:     {fedora: steam, el: ~}
+  telegram:  {fedora: telegram-desktop, el: {flatpak: org.telegram.desktop}}
+  bitwarden: {all: {flatpak: com.bitwarden.desktop}}
+  zapzap:    {all: {flatpak: com.rtosta.zapzap}}
+
+# Renamed ids keep resolving: old id -> current id.
+alpi_catalog_aliases:
+  p7zip: 7zip

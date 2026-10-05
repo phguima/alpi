@@ -1,0 +1,49 @@
+---
+# Installs the sets resolved in tasks/resolve.yml: the base first, the user's extras in a separate
+# step (a typo there does not stop the base install), then the explicit uninstalls.
+
+- name: Packages | Install base packages
+  ansible.builtin.package:
+    name: "{{ alpi_pkgs.native }}"
+    state: present
+  when: alpi_pkgs.native | length > 0
+
+- name: Packages | Add the Flathub remote
+  community.general.flatpak_remote:
+    name: flathub
+    flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+    state: present
+  when: (alpi_pkgs.flatpak + alpi_pkgs_extra.flatpak) | length > 0
+
+- name: Packages | Install base flatpaks
+  community.general.flatpak:
+    name: "{{ alpi_pkgs.flatpak }}"
+    remote: flathub
+    state: present
+  when: alpi_pkgs.flatpak | length > 0
+
+- name: Packages | Install the user's extra packages
+  ansible.builtin.package:
+    name: "{{ alpi_pkgs_extra.native }}"
+    state: present
+  when: alpi_pkgs_extra.native | length > 0
+
+- name: Packages | Install the user's extra flatpaks
+  community.general.flatpak:
+    name: "{{ alpi_pkgs_extra.flatpak }}"
+    remote: flathub
+    state: present
+  when: alpi_pkgs_extra.flatpak | length > 0
+
+# packages_absent only. No autoremove: dependencies other packages may need are kept.
+- name: Packages | Remove packages listed in packages_absent
+  ansible.builtin.package:
+    name: "{{ alpi_pkgs_absent.native }}"
+    state: absent
+  when: alpi_pkgs_absent.native | length > 0
+
+- name: Packages | Remove flatpaks listed in packages_absent
+  community.general.flatpak:
+    name: "{{ alpi_pkgs_absent.flatpak }}"
+    state: absent
+  when: alpi_pkgs_absent.flatpak | length > 0

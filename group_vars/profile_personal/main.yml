@@ -1,0 +1,7 @@
+---
+# Personal machine (AFPI's noir): manages the hostname, everything on.
+alpi_manage_hostname: true
+packages_profile:
+  - steam
+packages_profile_skip: []
+features_profile: {}

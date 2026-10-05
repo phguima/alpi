@@ -1,0 +1,151 @@
+---
+# Environment discovery: support matrix first (before anything else is read or changed), then
+# user, hardware and desktop facts, then the dynamic groups that load group_vars/os_* and
+# group_vars/profile_*, then package and feature resolution.
+
+- name: Env Setup | Ensure the distro is supported
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['distribution'] in alpi_supported
+      - ansible_facts['distribution_major_version'] | int >= alpi_supported[ansible_facts['distribution']].min
+      - ansible_facts['distribution_major_version'] | int <= alpi_supported[ansible_facts['distribution']].max
+    fail_msg: >-
+      ALPI does not support {{ ansible_facts['distribution'] }}
+      {{ ansible_facts['distribution_version'] }}. Supported:
+      {% for d, v in alpi_supported.items() %}{{ d }} {{ v.min }}{{ '' if v.min == v.max else '-' ~ v.max }}{{ '' if loop.last else ', ' }}{% endfor %}.
+    quiet: true
+  tags: [always]
+
+- name: Env Setup | Ensure a profile is chosen
+  ansible.builtin.assert:
+    that:
+      - alpi_profile is defined
+      - alpi_profile in alpi_profiles
+    fail_msg: >-
+      alpi_profile must be one of {{ alpi_profiles | join(', ') }}
+      (got: {{ alpi_profile | default('nothing') }}). Run ./bootstrap.sh or pass -e alpi_profile=<name>.
+    quiet: true
+  tags: [always]
+
+- name: Env Setup | Get primary user data
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ ansible_facts['env']['SUDO_USER'] }}"
+  register: primary_user_data
+  when: ansible_facts['env']['SUDO_USER'] is defined and ansible_facts['env']['SUDO_USER'] != 'root'
+  tags: [always]
+
+- name: Env Setup | Set primary user facts
+  set_fact:
+    user_name: "{{ ansible_facts['env']['SUDO_USER'] | default(ansible_facts['user_id']) }}"
+    user_home: >-
+      {{ 
+        primary_user_data.ansible_facts.getent_passwd[ansible_facts['env']['SUDO_USER']][4] 
+        if (primary_user_data.ansible_facts is defined and ansible_facts['env']['SUDO_USER'] is defined and ansible_facts['env']['SUDO_USER'] != 'root') 
+        else (ansible_facts['env']['HOME'] | default('/root')) 
+      }}
+  tags: [always]
+
+- name: Env Setup | Identify target users for shell setup
+  set_fact:
+    zsh_users:
+      - name: "root"
+        home: "/root"
+      - name: "{{ user_name }}"
+        home: "{{ user_home }}"
+  when: user_name != 'root'
+  tags: [always]
+
+- name: Env Setup | Identify target users for shell setup (Root only)
+  set_fact:
+    zsh_users:
+      - name: "root"
+        home: "/root"
+  when: user_name == 'root'
+  tags: [always]
+
+- name: Env Setup | Initialize hardware facts
+  set_fact:
+    is_nvidia: false
+    is_intel: false
+    is_amd: false
+    has_nvidia_driver: false
+    is_asus: false
+  tags: [always]
+
+- name: Env Setup | Detect ASUS system
+  set_fact:
+    is_asus: "{{ (ansible_facts['system_vendor'] | default('') | lower is search('asus')) or (ansible_facts['board_vendor'] | default('') | lower is search('asus')) }}"
+  tags: [always, hardware, asus]
+
+# Reads the SecureBoot EFI variable directly (5th byte: 1 = enabled), so it does not depend on
+# mokutil; legacy-BIOS boots have no efivars and report false.
+- name: Env Setup | Read Secure Boot state
+  ansible.builtin.command: od -An -tu1 -j4 -N1 /sys/firmware/efi/efivars/SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c
+  register: secure_boot_raw
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags: [always]
+
+- name: Env Setup | Set Secure Boot fact
+  set_fact:
+    is_secure_boot: "{{ secure_boot_raw.rc == 0 and (secure_boot_raw.stdout | trim) == '1' }}"
+  tags: [always]
+
+- name: Env Setup | Detect GPU Type
+  ansible.builtin.shell: lspci | grep -iE "vga|3d|display"
+  register: gpu_info_raw
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags: [always, hardware]
+
+- name: Env Setup | Set GPU info fact
+  set_fact:
+    gpu_info: "{{ gpu_info_raw.stdout | default('') }}"
+    is_nvidia: "{{ gpu_info_raw.stdout is defined and gpu_info_raw.stdout is search('NVIDIA', ignorecase=True) }}"
+    is_intel: "{{ gpu_info_raw.stdout is defined and gpu_info_raw.stdout is search('Intel', ignorecase=True) }}"
+    is_amd: "{{ gpu_info_raw.stdout is defined and gpu_info_raw.stdout is regex('\\b(amd|ati|Advanced Micro Devices)\\b', ignorecase=True) }}"
+  tags: [always, hardware]
+
+- name: Env Setup | Check for proprietary NVIDIA driver
+  ansible.builtin.shell: "command -v nvidia-smi && nvidia-smi"
+  register: nvidia_smi_check_raw
+  failed_when: false
+  changed_when: false
+  check_mode: false
+  when: is_nvidia
+  tags: [always, hardware, detection, nvidia]
+
+- name: Env Setup | Set NVIDIA driver fact
+  set_fact:
+    has_nvidia_driver: "{{ nvidia_smi_check_raw.rc == 0 if (nvidia_smi_check_raw is defined and 'rc' in nvidia_smi_check_raw) else false }}"
+  tags: [always, hardware, detection, nvidia]
+
+- name: Env Setup | Detect desktop environment
+  set_fact:
+    detected_xdg: "{{ lookup('env', 'XDG_CURRENT_DESKTOP') | default('') | upper }}"
+  tags: [always, system, detection]
+
+- name: Env Setup | Set DE Boolean Facts
+  set_fact:
+    is_gnome: "{{ 'GNOME' in detected_xdg }}"
+    is_kde: "{{ 'KDE' in detected_xdg or 'PLASMA' in detected_xdg or 'KDE' in (ansible_facts['env']['XDG_CURRENT_DESKTOP'] | default('') | upper) }}"
+  tags: [always, system, detection]
+
+# group_vars/os_<distro>, os_<distro>_<major> and profile_<name> load once the host is in these
+# groups (only the directories that exist count).
+- name: Env Setup | Join the distro and profile groups
+  ansible.builtin.group_by:
+    key: "{{ item }}"
+  loop:
+    - "os_{{ ansible_facts['distribution'] }}"
+    - "os_{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_major_version'] }}"
+    - "profile_{{ alpi_profile }}"
+  changed_when: false
+  tags: [always]
+
+- name: Env Setup | Resolve packages and features
+  ansible.builtin.import_tasks: resolve.yml
+  tags: [always]

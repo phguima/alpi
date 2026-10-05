@@ -1,0 +1,82 @@
+---
+# Package and feature resolution (PROPOSAL.md, "Customization"). Every check runs here, before
+# any role changes the system. Results:
+#   alpi_pkgs:       base set (repo defaults + distro + desktop + profile, minus skips)
+#   alpi_pkgs_extra: the user's packages_add (installed in a separate step, after the base)
+#   alpi_pkgs_absent: the user's packages_absent (explicit uninstall)
+#   alpi_feature:    feature name -> bool
+
+- name: Resolve | Select package ids
+  ansible.builtin.set_fact:
+    alpi_ids_base: >-
+      {{ (packages_base + (packages_os | default([]))
+          + (packages_kde if is_kde else []) + (packages_gnome if is_gnome else [])
+          + (packages_profile | default([])))
+         | alpi_canonical(alpi_catalog_aliases) | unique
+         | reject('in', packages_profile_skip | default([]) | alpi_canonical(alpi_catalog_aliases))
+         | reject('in', packages_skip | default([]) | alpi_canonical(alpi_catalog_aliases)) | list }}
+    alpi_ids_extra: >-
+      {{ packages_add | default([]) | alpi_canonical(alpi_catalog_aliases) | unique
+         | reject('in', packages_skip | default([]) | alpi_canonical(alpi_catalog_aliases)) | list }}
+    alpi_ids_absent: "{{ packages_absent | default([]) | alpi_canonical(alpi_catalog_aliases) | unique }}"
+
+- name: Resolve | Look up the catalog
+  ansible.builtin.set_fact:
+    alpi_pkgs: "{{ alpi_ids_base | alpi_resolve(alpi_catalog, alpi_catalog_keys, alpi_catalog_aliases) }}"
+    alpi_pkgs_extra: "{{ alpi_ids_extra | reject('in', alpi_ids_base) | list | alpi_resolve(alpi_catalog, alpi_catalog_keys, alpi_catalog_aliases) }}"
+    alpi_pkgs_absent: "{{ alpi_ids_absent | alpi_resolve(alpi_catalog, alpi_catalog_keys, alpi_catalog_aliases) }}"
+
+- name: Resolve | Check package ids
+  ansible.builtin.assert:
+    that:
+      - _unknown | length == 0
+      - _missing | length == 0
+      - _conflict | length == 0
+    fail_msg: "{{ _messages | select | join(' ') }}"
+    quiet: true
+  vars:
+    _unknown: "{{ alpi_pkgs.unknown + alpi_pkgs_extra.unknown + alpi_pkgs_absent.unknown }}"
+    _missing: "{{ alpi_pkgs.missing + alpi_pkgs_extra.missing + alpi_pkgs_absent.missing }}"
+    _conflict: "{{ (alpi_ids_base + alpi_ids_extra) | intersect(alpi_ids_absent) }}"
+    _messages:
+      - "{{ ('Unknown package ids (not in group_vars/all/catalog.yml; use pkg:<name> or flatpak:<app id> for names outside the catalog): ' ~ _unknown | join(', ') ~ '.') if _unknown else '' }}"
+      - "{{ ('Catalog bug, no entry for this distro (keys ' ~ alpi_catalog_keys | join(', ') ~ '): ' ~ _missing | join(', ') ~ '.') if _missing else '' }}"
+      - "{{ ('Both installed and in packages_absent: ' ~ _conflict | join(', ') ~ '.') if _conflict else '' }}"
+
+- name: Resolve | Check unavailable packages (strict mode)
+  ansible.builtin.assert:
+    that: _unavailable | length == 0
+    fail_msg: "Not available on {{ ansible_facts['distribution'] }}: {{ _unavailable | join(', ') }} (alpi_strict is on)."
+    quiet: true
+  vars:
+    _unavailable: "{{ alpi_pkgs.unavailable + alpi_pkgs_extra.unavailable }}"
+  when: alpi_strict | bool
+
+- name: Resolve | Merge features
+  ansible.builtin.set_fact:
+    alpi_features_merged: "{{ features_default | combine(features_profile | default({}), features | default({})) }}"
+
+- name: Resolve | Check feature names
+  ansible.builtin.assert:
+    that: _unknown | length == 0
+    fail_msg: "Unknown features: {{ _unknown | join(', ') }}. Known: {{ features_default.keys() | join(', ') }}."
+    quiet: true
+  vars:
+    _unknown: "{{ alpi_features_merged.keys() | difference(features_default.keys()) }}"
+
+- name: Resolve | Set feature flags
+  ansible.builtin.set_fact:
+    alpi_feature: "{{ alpi_features_merged | alpi_features(alpi_hardware_features, {'nvidia': is_nvidia, 'asus': is_asus}) }}"
+
+- name: Resolve | Summary
+  ansible.builtin.debug:
+    msg:
+      profile: "{{ alpi_profile }}"
+      distro: "{{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_major_version'] }}"
+      desktop: "{{ 'KDE' if is_kde else ('GNOME' if is_gnome else 'none detected') }}"
+      native: "{{ alpi_pkgs.native }}"
+      flatpak: "{{ alpi_pkgs.flatpak }}"
+      extra: "{{ alpi_pkgs_extra.native + alpi_pkgs_extra.flatpak }}"
+      absent: "{{ alpi_pkgs_absent.native + alpi_pkgs_absent.flatpak }}"
+      unavailable_skipped: "{{ alpi_pkgs.unavailable + alpi_pkgs_extra.unavailable }}"
+      features: "{{ alpi_feature }}"

@@ -1,0 +1,19 @@
+---
+# Default package sets, as catalog ids (group_vars/all/catalog.yml). Other layers, each with its
+# own keys so nothing is overwritten (the merge happens once, in tasks/resolve.yml):
+#   group_vars/os_*:      packages_os
+#   group_vars/profile_*: packages_profile, packages_profile_skip
+#   host_vars/127.0.0.1/custom.yml: packages_add, packages_skip, packages_absent (applied last)
+packages_base:
+  - git
+  - htop
+  - zsh
+  - vim
+  - shellcheck
+  - 7zip
+  - telegram
+  - bitwarden
+  - zapzap
+
+packages_kde: []
+packages_gnome: []

@@ -72,8 +72,10 @@ behavior differs.
 
 - **Precedence:** do not use `include_vars` for distro/profile, because it has higher priority than
   `host_vars` and the profile would silently override the user. Instead, `group_by` creates dynamic
-  groups (`os_<distro>_<major>`, `profile_<name>`) and the data lives in `group_vars/`, ordered
-  with `ansible_group_priority`. That keeps `host_vars` and `-e` on top.
+  groups (`os_<distro>`, `os_<distro>_<major>`, `profile_<name>`) and the data lives in
+  `group_vars/`. That keeps `host_vars` and `-e` on top. Layers never share a key (each has its own
+  `packages_*`/`features_*` names), so the order between groups does not matter;
+  `ansible_group_priority` would not help anyway, since it only works in the inventory source.
 - **Explicit support:** an allowlist of (distro, version) with an assert before loading any
   variable. No silent fallback by `os_family`: Fedora, Rocky and CentOS Stream have
   `os_family = RedHat`, and Ubuntu falls into `Debian`.

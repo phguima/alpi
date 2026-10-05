@@ -1,0 +1,13 @@
+---
+# Support matrix: the playbook stops in env_setup on anything not listed here (major versions,
+# inclusive). There is no fallback by os_family: Rocky, CentOS Stream or Ubuntu are not "close
+# enough" to a supported distro.
+# Reserved, not supported yet (PROPOSAL.md, decision 6): Debian 13, Ubuntu 26.04.
+alpi_supported:
+  Fedora: {min: 41, max: 44}
+  AlmaLinux: {min: 10, max: 10}
+
+alpi_profiles: [personal, work]
+
+# true: ids marked unavailable (~) on this distro stop the run instead of being skipped.
+alpi_strict: false
