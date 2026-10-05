@@ -71,16 +71,20 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     filter/role paths, links to the repo's `group_vars/` and the scenario's `host_vars/` (links
     replace inline `host_vars`, so a scenario's settings under test go in
     `molecule/<scenario>/host_vars/<instance>.yml`).
-  - Scenarios: `fedora44-personal`, `el10-work` (install + golden resolution via
-    `shared/verify_resolution.yml`; `el10-work` also resolves with EL10's own ansible-core 2.16
-    inside the container, `shared/verify_native_controller.yml`), `failures` (every validation
+  - Scenarios: `catalog` (Fedora + Alma: repos + every name checked, nothing installed; the full
+    resolved sets compared with reviewed golden values in its `host_vars/`, via
+    `shared/verify_resolution.yml`. Update those when the catalog or package lists change, after
+    reviewing the diff), `fedora44-personal`, `el10-work` (real installs, heaviest apps skipped;
+    `shared/verify_installed.yml` checks everything resolved is installed; `el10-work` also
+    resolves with EL10's own ansible-core 2.16 inside the container,
+    `shared/verify_native_controller.yml`), `failures` (every validation
     must fail with its message, `shared/expect_failure.yml`; Fedora + Alma), `unsupported`
     (Debian 13), `bootstrap` (bootstrap.sh with scripted answers).
   - Extra vars win over set_fact, so a scenario forces detected hardware with
     `provisioner.options.extra-vars` (e.g. `'{"is_asus": true}'` in `fedora44-personal`).
   - Images are bare: `shared/prepare.yml` installs python3 and sudo; the podman connection runs
     `raw` without a shell (wrap in `sh -c`). Bare Fedora lacks the Python rpm bindings, so verify
-    with `rpm -q` (`shared/verify_packages.yml`), not `package_facts`.
+    with `rpm -q --whatprovides` (`shared/verify_installed.yml`), not `package_facts`.
   - A failure-case harness must be shown to fail on a case that should not fail before trusting it.
 - The manual podman recipes below remain for quick experiments.
 
@@ -100,8 +104,8 @@ Recipes that worked here:
   `host_vars/127.0.0.1/custom.yml` written inside the copy.
 - `bootstrap.sh` interactively: `printf "answers\n" | script -qec ./bootstrap.sh /dev/null`, with a
   pass-through `sudo` shim first in `PATH` (the real `sudo` swallows the piped answers).
-- Plays that include `roles/packages` without `roles/repos` (e.g. the `failures` scenario) must
-  skip what needs EPEL/RPM Fusion/vendor repos.
+- Plays that include `roles/packages` must run `roles/repos` first, or names from EPEL/RPM
+  Fusion/vendor repositories fail the name check.
 
 Hardware (Secure Boot/MOK, reboot) goes to the user's VM; results arrive as screenshots in
 `~/Pictures/Screenshots` (list the directory and take the newest ones).

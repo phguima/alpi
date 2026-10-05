@@ -1,0 +1,8 @@
+---
+alpi_profile: personal
+# The 'catalog' scenario checks every name; here the heaviest downloads are skipped to keep the
+# run short. Still installed: RPM Fusion (Steam, Telegram), Brave, VS Code, GitHub CLI, the ASUS
+# COPR (is_asus forced in molecule.yml), ClamAV and two Flatpaks.
+packages_skip: [chromium, discord, drawy, displaycal, gpu-screen-recorder, slack, spotify, zoom, zotero]
+packages_add: ["pkg:tree"]
+packages_absent: ["pkg:nano"]

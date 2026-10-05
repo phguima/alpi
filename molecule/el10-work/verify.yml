@@ -1,27 +1,22 @@
 ---
 - name: Verify | AlmaLinux 10, work
   hosts: all
-  vars:
-    _golden:
-      native: [git, htop, zsh, vim-enhanced, ShellCheck, 7zip, 7zip-standalone,
-               brave-browser, brave-origin, code, gh]
-      flatpak: []
-      extra: [tree]
-      absent: [nano]
-      unavailable: [steam]
-      features: {nvidia: false, asus: false, steam: false}
-      repos: [crb, epel, rpmfusion-free, rpmfusion-nonfree, brave, vscode, gh-cli]
   tasks:
-    - name: Verify | Resolution
-      ansible.builtin.include_tasks: ../shared/verify_resolution.yml
+    - name: Verify | Installed
+      ansible.builtin.include_tasks: ../shared/verify_installed.yml
 
-    - name: Verify | Packages
-      ansible.builtin.include_tasks: ../shared/verify_packages.yml
-      vars:
-        _installed: [git, htop, zsh, vim-enhanced, ShellCheck, 7zip, 7zip-standalone,
-                     brave-browser, brave-origin, code, gh, tree, epel-release,
-                     rpmfusion-free-release, rpmfusion-nonfree-release]
-        _absent: [nano, steam]
+    - name: Verify | Steam stays out (feature off, and unavailable on EL even when added)
+      ansible.builtin.assert:
+        that:
+          - not alpi_feature.steam
+          - "'steam' in alpi_pkgs_extra.unavailable"
+        quiet: true
 
     - name: Verify | Same resolution with EL10's ansible-core 2.16
       ansible.builtin.include_tasks: ../shared/verify_native_controller.yml
+      vars:
+        _golden:
+          native: "{{ alpi_pkgs.native }}"
+          flatpak: "{{ alpi_pkgs.flatpak }}"
+          features: "{{ alpi_feature }}"
+          repos: "{{ alpi_repos_enabled | map(attribute='id') | list }}"

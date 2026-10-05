@@ -1,0 +1,19 @@
+---
+alpi_profile: personal
+
+# Expected full resolved sets (verify.yml). Reviewed against AFPI 2.9 / AAPI 1.1 lists;
+# KDE, GNOME and ASUS are forced on in molecule.yml.
+_golden:
+  native: [7zip, 7zip-standalone, curl, fastfetch, git, htop, hwinfo, lm_sensors, nodejs, nvtop, pipx,
+    python3-pip, ShellCheck, testdisk, tmux, tuptime, unrar, unzip, uv, vim, zsh, chkrootkit, lynis, rkhunter,
+    unhide, argyllcms, brave-browser, brave-origin, chromium, discord, drawy, gh, telegram-desktop, code,
+    kde-gtk-config, ktorrent, plasma-sdk, flatseal, gnome-tweaks, steam, clamav, clamav-update, asusctl,
+    supergfxctl, asusctl-rog-gui]
+  flatpak: [com.bitwarden.desktop, net.displaycal.DisplayCAL, com.dec05eba.gpu_screen_recorder, com.slack.Slack,
+    com.spotify.Client, com.rtosta.zapzap, us.zoom.Zoom, org.zotero.Zotero, com.markopejic.downloader,
+    com.mattjakeman.ExtensionManager, de.haeckerfelix.Fragments, com.github.unrud.VideoDownloader]
+  features: {asus: true, clamav: true, nvidia: false, steam: true}
+  repos: [rpmfusion-free, rpmfusion-nonfree, brave, gh-cli, vscode, asus-linux]
+  unavailable: []
+  extra: []
+  absent: []

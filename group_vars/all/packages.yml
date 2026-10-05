@@ -1,22 +1,66 @@
 ---
-# Default package sets, as catalog ids (group_vars/all/catalog.yml). Other layers, each with its
-# own keys so nothing is overwritten (the merge happens once, in tasks/resolve.yml):
+# Default package sets, as catalog ids (group_vars/all/catalog.yml), ported from AFPI 2.9 /
+# AAPI 1.1. Other layers, each with its own keys so nothing is overwritten (the merge happens
+# once, in tasks/resolve.yml):
 #   group_vars/os_*:      packages_os
 #   group_vars/profile_*: packages_profile, packages_profile_skip
+#   features (group_vars/all/features.yml): feature_packages while a feature is on
 #   host_vars/127.0.0.1/custom.yml: packages_add, packages_skip, packages_absent (applied last)
 packages_base:
+  # Command line and system tools
+  - 7zip
+  - curl
+  - fastfetch
   - git
   - htop
-  - zsh
-  - vim
+  - hwinfo
+  - lm-sensors
+  - nodejs
+  - nvtop
+  - pipx
+  - python3-pip
   - shellcheck
-  - 7zip
-  - telegram
-  - bitwarden
+  - testdisk
+  - tmux
+  - tuptime
+  - unrar
+  - unzip
+  - uv
+  - vim
+  - zsh
+  # Security (ClamAV is a feature)
+  - chkrootkit
+  - lynis
+  - rkhunter
+  - unhide
+  # Desktop applications (Steam is a feature)
+  - argyllcms
   - brave
-  - vscode
+  - chromium
+  - discord
+  - drawy
   - gh
+  - telegram
+  - vscode
+  # Flatpaks
+  - bitwarden
+  - displaycal
+  - gpu-screen-recorder
+  - slack
+  - spotify
   - zapzap
+  - zoom
+  - zotero
 
-packages_kde: []
-packages_gnome: []
+packages_kde:
+  - kde-gtk-config
+  - ktorrent
+  - media-downloader
+  - plasma-sdk
+
+packages_gnome:
+  - extension-manager
+  - flatseal
+  - fragments
+  - gnome-tweaks
+  - video-downloader

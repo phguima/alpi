@@ -1,0 +1,6 @@
+---
+- name: Verify | Full resolved sets
+  hosts: all
+  tasks:
+    - name: Verify | Resolution matches the reviewed golden sets
+      ansible.builtin.include_tasks: ../shared/verify_resolution.yml

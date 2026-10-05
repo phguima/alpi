@@ -1,0 +1,42 @@
+---
+# Everything the resolution selects must be installed, and packages_absent removed. Re-runs
+# env_setup (resolution only) and checks with rpm --whatprovides, so provides count (vim ->
+# vim-enhanced). Expected sets themselves are checked by the 'catalog' scenario.
+- name: Verify | Resolve again
+  ansible.builtin.include_tasks: ../../tasks/env_setup.yml
+
+# The containers have no desktop session; KDE/GNOME here would mean the host's environment
+# leaked in through a controller-side lookup.
+- name: Verify | No desktop detected from the host
+  ansible.builtin.assert:
+    that: not is_kde and not is_gnome
+    fail_msg: "Desktop detected in a container ({{ detected_xdg }}): host environment leaked"
+    quiet: true
+
+- name: Verify | Query native packages
+  ansible.builtin.command:
+    argv: "{{ ['rpm', '-q', '--whatprovides'] + [item] }}"
+  loop: "{{ alpi_pkgs.native + alpi_pkgs_extra.native + alpi_pkgs_absent.native }}"
+  register: _rpm
+  changed_when: false
+  failed_when: false
+
+- name: Verify | List installed Flatpak apps
+  ansible.builtin.command: flatpak list --app --columns=application
+  register: _flatpak_list
+  changed_when: false
+  failed_when: false
+
+- name: Verify | Selected packages installed, absent ones removed
+  ansible.builtin.assert:
+    that:
+      - _missing | length == 0
+      - _present | length == 0
+      - _missing_flatpak | length == 0
+    fail_msg: "Not installed: {{ _missing + _missing_flatpak }}. Should be absent: {{ _present }}."
+    quiet: true
+  vars:
+    _installed: "{{ _rpm.results | selectattr('rc', 'eq', 0) | map(attribute='item') | list }}"
+    _missing: "{{ (alpi_pkgs.native + alpi_pkgs_extra.native) | difference(_installed) }}"
+    _present: "{{ alpi_pkgs_absent.native | intersect(_installed) }}"
+    _missing_flatpak: "{{ (alpi_pkgs.flatpak + alpi_pkgs_extra.flatpak) | difference(_flatpak_list.stdout_lines | default([])) }}"

@@ -1,0 +1,13 @@
+---
+- name: Catalog | Repositories and name checks only
+  hosts: all
+  pre_tasks:
+    - name: Catalog | Environment setup
+      ansible.builtin.import_tasks: ../../tasks/env_setup.yml
+  roles:
+    - repos
+  tasks:
+    - name: Catalog | Check every name
+      ansible.builtin.include_role:
+        name: packages
+        tasks_from: check.yml

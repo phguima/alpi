@@ -1,0 +1,8 @@
+---
+alpi_profile: work
+# The 'catalog' scenario checks every name; Flatpaks are installed by fedora44-personal. Skipped
+# here: Flatpaks and the heaviest downloads.
+packages_skip: [chromium, discord, drawy, telegram, bitwarden, displaycal, gpu-screen-recorder,
+                slack, spotify, zapzap, zoom, zotero]
+packages_add: ["pkg:tree", steam]
+packages_absent: ["pkg:nano"]

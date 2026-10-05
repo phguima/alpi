@@ -9,8 +9,10 @@ features_default:
   nvidia: auto
   asus: auto
   steam: true
+  clamav: true
 
 # Package ids (catalog) each feature adds to the base set while it is on.
 feature_packages:
   steam: [steam]
+  clamav: [clamav, clamav-freshclam]
   asus: [asusctl, supergfxctl, asusctl-rog-gui]

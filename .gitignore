@@ -6,4 +6,5 @@
 group_vars/all/secrets.yml
 
 # Machine-specific settings: bootstrap.yml (written by bootstrap.sh) and custom.yml (user's own)
-host_vars/
+# (root only: molecule/<scenario>/host_vars/ are test fixtures and must be tracked)
+/host_vars/

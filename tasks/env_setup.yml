@@ -123,15 +123,22 @@
     has_nvidia_driver: "{{ nvidia_smi_check_raw.rc == 0 if (nvidia_smi_check_raw is defined and 'rc' in nvidia_smi_check_raw) else false }}"
   tags: [always, hardware, detection, nvidia]
 
+# The target's own environment first. Facts are gathered through sudo (become), which usually
+# drops XDG_CURRENT_DESKTOP, so a local run falls back to the controller's environment: it is the
+# same machine, and ansible-playbook runs in the user's session. lookup() always reads the
+# controller, so that fallback must never apply to another target (e.g. Molecule's containers).
 - name: Env Setup | Detect desktop environment
   set_fact:
-    detected_xdg: "{{ lookup('env', 'XDG_CURRENT_DESKTOP') | default('') | upper }}"
+    detected_xdg: >-
+      {{ ((ansible_facts['env']['XDG_CURRENT_DESKTOP'] | default('', true))
+          or (lookup('env', 'XDG_CURRENT_DESKTOP') if ansible_connection | default('') == 'local' else ''))
+         | upper }}
   tags: [always, system, detection]
 
 - name: Env Setup | Set DE Boolean Facts
   set_fact:
     is_gnome: "{{ 'GNOME' in detected_xdg }}"
-    is_kde: "{{ 'KDE' in detected_xdg or 'PLASMA' in detected_xdg or 'KDE' in (ansible_facts['env']['XDG_CURRENT_DESKTOP'] | default('') | upper) }}"
+    is_kde: "{{ 'KDE' in detected_xdg or 'PLASMA' in detected_xdg }}"
   tags: [always, system, detection]
 
 # group_vars/os_<distro>, os_<distro>_<major> and profile_<name> load once the host is in these
