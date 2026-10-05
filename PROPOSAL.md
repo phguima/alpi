@@ -123,7 +123,10 @@ packages_absent: [akregator]   # explicit uninstall (see Removal)
   - an unknown id stops the run and lists all unknown ids;
   - an id that is `~` on the current distro is skipped with a warning (or fails, with
     `strict: true`);
-  - prefixed raw names are checked with `dnf repoquery` / `apt-cache policy`.
+  - every native name (catalog and `pkg:`) and Flatpak id is checked to exist at the start of the
+    `packages` role, before anything from the lists is installed: a `dnf install --assumeno` dry
+    run (resolves provides, same message on dnf4/dnf5) and `flatpak remote-info flathub`. Not in
+    `env_setup`, because EPEL/RPM Fusion/COPR names only resolve after the `repos` role ran.
 - **Isolation:** the user's extras are installed in a separate task, after the base, so a typo does
   not break the whole install.
 - **Removal:** `skip` means "do not install", **never** "uninstall". Dropping a package from the

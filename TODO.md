@@ -2,11 +2,6 @@
 
 Only what is left. Architecture, rationale and decisions in `PROPOSAL.md`.
 
-## 1. Skeleton
-
-- [ ] Check prefixed raw names (`pkg:`, `flatpak:`) in env_setup (`dnf repoquery` / `flatpak remote-info`)
-      instead of only failing at install time. Needs the `repos` role first (EPEL/RPM Fusion names).
-
 ## 2. Bring in AFPI (Fedora, `personal` profile)
 
 - [ ] Port the roles with the specific tasks in `tasks/Fedora.yml`; fill `catalog.yml` and

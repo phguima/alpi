@@ -1,0 +1,23 @@
+---
+# Dry run of the whole native set: dnf (4 and 5) prints "No match for argument: <name>" for names
+# no enabled repository provides, and resolves provides (e.g. vim -> vim-enhanced) like a real
+# install would. --assumeno makes it exit non-zero even when everything resolves.
+- name: Packages | Look up native package names
+  ansible.builtin.command:
+    argv: "{{ ['dnf', 'install', '--assumeno'] + _native }}"
+  environment:
+    LC_ALL: C
+  register: _dnf_dry_run
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  vars:
+    _native: "{{ alpi_pkgs.native + alpi_pkgs_extra.native }}"
+  when: _native | length > 0
+
+- name: Packages | Set missing native packages
+  ansible.builtin.set_fact:
+    alpi_missing_native: >-
+      {{ (_dnf_dry_run.stdout_lines | default([]) + _dnf_dry_run.stderr_lines | default([]))
+         | select('search', '^No match for argument: ')
+         | map('regex_replace', '^No match for argument: ', '') | map('trim') | unique }}

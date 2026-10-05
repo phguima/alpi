@@ -7,7 +7,7 @@ are in English.
 
 ## Work status
 
-Skeleton stage (created on 2026-10-05; section 1 of `TODO.md` done the same day). `PROPOSAL.md` holds the architecture (reviewed by an
+Skeleton stage (created on 2026-10-05; skeleton done the same day). `PROPOSAL.md` holds the architecture (reviewed by an
 adversarial agent); `TODO.md` holds **only what is left** (decisions are recorded in `PROPOSAL.md`).
 **Read both before starting.** When an item is done, remove it from `TODO.md` and record the
 validation in the commit message.
@@ -29,6 +29,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   (`ansible_group_priority` does not work in `group_vars/`).
 - `host_vars/127.0.0.1/bootstrap.yml` (written by `bootstrap.sh`: `alpi_profile`, hostname, git
   identity) and `custom.yml` (the user's, see `custom.yml.example`), both git-ignored.
+- `roles/packages`: name checks first (`check_<os_family>.yml`: dnf dry run; `flatpak remote-info`),
+  then base, user extras, explicit uninstalls. Needs the `repos` role before it (section 2).
 - Golden test: `ansible-playbook site.yml --tags resolve` only resolves and prints the sets.
 
 ## Git

@@ -1,12 +1,17 @@
 ---
 # Installs the sets resolved in tasks/resolve.yml: the base first, the user's extras in a separate
-# step (a typo there does not stop the base install), then the explicit uninstalls.
+# step, then the explicit uninstalls.
 
-- name: Packages | Install base packages
+# Name checks run here and not in env_setup: package names from EPEL/RPM Fusion/COPR only resolve
+# once the repos role has run. Nothing is installed before every name is known to exist.
+- name: Packages | Check native package names
+  ansible.builtin.include_tasks: "check_{{ ansible_facts['os_family'] }}.yml"
+
+- name: Packages | Install Flatpak
   ansible.builtin.package:
-    name: "{{ alpi_pkgs.native }}"
+    name: flatpak
     state: present
-  when: alpi_pkgs.native | length > 0
+  when: (alpi_pkgs.flatpak + alpi_pkgs_extra.flatpak) | length > 0
 
 - name: Packages | Add the Flathub remote
   community.general.flatpak_remote:
@@ -14,6 +19,33 @@
     flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
     state: present
   when: (alpi_pkgs.flatpak + alpi_pkgs_extra.flatpak) | length > 0
+
+- name: Packages | Look up flatpak ids on Flathub
+  ansible.builtin.command:
+    argv: [flatpak, remote-info, flathub, "{{ item }}"]
+  loop: "{{ alpi_pkgs.flatpak + alpi_pkgs_extra.flatpak }}"
+  register: _flatpak_info
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Packages | Check that every package exists
+  ansible.builtin.assert:
+    that: (alpi_missing_native + _missing_flatpak) | length == 0
+    fail_msg: >-
+      Not found, none of the listed packages was installed. Native packages (not in any enabled repository):
+      {{ alpi_missing_native | join(', ') or 'none' }}. Flatpaks (not on Flathub):
+      {{ _missing_flatpak | join(', ') or 'none' }}. Fix the pkg:/flatpak: names in
+      host_vars/127.0.0.1/custom.yml, or the entry in group_vars/all/catalog.yml.
+    quiet: true
+  vars:
+    _missing_flatpak: "{{ _flatpak_info.results | default([]) | rejectattr('rc', 'equalto', 0) | map(attribute='item') | list }}"
+
+- name: Packages | Install base packages
+  ansible.builtin.package:
+    name: "{{ alpi_pkgs.native }}"
+    state: present
+  when: alpi_pkgs.native | length > 0
 
 - name: Packages | Install base flatpaks
   community.general.flatpak:
