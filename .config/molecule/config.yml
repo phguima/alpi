@@ -1,0 +1,25 @@
+---
+# Base config for every scenario in molecule/ (Molecule loads it automatically). Scenarios only
+# declare their platform; their settings under test live in molecule/<scenario>/host_vars/.
+driver:
+  name: podman
+provisioner:
+  name: ansible
+  env:
+    # site.yml targets localhost unless this is set; molecule/shared/converge.yml checks it
+    ALPI_TARGET: all
+    ANSIBLE_FILTER_PLUGINS: ${MOLECULE_PROJECT_DIRECTORY}/filter_plugins
+    ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/roles
+  inventory:
+    # The repo's group_vars (so playbooks outside the repo root, like verify.yml, see them) and
+    # the scenario's host_vars (the custom.yml settings under test). Links replace inline host_vars.
+    links:
+      group_vars: ../../group_vars/
+      host_vars: host_vars/
+  playbooks:
+    prepare: ../shared/prepare.yml
+    converge: ../shared/converge.yml
+verifier:
+  name: ansible
+scenario:
+  test_sequence: [destroy, syntax, create, prepare, converge, idempotence, verify, destroy]

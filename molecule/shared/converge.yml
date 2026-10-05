@@ -1,0 +1,15 @@
+---
+# Guard: site.yml targets localhost unless ALPI_TARGET is set, and a scenario must never touch the
+# host. This play runs in the container and stops the converge if the variable is missing.
+- name: Molecule | Guard against running on the host
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Molecule | Require ALPI_TARGET
+      ansible.builtin.assert:
+        that: lookup('env', 'ALPI_TARGET') | length > 0
+        fail_msg: ALPI_TARGET is not set; site.yml would target localhost (the host). Set it in molecule.yml.
+        quiet: true
+
+- name: Molecule | Run site.yml
+  ansible.builtin.import_playbook: ../../site.yml

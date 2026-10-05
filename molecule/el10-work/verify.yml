@@ -1,0 +1,23 @@
+---
+- name: Verify | AlmaLinux 10, work
+  hosts: all
+  vars:
+    _golden:
+      native: [git, zsh, vim-enhanced]
+      flatpak: []
+      extra: [tree]
+      absent: [nano]
+      unavailable: [steam]
+      features: {nvidia: false, asus: false, steam: false}
+  tasks:
+    - name: Verify | Resolution
+      ansible.builtin.include_tasks: ../shared/verify_resolution.yml
+
+    - name: Verify | Packages
+      ansible.builtin.include_tasks: ../shared/verify_packages.yml
+      vars:
+        _installed: [git, zsh, vim-enhanced, tree]
+        _absent: [nano, steam]
+
+    - name: Verify | Same resolution with EL10's ansible-core 2.16
+      ansible.builtin.include_tasks: ../shared/verify_native_controller.yml

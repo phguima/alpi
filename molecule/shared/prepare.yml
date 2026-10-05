@@ -1,0 +1,13 @@
+---
+# Bare images may lack Python (Ansible modules), sudo (site.yml uses become) and the package the
+# scenarios remove.
+- name: Molecule | Prepare
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Molecule | Install Python, sudo and the package to remove
+      # The podman connection runs raw commands without a shell
+      ansible.builtin.raw: >-
+        sh -c 'if command -v dnf >/dev/null; then dnf -y -q install python3 sudo nano;
+        else apt-get -qq update && apt-get -qq install -y python3 sudo; fi'
+      changed_when: false

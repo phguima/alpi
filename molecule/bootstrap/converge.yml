@@ -1,0 +1,90 @@
+---
+- name: Bootstrap | Run bootstrap.sh with scripted answers
+  hosts: all
+  vars:
+    _dir: /opt/alpi
+    _env:
+      PATH: "/opt/shim:{{ ansible_facts['env']['PATH'] }}"
+  tasks:
+    - name: Bootstrap | Install script(1)
+      ansible.builtin.package:
+        name: util-linux-script
+        state: present
+
+    - name: Bootstrap | Directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop: [/opt/shim, "{{ _dir }}/host_vars"]
+
+    - name: Bootstrap | Pass-through sudo shim
+      ansible.builtin.copy:
+        dest: /opt/shim/sudo
+        content: "#!/bin/sh\nexec \"$@\"\n"
+        mode: "0755"
+
+    - name: Bootstrap | Copy what bootstrap.sh reads
+      ansible.builtin.copy:
+        src: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/{{ item }}"
+        dest: "{{ _dir }}/"
+        mode: preserve
+      loop: [bootstrap.sh, site.yml, group_vars, custom.yml.example]
+
+    - name: Bootstrap | Check for settings from an earlier run
+      ansible.builtin.stat:
+        path: "{{ _dir }}/host_vars/127.0.0.1/bootstrap.yml"
+      register: _saved
+
+    # AFPI/AAPI kept the settings in host_vars/127.0.0.1.yml; bootstrap.sh must move it.
+    - name: Bootstrap | Legacy settings file
+      ansible.builtin.copy:
+        dest: "{{ _dir }}/host_vars/127.0.0.1.yml"
+        content: "system_hostname: old\ngit_user_name: \"O'Neil\"\n"
+        mode: "0644"
+      when: not _saved.stat.exists
+
+    # Unknown profile and invalid e-mail are asked again. 'work' never asks for the hostname
+    # and drops the one from the legacy file.
+    - name: Bootstrap | First run (work)
+      ansible.builtin.shell:
+        cmd: printf 'bogus\nwork\nTest User\nnot-an-email\nt@example.com\n' | script -qec ./bootstrap.sh /dev/null
+        chdir: "{{ _dir }}"
+      environment: "{{ _env }}"
+      register: _run1
+      changed_when: false
+
+    - name: Bootstrap | First run asked again after the bad answers
+      ansible.builtin.assert:
+        that:
+          - "\"Unknown profile 'bogus'\" in _run1.stdout"
+          - "\"Invalid e-mail 'not-an-email'\" in _run1.stdout"
+          - "'Hostname' not in _run1.stdout"
+          - "\"profile 'work'\" in _run1.stdout"
+          - "not _saved.stat.exists or 'Moved host_vars/127.0.0.1.yml' not in _run1.stdout"
+        fail_msg: "{{ _run1.stdout }}"
+        quiet: true
+
+    - name: Bootstrap | First run moved the legacy file
+      ansible.builtin.assert:
+        that: "'Moved host_vars/127.0.0.1.yml' in _run1.stdout"
+        fail_msg: "{{ _run1.stdout }}"
+        quiet: true
+      when: not _saved.stat.exists
+
+    # 'personal' asks for the hostname; Enter keeps the saved git identity.
+    - name: Bootstrap | Second run (personal)
+      ansible.builtin.shell:
+        cmd: printf 'personal\nnoir\n\n\n' | script -qec ./bootstrap.sh /dev/null
+        chdir: "{{ _dir }}"
+      environment: "{{ _env }}"
+      register: _run2
+      changed_when: false
+
+    - name: Bootstrap | Second run asked for the hostname
+      ansible.builtin.assert:
+        that:
+          - "'Hostname' in _run2.stdout"
+          - "\"profile 'personal'\" in _run2.stdout"
+        fail_msg: "{{ _run2.stdout }}"
+        quiet: true

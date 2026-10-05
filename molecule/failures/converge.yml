@@ -1,0 +1,42 @@
+---
+- name: Failures | Each case must fail with its message
+  hosts: all
+  vars:
+    _cases:
+      - name: no profile
+        expect: ["alpi_profile must be one of personal, work"]
+      - name: unknown profile
+        profile: home
+        expect: ["alpi_profile must be one of personal, work", "got: home"]
+      - name: unknown package id
+        profile: work
+        packages_add: [nope, git]
+        expect: ["Unknown package ids", "nope"]
+      - name: installed and absent
+        profile: work
+        packages_absent: [git]
+        expect: ["Both installed and in packages_absent: git"]
+      - name: unknown feature
+        profile: work
+        features: {steamm: true}
+        expect: ["Unknown features: steamm"]
+      - name: strict mode
+        only: AlmaLinux
+        profile: work
+        packages_add: [steam]
+        strict: true
+        expect: ["Not available on AlmaLinux: steam"]
+      - name: names not found
+        profile: work
+        # Repo-less container: skip what needs EPEL/RPM Fusion, and the real Flatpaks
+        packages_skip: [htop, shellcheck, 7zip, telegram, bitwarden, zapzap]
+        packages_add: ["pkg:nope-xyz", "flatpak:org.nope.App"]
+        packages_role: true
+        expect: ["nope-xyz", "org.nope.App", "none of the listed packages was installed"]
+  tasks:
+    - name: Failures | Run the cases
+      ansible.builtin.include_tasks: ../shared/expect_failure.yml
+      loop: "{{ _cases | rejectattr('only', 'defined') + (_cases | selectattr('only', 'defined') | selectattr('only', 'eq', ansible_facts['distribution'])) }}"
+      loop_control:
+        loop_var: _case
+        label: "{{ _case.name }}"

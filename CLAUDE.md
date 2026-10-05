@@ -55,7 +55,30 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - Run: `molecule test -s <scenario>` (create → converge → idempotence → verify → destroy). The
   idempotence step replaces the manual "run twice". Hardware-only checks (Secure Boot/MOK, real
   reboot) stay in the user's VM.
-- Until Molecule is set up (see `TODO.md`), keep using the manual podman recipes below.
+- ALPI setup (2026-10-05):
+  - Run everything: `molecule test --all`; one scenario: `molecule test -s <name>`. Unit tests:
+    `~/.local/share/pipx/venvs/molecule/bin/python -m pytest -q tests/unit` (the `pytest` in
+    `~/.local/bin` is an old broken pip install of the user's; leave it alone).
+  - In this harness, pipe Molecule's output (`molecule … 2>&1 | cat`): Ansible refuses to run
+    with non-blocking stdio.
+  - Molecule uses the host's `ansible-core` (`/usr/bin`, 2.20) and needs `containers.podman` in
+    `~/.ansible/collections` (`ansible-galaxy collection install containers.podman -p
+    ~/.ansible/collections --force`; the copy in Fedora's `ansible` package is not searched).
+  - `.config/molecule/config.yml` is the base config: podman driver, `ALPI_TARGET=all` (site.yml
+    targets localhost without it; `molecule/shared/converge.yml` refuses to run if it is unset),
+    filter/role paths, links to the repo's `group_vars/` and the scenario's `host_vars/` (links
+    replace inline `host_vars`, so a scenario's settings under test go in
+    `molecule/<scenario>/host_vars/<instance>.yml`).
+  - Scenarios: `fedora44-personal`, `el10-work` (install + golden resolution via
+    `shared/verify_resolution.yml`; `el10-work` also resolves with EL10's own ansible-core 2.16
+    inside the container, `shared/verify_native_controller.yml`), `failures` (every validation
+    must fail with its message, `shared/expect_failure.yml`; Fedora + Alma), `unsupported`
+    (Debian 13), `bootstrap` (bootstrap.sh with scripted answers).
+  - Images are bare: `shared/prepare.yml` installs python3 and sudo; the podman connection runs
+    `raw` without a shell (wrap in `sh -c`). Bare Fedora lacks the Python rpm bindings, so verify
+    with `rpm -q` (`shared/verify_packages.yml`), not `package_facts`.
+  - A failure-case harness must be shown to fail on a case that should not fail before trusting it.
+- The manual podman recipes below remain for quick experiments.
 
 ## Tests — in a container or VM, never on the host
 

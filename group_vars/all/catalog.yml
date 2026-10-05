@@ -11,7 +11,7 @@ alpi_catalog:
   zsh:       {all: zsh}
   vim:       {fedora: vim, el: vim-enhanced}
   shellcheck: {fedora: ShellCheck, el: ShellCheck}
-  7zip:      {fedora: [p7zip, p7zip-plugins], el: [7zip, 7zip-standalone]}
+  7zip:      {all: [7zip, 7zip-standalone]}   # Fedora 44: p7zip and p7zip-plugins are only provides of these
   steam:     {fedora: steam, el: ~}
   telegram:  {fedora: telegram-desktop, el: {flatpak: org.telegram.desktop}}
   bitwarden: {all: {flatpak: com.bitwarden.desktop}}

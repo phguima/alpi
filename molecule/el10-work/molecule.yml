@@ -1,0 +1,11 @@
+---
+# AlmaLinux 10, work profile: resolution + the packages role, and the same resolution run by EL10's
+# own ansible-core 2.16 inside the container (a real run uses it as the controller; Molecule's
+# controller is the host's newer ansible-core).
+# Skipped until the repos role exists (TODO section 2): EPEL packages (htop, ShellCheck, 7zip) and
+# Flatpaks (no Flathub installs yet).
+platforms:
+  - name: alpi-el10-work
+    image: docker.io/library/almalinux:10
+    pre_build_image: true
+    command: sleep infinity

@@ -1,0 +1,19 @@
+---
+# Included by verify.yml with _golden: re-runs the resolution (env_setup only) and compares every
+# resolved set with the expected one.
+- name: Verify | Resolve again
+  ansible.builtin.include_tasks: ../../tasks/env_setup.yml
+
+- name: Verify | Resolution matches the golden values
+  ansible.builtin.assert:
+    that: _got == _golden
+    fail_msg: "Expected {{ _golden }}, got {{ _got }}"
+    quiet: true
+  vars:
+    _got:
+      native: "{{ alpi_pkgs.native }}"
+      flatpak: "{{ alpi_pkgs.flatpak }}"
+      extra: "{{ alpi_pkgs_extra.native + alpi_pkgs_extra.flatpak }}"
+      absent: "{{ alpi_pkgs_absent.native + alpi_pkgs_absent.flatpak }}"
+      unavailable: "{{ alpi_pkgs.unavailable + alpi_pkgs_extra.unavailable }}"
+      features: "{{ alpi_feature }}"

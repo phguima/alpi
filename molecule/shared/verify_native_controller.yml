@@ -1,0 +1,52 @@
+---
+# Runs `site.yml --tags resolve` with the distro's own ansible-core inside the container (on EL10
+# that is 2.16, older than Molecule's controller), with the same settings as the scenario.
+- name: Verify | Install the distro's ansible-core
+  ansible.builtin.package:
+    name: ansible-core
+    state: present
+
+- name: Verify | Install community.general for this ansible-core
+  ansible.builtin.shell: |
+    v=$(python3 -c 'from ansible.release import __version__ as v; print(v)')
+    case "$v" in 2.16.*) spec='community.general:>=11.0.0,<12.0.0' ;; *) spec='community.general' ;; esac
+    ansible-galaxy collection install "$spec"
+  register: _galaxy
+  changed_when: "'was installed successfully' in _galaxy.stdout"
+
+- name: Verify | Copy the project
+  ansible.builtin.copy:
+    src: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/{{ item }}"
+    dest: /opt/alpi/
+    mode: preserve
+  loop: [ansible.cfg, inventory.ini, site.yml, tasks, group_vars, filter_plugins, roles]
+
+- name: Verify | Create the host_vars directory
+  ansible.builtin.file:
+    path: /opt/alpi/host_vars/127.0.0.1
+    state: directory
+    mode: "0755"
+
+- name: Verify | Copy the scenario settings as custom.yml
+  ansible.builtin.copy:
+    src: "host_vars/{{ inventory_hostname }}.yml"
+    dest: /opt/alpi/host_vars/127.0.0.1/custom.yml
+    mode: "0644"
+
+- name: Verify | Resolve with the native controller
+  ansible.builtin.command:
+    cmd: ansible-playbook site.yml --tags resolve -e ansible_become=false
+    chdir: /opt/alpi
+  environment:
+    ANSIBLE_BECOME_ASK_PASS: "False"
+    ANSIBLE_NOCOLOR: "1"
+  register: _native
+  changed_when: false
+
+- name: Verify | Native resolution matches the golden values
+  ansible.builtin.assert:
+    that: _summary.native == _golden.native and _summary.flatpak == _golden.flatpak and _summary.features == _golden.features
+    fail_msg: "Expected {{ _golden | to_json }}, got {{ _summary | to_json }}"
+    quiet: true
+  vars:
+    _summary: "{{ (_native.stdout | regex_search('\"msg\": (\\{[\\s\\S]*?\\n    \\})', '\\1') | first) | from_json }}"

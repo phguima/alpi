@@ -1,0 +1,12 @@
+---
+# An unsupported distro must stop in env_setup before anything else runs.
+platforms:
+  - name: alpi-unsupported-debian13
+    image: docker.io/library/debian:13
+    pre_build_image: true
+    command: sleep infinity
+provisioner:
+  playbooks:
+    converge: converge.yml
+scenario:
+  test_sequence: [destroy, syntax, create, prepare, converge, idempotence, destroy]

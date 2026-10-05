@@ -1,0 +1,21 @@
+---
+# Included by each scenario's verify.yml with _installed and _absent lists. Uses rpm directly:
+# package_facts needs the Python rpm bindings, which bare images lack.
+- name: Verify | Query packages
+  ansible.builtin.command:
+    argv: "{{ ['rpm', '-q', '--qf', '%{NAME}\\n'] + _installed + _absent }}"
+  register: _rpm
+  changed_when: false
+  failed_when: false
+
+- name: Verify | Expected packages installed, absent ones removed
+  ansible.builtin.assert:
+    that:
+      - _missing | length == 0
+      - _present | length == 0
+    fail_msg: "Not installed: {{ _missing }}. Should be absent: {{ _present }}."
+    quiet: true
+  vars:
+    _found: "{{ _rpm.stdout_lines | reject('search', ' is not installed') | list }}"
+    _missing: "{{ _installed | difference(_found) }}"
+    _present: "{{ _absent | intersect(_found) }}"

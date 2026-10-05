@@ -1,0 +1,17 @@
+---
+# Every validation must stop the run with a clear message (the assertions live in converge.yml).
+# Both supported distros; a case with 'only' runs on that distro alone.
+platforms:
+  - name: alpi-failures-fedora44
+    image: registry.fedoraproject.org/fedora:44
+    pre_build_image: true
+    command: sleep infinity
+  - name: alpi-failures-el10
+    image: docker.io/library/almalinux:10
+    pre_build_image: true
+    command: sleep infinity
+provisioner:
+  playbooks:
+    converge: converge.yml
+scenario:
+  test_sequence: [destroy, syntax, create, prepare, converge, idempotence, destroy]

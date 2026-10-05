@@ -1,0 +1,33 @@
+---
+- name: Verify | bootstrap.sh results
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Verify | Read the saved settings
+      ansible.builtin.slurp:
+        src: /opt/alpi/host_vars/127.0.0.1/bootstrap.yml
+      register: _file
+
+    - name: Verify | Settings from the last run, git identity kept
+      ansible.builtin.assert:
+        that:
+          - _saved.alpi_profile == 'personal'
+          - _saved.system_hostname == 'noir'
+          - _saved.git_user_name == 'Test User'
+          - _saved.git_user_email == 't@example.com'
+        fail_msg: "{{ _saved | to_json }}"
+        quiet: true
+      vars:
+        _saved: "{{ _file.content | b64decode | from_yaml }}"
+
+    - name: Verify | Legacy file is gone
+      ansible.builtin.stat:
+        path: /opt/alpi/host_vars/127.0.0.1.yml
+      register: _legacy
+      failed_when: _legacy.stat.exists
+
+    - name: Verify | ansible-core and community.general installed
+      ansible.builtin.command: ansible-galaxy collection list community.general
+      register: _cg
+      changed_when: false
+      failed_when: "'community.general' not in _cg.stdout"

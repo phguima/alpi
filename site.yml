@@ -3,7 +3,8 @@
 # Golden test (no changes to the system): ansible-playbook site.yml --tags resolve
 
 - name: ALPI | Linux Post-Install
-  hosts: localhost
+  # Molecule sets ALPI_TARGET=all to run against its containers; a real run targets localhost.
+  hosts: "{{ lookup('env', 'ALPI_TARGET') | default('localhost', true) }}"
   become: yes
 
   pre_tasks:

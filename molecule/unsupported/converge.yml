@@ -1,0 +1,11 @@
+---
+- name: Unsupported | The distro is rejected
+  hosts: all
+  tasks:
+    - name: Unsupported | Run the case
+      ansible.builtin.include_tasks: ../shared/expect_failure.yml
+      vars:
+        _case:
+          name: Debian 13
+          profile: work
+          expect: ["ALPI does not support Debian 13", "Supported: Fedora 41-44, AlmaLinux 10"]

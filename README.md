@@ -26,6 +26,17 @@ ansible-playbook site.yml -K --tags resolve      # preview: prints what would be
 ansible-playbook site.yml -K
 ```
 
+## 🧪 Tests
+
+Every change ships with tests. [Molecule](https://ansible.readthedocs.io/projects/molecule/) runs the playbook in podman containers (never on the host); pytest covers the filter plugin.
+
+```bash
+pipx install molecule && pipx inject molecule 'molecule-plugins[podman]' pytest
+ansible-galaxy collection install containers.podman
+molecule test --all                       # fedora44-personal, el10-work, failures, unsupported, bootstrap
+~/.local/share/pipx/venvs/molecule/bin/python -m pytest -q tests/unit
+```
+
 ## ⚖️ License
 
 GPL-3.0. See [LICENSE](LICENSE).
