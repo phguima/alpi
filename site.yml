@@ -13,4 +13,5 @@
       tags: [always]
 
   roles:
+    - { role: repos, tags: [repos] }
     - { role: packages, tags: [packages] }

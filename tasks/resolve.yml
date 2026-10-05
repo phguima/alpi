@@ -1,17 +1,36 @@
 ---
 # Package and feature resolution (PROPOSAL.md, "Customization"). Every check runs here, before
 # any role changes the system. Results:
-#   alpi_pkgs:       base set (repo defaults + distro + desktop + profile, minus skips)
+#   alpi_feature:    feature name -> bool (resolved first: features add package sets)
+#   alpi_pkgs:       base set (repo defaults + distro + desktop + profile + enabled features'
+#                    packages, minus skips)
 #   alpi_pkgs_extra: the user's packages_add (installed in a separate step, after the base)
 #   alpi_pkgs_absent: the user's packages_absent (explicit uninstall)
-#   alpi_feature:    feature name -> bool
+#   alpi_repos_enabled: repository definitions to enable, in order (roles/repos)
+
+- name: Resolve | Merge features
+  ansible.builtin.set_fact:
+    alpi_features_merged: "{{ features_default | combine(features_profile | default({}), features | default({})) }}"
+
+- name: Resolve | Check feature names
+  ansible.builtin.assert:
+    that: _unknown | length == 0
+    fail_msg: "Unknown features: {{ _unknown | join(', ') }}. Known: {{ features_default.keys() | join(', ') }}."
+    quiet: true
+  vars:
+    _unknown: "{{ alpi_features_merged.keys() | difference(features_default.keys()) }}"
+
+- name: Resolve | Set feature flags
+  ansible.builtin.set_fact:
+    alpi_feature: "{{ alpi_features_merged | alpi_features(alpi_hardware_features, {'nvidia': is_nvidia, 'asus': is_asus}) }}"
 
 - name: Resolve | Select package ids
   ansible.builtin.set_fact:
     alpi_ids_base: >-
       {{ (packages_base + (packages_os | default([]))
           + (packages_kde if is_kde else []) + (packages_gnome if is_gnome else [])
-          + (packages_profile | default([])))
+          + (packages_profile | default([]))
+          + (feature_packages | default({}) | alpi_feature_ids(alpi_feature)))
          | alpi_canonical(alpi_catalog_aliases) | unique
          | reject('in', packages_profile_skip | default([]) | alpi_canonical(alpi_catalog_aliases))
          | reject('in', packages_skip | default([]) | alpi_canonical(alpi_catalog_aliases)) | list }}
@@ -52,21 +71,23 @@
     _unavailable: "{{ alpi_pkgs.unavailable + alpi_pkgs_extra.unavailable }}"
   when: alpi_strict | bool
 
-- name: Resolve | Merge features
+- name: Resolve | Select repositories
   ansible.builtin.set_fact:
-    alpi_features_merged: "{{ features_default | combine(features_profile | default({}), features | default({})) }}"
+    _repos: >-
+      {{ (alpi_repos_common | default({})) | combine(alpi_repos_os | default({}))
+         | alpi_repos(alpi_repos_always | default([]), alpi_pkgs.repos + alpi_pkgs_extra.repos) }}
 
-- name: Resolve | Check feature names
+- name: Resolve | Check repository ids
   ansible.builtin.assert:
-    that: _unknown | length == 0
-    fail_msg: "Unknown features: {{ _unknown | join(', ') }}. Known: {{ features_default.keys() | join(', ') }}."
+    that: _repos.unknown | length == 0
+    fail_msg: >-
+      Catalog bug, repositories with no definition for {{ ansible_facts['distribution'] }}
+      (alpi_repos_common / alpi_repos_os): {{ _repos.unknown | join(', ') }}.
     quiet: true
-  vars:
-    _unknown: "{{ alpi_features_merged.keys() | difference(features_default.keys()) }}"
 
-- name: Resolve | Set feature flags
+- name: Resolve | Set repositories
   ansible.builtin.set_fact:
-    alpi_feature: "{{ alpi_features_merged | alpi_features(alpi_hardware_features, {'nvidia': is_nvidia, 'asus': is_asus}) }}"
+    alpi_repos_enabled: "{{ _repos.enabled }}"
 
 - name: Resolve | Summary
   ansible.builtin.debug:
@@ -80,3 +101,4 @@
       absent: "{{ alpi_pkgs_absent.native + alpi_pkgs_absent.flatpak }}"
       unavailable_skipped: "{{ alpi_pkgs.unavailable + alpi_pkgs_extra.unavailable }}"
       features: "{{ alpi_feature }}"
+      repos: "{{ alpi_repos_enabled | map(attribute='id') }}"

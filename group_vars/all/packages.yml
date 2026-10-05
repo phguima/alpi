@@ -13,6 +13,9 @@ packages_base:
   - 7zip
   - telegram
   - bitwarden
+  - brave
+  - vscode
+  - gh
   - zapzap
 
 packages_kde: []

@@ -1,0 +1,65 @@
+---
+# Enables alpi_repos_enabled (tasks/resolve.yml) in order: the distro's always-on repositories,
+# then the ones the selected packages need. One task per type, each looping over its repos, so the
+# order matters only between types: config/release packages first (CRB, EPEL, RPM Fusion), then
+# repo files and COPRs.
+
+# dnf-plugins-core (dnf4) / dnf5-plugins: config-manager, copr and needs-restarting
+- name: Repos | Install DNF plugins
+  ansible.builtin.dnf:
+    name: "{{ alpi_dnf_plugins }}"
+    state: present
+
+- name: Repos | Enable defined repositories (dnf4)
+  community.general.dnf_config_manager:
+    name: "{{ item.id }}"
+    state: enabled
+  loop: "{{ alpi_repos_enabled | selectattr('type', 'eq', 'dnf_config') }}"
+  loop_control:
+    label: "{{ item.id }}"
+
+- name: Repos | Install release packages
+  ansible.builtin.dnf:
+    name: "{{ item.name }}"
+    state: present
+  loop: "{{ alpi_repos_enabled | selectattr('type', 'eq', 'package') }}"
+  loop_control:
+    label: "{{ item.id }}"
+
+# The release RPMs carry the repository's GPG key, so there is no key to check them with yet.
+- name: Repos | Install release packages by URL
+  ansible.builtin.dnf:
+    name: "{{ item.url }}"
+    state: present
+    disable_gpg_check: true
+  # mirrors.rpmfusion.org redirects to a random mirror, and a dead one fails the download
+  register: _release_rpm
+  until: _release_rpm is succeeded
+  retries: 3
+  delay: 5
+  loop: "{{ alpi_repos_enabled | selectattr('type', 'eq', 'rpm') }}"
+  loop_control:
+    label: "{{ item.id }}"
+
+- name: Repos | Add repository files
+  ansible.builtin.yum_repository:
+    name: "{{ item.id }}"
+    description: "{{ item.description }}"
+    baseurl: "{{ item.baseurl }}"
+    gpgkey: "{{ item.gpgkey }}"
+    gpgcheck: true
+    repo_gpgcheck: "{{ item.repo_gpgcheck | default(omit) }}"
+    enabled: true
+  loop: "{{ alpi_repos_enabled | selectattr('type', 'eq', 'yum') }}"
+  loop_control:
+    label: "{{ item.id }}"
+
+# 'dnf copr enable' rather than community.general.copr, which needs the dnf4 Python bindings
+# (python3-dnf) that a dnf5 system does not have to carry.
+- name: Repos | Enable COPR repositories
+  ansible.builtin.command:
+    argv: [dnf, copr, enable, -y, "{{ item.name }}"]
+    creates: "/etc/yum.repos.d/_copr:copr.fedorainfracloud.org:{{ item.name | replace('/', ':') }}.repo"
+  loop: "{{ alpi_repos_enabled | selectattr('type', 'eq', 'copr') }}"
+  loop_control:
+    label: "{{ item.id }}"

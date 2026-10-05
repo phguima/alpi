@@ -28,8 +28,9 @@
         expect: ["Not available on AlmaLinux: steam"]
       - name: names not found
         profile: work
-        # Repo-less container: skip what needs EPEL/RPM Fusion, and the real Flatpaks
-        packages_skip: [htop, shellcheck, 7zip, telegram, bitwarden, zapzap]
+        # The repos role does not run here: skip what needs EPEL/RPM Fusion/vendor repos, and the
+        # real Flatpaks
+        packages_skip: [htop, shellcheck, 7zip, telegram, bitwarden, zapzap, brave, vscode, gh]
         packages_add: ["pkg:nope-xyz", "flatpak:org.nope.App"]
         packages_role: true
         expect: ["nope-xyz", "org.nope.App", "none of the listed packages was installed"]

@@ -1,3 +1,22 @@
 ---
 alpi_catalog_keys: [el10, el, all]
 packages_os: []
+
+# DNF plugins (config-manager, copr, needs-restarting), installed first by roles/repos
+alpi_dnf_plugins: [dnf-plugins-core]
+
+# CRB + EPEL before anything else: most desktop packages live in EPEL, and RPM Fusion for EL
+# depends on it.
+alpi_repos_always: [crb, epel, rpmfusion-free, rpmfusion-nonfree]
+alpi_repos_os:
+  crb:
+    type: dnf_config
+  epel:
+    type: package
+    name: epel-release
+  rpmfusion-free:
+    type: rpm
+    url: "https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
+  rpmfusion-nonfree:
+    type: rpm
+    url: "https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"

@@ -12,10 +12,12 @@ def alpi_resolve(ids, catalog, keys, aliases=None):
       native / flatpak: names to install with the package manager / Flatpak;
       unknown:     ids missing from the catalog (user or repo error);
       missing:     ids in the catalog with no entry for any of the keys (catalog bug);
-      unavailable: ids marked ~ (null) for this distro (skipped with a warning).
+      unavailable: ids marked ~ (null) for this distro (skipped with a warning);
+      repos:       repository ids that the resolved native packages need (an entry's 'repo'
+                   key, a string or a list; Flatpak values need no repository).
     """
     aliases = aliases or {}
-    out = {"native": [], "flatpak": [], "unknown": [], "missing": [], "unavailable": []}
+    out = {"native": [], "flatpak": [], "unknown": [], "missing": [], "unavailable": [], "repos": []}
 
     def add(kind, names):
         for name in names:
@@ -42,11 +44,37 @@ def alpi_resolve(ids, catalog, keys, aliases=None):
             add("unavailable", [pid])
         elif isinstance(value, dict) and "flatpak" in value:
             add("flatpak", [value["flatpak"]])
-        elif isinstance(value, (list, tuple)):
-            add("native", [str(v) for v in value])
         else:
-            add("native", [str(value)])
+            add("native", [str(v) for v in value] if isinstance(value, (list, tuple)) else [str(value)])
+            repo = entry.get("repo") or []
+            add("repos", [repo] if isinstance(repo, str) else list(repo))
     return out
+
+
+def alpi_feature_ids(feature_packages, flags):
+    """Package ids of the features that are on (feature_packages: feature -> list of ids)."""
+    ids = []
+    for name, pkgs in (feature_packages or {}).items():
+        if flags.get(name):
+            ids.extend(i for i in pkgs or [] if i not in ids)
+    return ids
+
+
+def alpi_repos(definitions, always, needed):
+    """Order the repositories to enable: 'always' first (in its order), then the needed ones.
+
+    Returns {"enabled": [definition + {"id": ...}, ...], "unknown": [ids with no definition]}.
+    """
+    enabled, unknown, seen = [], [], set()
+    for rid in list(always or []) + list(needed or []):
+        if rid in seen:
+            continue
+        seen.add(rid)
+        if rid in (definitions or {}):
+            enabled.append(dict(definitions[rid], id=rid))
+        else:
+            unknown.append(rid)
+    return {"enabled": enabled, "unknown": unknown}
 
 
 def alpi_canonical(ids, aliases=None):
@@ -76,4 +104,6 @@ class FilterModule(object):
             "alpi_resolve": alpi_resolve,
             "alpi_canonical": alpi_canonical,
             "alpi_features": alpi_features,
+            "alpi_repos": alpi_repos,
+            "alpi_feature_ids": alpi_feature_ids,
         }

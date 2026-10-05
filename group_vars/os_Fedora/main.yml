@@ -1,3 +1,19 @@
 ---
 alpi_catalog_keys: [fedora, all]
 packages_os: []
+
+# DNF plugins (config-manager, copr, needs-restarting), installed first by roles/repos
+alpi_dnf_plugins: [dnf-plugins-core, dnf5-plugins]
+
+# RPM Fusion is always on (codecs, Steam, Discord, NVIDIA…); see group_vars/all/repos.yml.
+alpi_repos_always: [rpmfusion-free, rpmfusion-nonfree]
+alpi_repos_os:
+  rpmfusion-free:
+    type: rpm
+    url: "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
+  rpmfusion-nonfree:
+    type: rpm
+    url: "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
+  asus-linux:
+    type: copr
+    name: lukenukem/asus-linux

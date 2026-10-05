@@ -20,7 +20,7 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 
 - `site.yml`: `tasks/env_setup.yml` (support matrix assert → profile assert → user/hardware/DE
   facts, ported from AFPI → `group_by` into `os_<distro>`, `os_<distro>_<major>`,
-  `profile_<name>` → `tasks/resolve.yml`), then the roles (today only `packages`).
+  `profile_<name>` → `tasks/resolve.yml`), then the roles (`repos`, `packages` so far).
 - `tasks/resolve.yml` + `filter_plugins/alpi.py`: catalog lookup, merge of the package/feature
   layers, all validation (fails before anything changes). Keep logic in the filter plugin, not in
   long Jinja expressions.
@@ -29,6 +29,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   (`ansible_group_priority` does not work in `group_vars/`).
 - `host_vars/127.0.0.1/bootstrap.yml` (written by `bootstrap.sh`: `alpi_profile`, hostname, git
   identity) and `custom.yml` (the user's, see `custom.yml.example`), both git-ignored.
+- `roles/repos` (before `packages`): enables `alpi_repos_enabled` from `resolve.yml` (the distro's
+  always-on repos, then the ones the selected catalog entries name with `repo:`).
 - `roles/packages`: name checks first (`check_<os_family>.yml`: dnf dry run; `flatpak remote-info`),
   then base, user extras, explicit uninstalls. Needs the `repos` role before it (section 2).
 - Golden test: `ansible-playbook site.yml --tags resolve` only resolves and prints the sets.
@@ -74,6 +76,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     inside the container, `shared/verify_native_controller.yml`), `failures` (every validation
     must fail with its message, `shared/expect_failure.yml`; Fedora + Alma), `unsupported`
     (Debian 13), `bootstrap` (bootstrap.sh with scripted answers).
+  - Extra vars win over set_fact, so a scenario forces detected hardware with
+    `provisioner.options.extra-vars` (e.g. `'{"is_asus": true}'` in `fedora44-personal`).
   - Images are bare: `shared/prepare.yml` installs python3 and sudo; the podman connection runs
     `raw` without a shell (wrap in `sh -c`). Bare Fedora lacks the Python rpm bindings, so verify
     with `rpm -q` (`shared/verify_packages.yml`), not `package_facts`.
@@ -96,8 +100,8 @@ Recipes that worked here:
   `host_vars/127.0.0.1/custom.yml` written inside the copy.
 - `bootstrap.sh` interactively: `printf "answers\n" | script -qec ./bootstrap.sh /dev/null`, with a
   pass-through `sudo` shim first in `PATH` (the real `sudo` swallows the piped answers).
-- Without the `repos` role, EPEL/RPM Fusion packages (htop, ShellCheck, 7zip on EL10; steam,
-  telegram on Fedora) must be skipped in full runs.
+- Plays that include `roles/packages` without `roles/repos` (e.g. the `failures` scenario) must
+  skip what needs EPEL/RPM Fusion/vendor repos.
 
 Hardware (Secure Boot/MOK, reboot) goes to the user's VM; results arrive as screenshots in
 `~/Pictures/Screenshots` (list the directory and take the newest ones).

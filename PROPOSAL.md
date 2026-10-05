@@ -103,6 +103,19 @@ steam:    {Fedora: steam, RedHat: ~}     # ~ = unavailable: skip and warn
 aliases:  {p7zip: 7zip}                  # renamed ids still resolve
 ```
 
+### Repositories and feature packages (added 2026-10-05, section 2)
+
+- A catalog entry names the repository its native packages need: `brave: {all: [brave-browser,
+  brave-origin], repo: brave}`. Repositories are defined by id (`alpi_repos_common` in
+  `group_vars/all/repos.yml`, `alpi_repos_os` in `group_vars/os_*`) with a type: `rpm` (release
+  package by URL), `package`, `dnf_config` (CRB), `yum` (repo file) or `copr`.
+- `roles/repos` enables the distro's `alpi_repos_always` first, in order (RPM Fusion on Fedora;
+  CRB, EPEL, RPM Fusion EL on AlmaLinux), then only the repositories the selected packages need.
+  Skipping `brave` means the Brave repository is never added. A repository id with no definition
+  for the distro is a catalog bug and stops the run in `env_setup`.
+- Features add package sets while they are on (`feature_packages: {asus: [asusctl, …]}`), so
+  `features: {asus: false}` drops the packages and, through them, the ASUS COPR.
+
 ### User file (outside git)
 
 ```yaml

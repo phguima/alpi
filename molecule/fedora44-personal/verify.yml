@@ -6,15 +6,24 @@
       ansible.builtin.include_tasks: ../shared/verify_resolution.yml
       vars:
         _golden:
-          native: [git, htop, zsh, vim, ShellCheck, 7zip, 7zip-standalone]
-          flatpak: []
+          native: [git, htop, zsh, vim, ShellCheck, 7zip, 7zip-standalone, telegram-desktop,
+                   brave-browser, brave-origin, code, gh, steam, asusctl, supergfxctl, asusctl-rog-gui]
+          flatpak: [com.bitwarden.desktop, com.rtosta.zapzap]
           extra: [tree]
           absent: [nano]
           unavailable: []
-          features: {nvidia: false, asus: false, steam: true}
+          features: {nvidia: false, asus: true, steam: true}
+          repos: [rpmfusion-free, rpmfusion-nonfree, brave, vscode, gh-cli, asus-linux]
 
     - name: Verify | Packages
       ansible.builtin.include_tasks: ../shared/verify_packages.yml
       vars:
-        _installed: [git, htop, zsh, vim-enhanced, ShellCheck, 7zip, 7zip-standalone, tree]
+        _installed: [git, htop, zsh, vim-enhanced, ShellCheck, 7zip, 7zip-standalone, telegram-desktop,
+                     brave-browser, brave-origin, code, gh, steam, asusctl, supergfxctl, asusctl-rog-gui,
+                     tree, rpmfusion-free-release, rpmfusion-nonfree-release]
         _absent: [nano]
+
+    - name: Verify | Flatpaks
+      ansible.builtin.include_tasks: ../shared/verify_flatpaks.yml
+      vars:
+        _flatpaks: [com.bitwarden.desktop, com.rtosta.zapzap]

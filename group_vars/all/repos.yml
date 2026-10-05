@@ -1,0 +1,23 @@
+---
+# Repository definitions, by id. A catalog entry names the repository it needs ('repo:'), and
+# roles/repos enables only those, after the distro's alpi_repos_always (group_vars/os_*).
+# Types: rpm (release package by URL), package (release package from enabled repos),
+# dnf_config (enable a defined repo, dnf4), yum (repo file), copr.
+# Repositories with the same URLs on every supported distro live here; distro-specific ones in
+# alpi_repos_os (group_vars/os_*).
+alpi_repos_common:
+  brave:
+    type: yum
+    description: Brave Browser
+    baseurl: https://brave-browser-rpm-release.s3.brave.com/x86_64/
+    gpgkey: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+  vscode:
+    type: yum
+    description: Visual Studio Code
+    baseurl: https://packages.microsoft.com/yumrepos/vscode
+    gpgkey: https://packages.microsoft.com/keys/microsoft.asc
+  gh-cli:
+    type: yum
+    description: packages for the GitHub CLI
+    baseurl: https://cli.github.com/packages/rpm
+    gpgkey: https://cli.github.com/packages/githubcli-archive-keyring.asc

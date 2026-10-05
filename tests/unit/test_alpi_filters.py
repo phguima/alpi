@@ -20,6 +20,9 @@ CATALOG = {
     "bitwarden": {"all": {"flatpak": "com.bitwarden.desktop"}},
     "fedora_only": {"fedora": "foo"},
     "el10_override": {"el10": "new-name", "el": "old-name"},
+    "brave": {"all": "brave-browser", "repo": "brave"},
+    "asusctl": {"fedora": ["asusctl", "supergfxctl"], "el": None, "repo": ["asus-linux"]},
+    "signal": {"fedora": {"flatpak": "org.signal.Signal"}, "el": "signal-desktop", "repo": "signal"},
 }
 ALIASES = {"p7zip": "7zip"}
 FEDORA = ["fedora", "all"]
@@ -80,7 +83,42 @@ class TestResolve:
         assert resolve(["vim", "git", "vim", "pkg:git"], FEDORA)["native"] == ["vim", "git"]
 
     def test_empty_input(self):
-        assert resolve(None, FEDORA) == {"native": [], "flatpak": [], "unknown": [], "missing": [], "unavailable": []}
+        assert resolve(None, FEDORA) == {
+            "native": [], "flatpak": [], "unknown": [], "missing": [], "unavailable": [], "repos": []
+        }
+
+    def test_repo_of_a_resolved_package(self):
+        assert resolve(["brave", "git"], EL10)["repos"] == ["brave"]
+
+    def test_repo_lists(self):
+        assert resolve(["asusctl"], FEDORA)["repos"] == ["asus-linux"]
+
+    def test_no_repo_when_unavailable(self):
+        assert resolve(["asusctl"], EL10)["repos"] == []
+
+    def test_no_repo_for_a_flatpak_value(self):
+        assert resolve(["signal"], FEDORA)["repos"] == []
+        assert resolve(["signal"], EL10)["repos"] == ["signal"]
+
+    def test_repos_deduplicated(self):
+        assert resolve(["brave", "brave"], FEDORA)["repos"] == ["brave"]
+
+
+class TestRepos:
+    DEFS = {"epel": {"type": "package"}, "crb": {"type": "dnf_config"}, "brave": {"type": "yum"}}
+
+    def test_always_first_in_order_then_needed(self):
+        out = alpi.alpi_repos(self.DEFS, ["crb", "epel"], ["brave", "epel"])
+        assert [r["id"] for r in out["enabled"]] == ["crb", "epel", "brave"]
+        assert out["enabled"][0] == {"type": "dnf_config", "id": "crb"}
+        assert out["unknown"] == []
+
+    def test_unknown_repo_ids(self):
+        assert alpi.alpi_repos(self.DEFS, [], ["nope"])["unknown"] == ["nope"]
+
+    def test_definitions_not_modified(self):
+        alpi.alpi_repos(self.DEFS, ["epel"], [])
+        assert "id" not in self.DEFS["epel"]
 
 
 class TestCanonical:
@@ -106,5 +144,15 @@ class TestFeatures:
         out = alpi.alpi_features({"steam": True, "clamav": False}, self.HW, {})
         assert out == {"steam": True, "clamav": False}
 
+    def test_feature_ids_only_for_features_that_are_on(self):
+        pkgs = {"steam": ["steam"], "asus": ["asusctl", "supergfxctl"], "vbox": ["virtualbox"]}
+        flags = {"steam": True, "asus": False, "vbox": True}
+        assert alpi.alpi_feature_ids(pkgs, flags) == ["steam", "virtualbox"]
+
+    def test_feature_ids_ignore_unknown_flags(self):
+        assert alpi.alpi_feature_ids({"x": ["a"]}, {}) == []
+
     def test_filters_are_registered(self):
-        assert set(alpi.FilterModule().filters()) == {"alpi_resolve", "alpi_canonical", "alpi_features"}
+        assert set(alpi.FilterModule().filters()) == {
+            "alpi_resolve", "alpi_canonical", "alpi_features", "alpi_repos", "alpi_feature_ids"
+        }

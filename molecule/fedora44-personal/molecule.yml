@@ -1,9 +1,12 @@
 ---
-# Fedora 44, personal profile: resolution + the packages role (base, extra, explicit uninstall).
-# Skipped until the repos role exists (TODO section 2): RPM Fusion packages (steam, telegram) and
-# Flatpaks (no Flathub installs yet).
+# Fedora 44, personal profile: repos (RPM Fusion, Brave, VS Code, GitHub CLI, the ASUS COPR) and
+# the packages role (base, real Flatpaks, extra, explicit uninstall). is_asus is forced through
+# extra vars (they win over the detected fact) so the ASUS feature and its COPR are exercised.
 platforms:
   - name: alpi-fedora44-personal
     image: registry.fedoraproject.org/fedora:44
     pre_build_image: true
     command: sleep infinity
+provisioner:
+  options:
+    extra-vars: '{"is_asus": true}'

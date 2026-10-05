@@ -6,10 +6,11 @@ its Molecule scenarios / unit tests (see `CLAUDE.md`).
 ## 2. Bring in AFPI (Fedora, `personal` profile)
 
 - [ ] Port the roles with the specific tasks in `tasks/Fedora.yml`; fill `catalog.yml` and
-      `packages.yml` from AFPI's lists (the catalog has only a seed today).
+      `packages.yml` from AFPI's lists (the catalog has only a seed today). Done so far: repos
+      (RPM Fusion, Brave, VS Code, GitHub CLI, ASUS COPR) and their packages.
+- [ ] ASUS feature tasks beyond the packages (`/etc/asusd`, `supergfxd.service`, ROG GUI
+      autostart); needs a systemd image in Molecule.
 - [ ] Apply `system_hostname` (only when the profile has `alpi_manage_hostname`) and the git identity.
-- [ ] New `repos` role (RPM Fusion, COPR) running first. Then drop the repo-related
-      `packages_skip` from the Molecule scenarios and cover real Flatpak installs.
 - [ ] Personal aliases (`open/close-thevoid`, LUKS UUID) to `host_vars`.
 - [ ] Feature gates: VirtualBox (string match today), ClamAV (unconditional freshclam), Flatpak overrides only for installed apps.
 - [ ] `flatpak_filesystem_overrides` empty in the repo, ZapZap in `custom.yml.example`.

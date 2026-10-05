@@ -9,3 +9,8 @@ features_default:
   nvidia: auto
   asus: auto
   steam: true
+
+# Package ids (catalog) each feature adds to the base set while it is on.
+feature_packages:
+  steam: [steam]
+  asus: [asusctl, supergfxctl, asusctl-rog-gui]

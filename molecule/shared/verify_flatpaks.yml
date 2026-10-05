@@ -1,0 +1,12 @@
+---
+# Included with _flatpaks: every id must be installed (system-wide, from Flathub).
+- name: Verify | List installed Flatpak apps
+  ansible.builtin.command: flatpak list --app --columns=application
+  register: _flatpak_list
+  changed_when: false
+
+- name: Verify | Expected Flatpaks installed
+  ansible.builtin.assert:
+    that: _flatpaks | difference(_flatpak_list.stdout_lines) | length == 0
+    fail_msg: "Not installed: {{ _flatpaks | difference(_flatpak_list.stdout_lines) }}"
+    quiet: true

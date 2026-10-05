@@ -3,12 +3,14 @@
   hosts: all
   vars:
     _golden:
-      native: [git, zsh, vim-enhanced]
+      native: [git, htop, zsh, vim-enhanced, ShellCheck, 7zip, 7zip-standalone,
+               brave-browser, brave-origin, code, gh]
       flatpak: []
       extra: [tree]
       absent: [nano]
       unavailable: [steam]
       features: {nvidia: false, asus: false, steam: false}
+      repos: [crb, epel, rpmfusion-free, rpmfusion-nonfree, brave, vscode, gh-cli]
   tasks:
     - name: Verify | Resolution
       ansible.builtin.include_tasks: ../shared/verify_resolution.yml
@@ -16,7 +18,9 @@
     - name: Verify | Packages
       ansible.builtin.include_tasks: ../shared/verify_packages.yml
       vars:
-        _installed: [git, zsh, vim-enhanced, tree]
+        _installed: [git, htop, zsh, vim-enhanced, ShellCheck, 7zip, 7zip-standalone,
+                     brave-browser, brave-origin, code, gh, tree, epel-release,
+                     rpmfusion-free-release, rpmfusion-nonfree-release]
         _absent: [nano, steam]
 
     - name: Verify | Same resolution with EL10's ansible-core 2.16
