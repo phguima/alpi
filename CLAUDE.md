@@ -20,11 +20,12 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 
 - `site.yml`: `tasks/env_setup.yml` (support matrix assert → profile assert → user/hardware/DE
   facts, ported from AFPI → `group_by` into `os_<distro>`, `os_<distro>_<major>`,
-  `profile_<name>` → `tasks/resolve.yml`), then the roles (`repos`, `packages` so far).
+  `profile_<name>` → machine-settings assert → `tasks/resolve.yml`), then the roles (`repos`,
+  `packages`, `common` so far).
 - `tasks/resolve.yml` + `filter_plugins/alpi.py`: catalog lookup, merge of the package/feature
   layers, all validation (fails before anything changes). Keep logic in the filter plugin, not in
   long Jinja expressions.
-- `group_vars/all/{support,catalog,packages,features}.yml`, `group_vars/os_*/`,
+- `group_vars/all/{support,catalog,packages,features,repos,machine}.yml`, `group_vars/os_*/`,
   `group_vars/profile_*/`: each layer has its own keys, so group order does not matter
   (`ansible_group_priority` does not work in `group_vars/`).
 - `host_vars/127.0.0.1/bootstrap.yml` (written by `bootstrap.sh`: `alpi_profile`, hostname, git
@@ -33,6 +34,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   always-on repos, then the ones the selected catalog entries name with `repo:`).
 - `roles/packages`: name checks first (`check_<os_family>.yml`: dnf dry run; `flatpak remote-info`),
   then base, user extras, explicit uninstalls. Needs the `repos` role before it (section 2).
+- `roles/common`: hostname (only when the profile sets `alpi_manage_hostname`) and the git
+  identity/defaults in the user's `~/.gitconfig` (`group_vars/all/machine.yml`, values from
+  `bootstrap.yml`; validated in `env_setup.yml`).
 - Golden test: `ansible-playbook site.yml --tags resolve` only resolves and prints the sets.
 
 ## Git
@@ -79,13 +83,21 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     resolves with EL10's own ansible-core 2.16 inside the container,
     `shared/verify_native_controller.yml`), `failures` (every validation
     must fail with its message, `shared/expect_failure.yml`; Fedora + Alma), `unsupported`
-    (Debian 13), `bootstrap` (bootstrap.sh with scripted answers).
+    (Debian 13), `bootstrap` (bootstrap.sh with scripted answers), `common` (env_setup +
+    `roles/common` on `almalinux/10-init` with systemd: static hostname via hostnamectl, git).
+  - Hostname in a rootless container: the kernel (transient) hostname cannot be changed, and
+    `CAP_SYS_ADMIN` breaks systemd (units fail with 243/CREDENTIALS). So `common` starts the
+    container as `noir` with the image's empty `/etc/hostname` (`--no-hostname` in
+    `extra_opts`) and checks the static hostname; the transient one is left to the VM.
   - Extra vars win over set_fact, so a scenario forces detected hardware with
     `provisioner.options.extra-vars` (e.g. `'{"is_asus": true}'` in `fedora44-personal`).
   - Images are bare: `shared/prepare.yml` installs python3 and sudo; the podman connection runs
     `raw` without a shell (wrap in `sh -c`). Bare Fedora lacks the Python rpm bindings, so verify
     with `rpm -q --whatprovides` (`shared/verify_installed.yml`), not `package_facts`.
   - A failure-case harness must be shown to fail on a case that should not fail before trusting it.
+  - `failures` runs every case in one play, and `group_by` groups stay for the whole play: a case
+    that depends on profile group_vars must come before cases that join another profile group
+    (with two profile groups the alphabetically last one wins, e.g. `profile_work`).
   - Expected noise in a green `molecule test --all` log (checked 2026-10-06); only the
     `SCENARIO RECAP` decides pass/fail:
     - `fatal:` / `[ERROR]: Task failed` lines in `failures`: each case fails on purpose and

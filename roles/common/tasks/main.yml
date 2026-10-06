@@ -1,0 +1,41 @@
+---
+# Machine settings shared by every distro: hostname (only when the profile manages it) and git.
+# Values are validated in tasks/env_setup.yml, before anything changes.
+
+- name: System | Set the hostname
+  ansible.builtin.hostname:
+    name: "{{ system_hostname }}"
+  when: alpi_manage_hostname and system_hostname | length > 0
+  tags: [system, hostname]
+
+# git_config needs the git binary; it is in the base list too, but this role must not depend on it.
+- name: Git | Ensure git is installed
+  ansible.builtin.package:
+    name: git
+    state: present
+  tags: [git]
+
+# Written to the user's ~/.gitconfig as that user (explicit file, so it does not depend on the
+# HOME that sudo passes). Empty values are skipped.
+- name: Git | Set user identity
+  community.general.git_config:
+    scope: file
+    file: "{{ user_home }}/.gitconfig"
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+  become_user: "{{ user_name }}"
+  loop:
+    - { key: user.name, value: "{{ git_user_name }}" }
+    - { key: user.email, value: "{{ git_user_email }}" }
+  when: item.value | length > 0
+  tags: [git]
+
+- name: Git | Set default options
+  community.general.git_config:
+    scope: file
+    file: "{{ user_home }}/.gitconfig"
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+  become_user: "{{ user_name }}"
+  loop: "{{ git_config_defaults | dict2items }}"
+  tags: [git]

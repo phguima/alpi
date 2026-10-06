@@ -153,6 +153,19 @@
   changed_when: false
   tags: [always]
 
+# Same rules as bootstrap.sh, for values written by hand (custom.yml, -e). After group_by: the
+# profile decides whether the hostname is managed.
+- name: Env Setup | Validate machine settings
+  ansible.builtin.assert:
+    that:
+      - not alpi_manage_hostname or system_hostname | length == 0 or system_hostname is regex('^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$')
+      - git_user_email | length == 0 or git_user_email is regex('^[^\\s@]+@[^\\s@]+$')
+    fail_msg: >-
+      Invalid machine settings (host_vars/127.0.0.1/): system_hostname '{{ system_hostname }}'
+      (letters, digits and '-', max 63 chars), git_user_email '{{ git_user_email }}'.
+    quiet: true
+  tags: [always]
+
 - name: Env Setup | Resolve packages and features
   ansible.builtin.import_tasks: resolve.yml
   tags: [always]

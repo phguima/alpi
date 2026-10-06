@@ -1,0 +1,18 @@
+---
+# roles/common alone (env_setup + common, no repos/packages): hostname and git identity.
+# Needs systemd for hostnamectl; AlmaLinux publishes an init image, Fedora does not (the hostname
+# module uses hostnamectl on both). A rootless container cannot change its kernel (transient)
+# hostname, and CAP_SYS_ADMIN breaks systemd, so the container already starts as 'noir' with the
+# image's empty /etc/hostname (--no-hostname): the role must write the static hostname. Setting
+# the transient hostname is left to the VM.
+platforms:
+  - name: alpi-common-el10
+    image: docker.io/almalinux/10-init
+    pre_build_image: true
+    command: /sbin/init
+    systemd: always
+    hostname: noir
+    extra_opts: [--no-hostname]
+provisioner:
+  playbooks:
+    converge: converge.yml

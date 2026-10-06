@@ -1,0 +1,13 @@
+---
+# Machine settings. ./bootstrap.sh asks for them and saves them to host_vars/127.0.0.1/bootstrap.yml
+# (git-ignored), which takes precedence over this file.
+
+# Applied only when the profile sets alpi_manage_hostname. Empty = keep the current hostname.
+system_hostname: ""
+
+# Git (~/.gitconfig of the user who runs the playbook). Empty name/e-mail = leave them as they are.
+git_user_name: ""
+git_user_email: ""
+git_config_defaults:
+  init.defaultBranch: main
+  pull.ff: only

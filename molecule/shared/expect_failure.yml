@@ -9,6 +9,8 @@
     packages_absent: "{{ _case.packages_absent | default([]) }}"
     features: "{{ _case.features | default({}) }}"
     alpi_strict: "{{ _case.strict | default(false) }}"
+    system_hostname: "{{ _case.system_hostname | default('') }}"
+    git_user_email: "{{ _case.git_user_email | default('') }}"
   block:
     - name: "Case | {{ _case.name }} | Run env_setup"
       ansible.builtin.include_tasks: ../../tasks/env_setup.yml

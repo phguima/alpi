@@ -20,3 +20,20 @@
           flatpak: "{{ alpi_pkgs.flatpak }}"
           features: "{{ alpi_feature }}"
           repos: "{{ alpi_repos_enabled | map(attribute='id') | list }}"
+
+    - name: Verify | Read the hostname and the git config
+      ansible.builtin.command: "{{ item }}"
+      loop:
+        - cat /etc/hostname
+        - git config --file /root/.gitconfig --list
+      register: _out
+      changed_when: false
+
+    - name: Verify | Hostname untouched (work profile), only the git defaults set
+      ansible.builtin.assert:
+        that:
+          - _out.results[0].stdout == 'alpi-el10-work'
+          - _out.results[1].stdout_lines | select('match', 'user\\.') | list == []
+          - "'init.defaultbranch=main' in _out.results[1].stdout_lines"
+          - "'pull.ff=only' in _out.results[1].stdout_lines"
+        quiet: true

@@ -11,7 +11,6 @@ its Molecule scenarios / unit tests (see `CLAUDE.md`).
       features). Left for their roles: hardware (Intel/AMD/NVIDIA, codecs), fonts, VirtualBox.
 - [ ] ASUS feature tasks beyond the packages (`/etc/asusd`, `supergfxd.service`, ROG GUI
       autostart); needs a systemd image in Molecule.
-- [ ] Apply `system_hostname` (only when the profile has `alpi_manage_hostname`) and the git identity.
 - [ ] Personal aliases (`open/close-thevoid`, LUKS UUID) to `host_vars`.
 - [ ] Feature gates: VirtualBox (string match today), ClamAV (unconditional freshclam), Flatpak overrides only for installed apps.
 - [ ] `flatpak_filesystem_overrides` empty in the repo, ZapZap in `custom.yml.example`.
@@ -25,7 +24,7 @@ its Molecule scenarios / unit tests (see `CLAUDE.md`).
 
 - [ ] Golden test: resolved sets per (distro, profile, DE) compared with AFPI and AAPI.
 - [ ] `fedora:44` and `almalinux:10` containers, twice (idempotency).
-- [ ] VM with EFI + Secure Boot.
+- [ ] VM with EFI + Secure Boot (also: the transient hostname, which containers cannot change).
 - [ ] Freeze AAPI and AFPI with a README pointing to ALPI.
 
 ## 5. New distros (after parity, only with a test VM)

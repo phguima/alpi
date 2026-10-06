@@ -1,0 +1,24 @@
+---
+- name: Verify | roles/common
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Verify | Read the static hostname and the git config
+      ansible.builtin.command: "{{ item }}"
+      loop:
+        - cat /etc/hostname
+        - hostnamectl --static
+        - git config --file /root/.gitconfig --list
+      register: _out
+      changed_when: false
+
+    - name: Verify | Static hostname written, identity and defaults set
+      ansible.builtin.assert:
+        that:
+          - _out.results[0].stdout == 'noir'
+          - _out.results[1].stdout == 'noir'
+          - "'user.name=O\\'Neil Test' in _out.results[2].stdout_lines"
+          - "'user.email=oneil@example.com' in _out.results[2].stdout_lines"
+          - "'init.defaultbranch=main' in _out.results[2].stdout_lines"
+          - "'pull.ff=only' in _out.results[2].stdout_lines"
+        quiet: true

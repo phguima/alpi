@@ -6,3 +6,6 @@ alpi_profile: personal
 packages_skip: [chromium, discord, drawy, displaycal, gpu-screen-recorder, slack, spotify, zoom, zotero]
 packages_add: ["pkg:tree"]
 packages_absent: ["pkg:nano"]
+# No system_hostname: hostnamectl needs systemd (scenario 'common' covers it).
+git_user_name: Test User
+git_user_email: test@example.com

@@ -8,6 +8,13 @@
       - name: unknown profile
         profile: home
         expect: ["alpi_profile must be one of personal, work", "got: home"]
+      # Must be the first case that reaches group_by: groups joined by earlier cases stay for the
+      # whole play, and profile_work (alphabetically after profile_personal) would win and turn
+      # alpi_manage_hostname off.
+      - name: invalid hostname
+        profile: personal
+        system_hostname: bad_name
+        expect: ["Invalid machine settings", "system_hostname 'bad_name'"]
       - name: unknown package id
         profile: work
         packages_add: [nope, git]
@@ -20,6 +27,10 @@
         profile: work
         features: {steamm: true}
         expect: ["Unknown features: steamm"]
+      - name: invalid e-mail
+        profile: work
+        git_user_email: "no-at-sign"
+        expect: ["Invalid machine settings", "git_user_email 'no-at-sign'"]
       - name: strict mode
         only: AlmaLinux
         profile: work

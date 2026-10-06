@@ -9,3 +9,17 @@
       ansible.builtin.assert:
         that: alpi_feature.steam and alpi_feature.asus and alpi_feature.clamav
         quiet: true
+
+    - name: Verify | Read the git config
+      ansible.builtin.command: git config --file /root/.gitconfig --list
+      register: _git
+      changed_when: false
+
+    - name: Verify | Git identity and defaults set
+      ansible.builtin.assert:
+        that:
+          - "'user.name=Test User' in _git.stdout_lines"
+          - "'user.email=test@example.com' in _git.stdout_lines"
+          - "'init.defaultbranch=main' in _git.stdout_lines"
+          - "'pull.ff=only' in _git.stdout_lines"
+        quiet: true
