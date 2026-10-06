@@ -6,27 +6,31 @@ scenarios / unit tests (see `CLAUDE.md`).
 
 ## 2. Bring in AFPI (Fedora, `personal` profile)
 
-- [ ] Port AFPI's roles and lists:
+- [x] Port AFPI's roles and lists:
   - [x] Repositories: RPM Fusion, Brave, VS Code, GitHub CLI, ASUS COPR (`c952aff`).
   - [x] Application lists: DNF common/KDE/GNOME, Flatpaks, ClamAV and Steam as features
         (`0649a6a`, validated in `9080809`).
   - [x] Fonts, codecs (ffmpeg swap, @multimedia on Fedora), Intel/AMD video acceleration
         (`5b24977`).
   - [x] NVIDIA driver + `akmods_mok` (`56afb1b`).
-  - [ ] VirtualBox as a feature (Fedora: `akmod-VirtualBox`, which `akmods_mok` picks up by
-        itself).
+  - [x] VirtualBox as a feature: RPM Fusion akmod on Fedora, Oracle repository + own key on EL
+        (`feat(virtualbox): …`).
 - [x] Apply `system_hostname` (only when the profile has `alpi_manage_hostname`) and the git
       identity (`8d90381`).
 - [ ] ASUS feature tasks beyond the packages (`/etc/asusd`, `supergfxd.service`, ROG GUI
       autostart). Needs systemd in Molecule: `common` uses `almalinux/10-init`, but the ASUS
       packages are Fedora only, so a Fedora image with systemd is still needed.
 - [ ] Personal aliases (`open/close-thevoid`, LUKS UUID) to `host_vars`.
-- [ ] Feature gates: VirtualBox (string match today), ClamAV (unconditional freshclam), Flatpak overrides only for installed apps.
+- [ ] Feature gates:
+  - [x] VirtualBox: driven by the resolved set, no string match (`feat(virtualbox): …`).
+  - [ ] ClamAV: freshclam is enabled unconditionally.
+  - [ ] Flatpak overrides only for installed apps.
 - [ ] `flatpak_filesystem_overrides` empty in the repo, ZapZap in `custom.yml.example`.
 
 ## 3. Bring in AAPI (AlmaLinux 10, `work` profile)
 
-- [ ] `group_vars/os_AlmaLinux_10` + `tasks/RedHat.yml` (dnf4, CRB/EPEL, Oracle VirtualBox).
+- [ ] `group_vars/os_AlmaLinux_10` + `tasks/RedHat.yml` (dnf4, CRB/EPEL). Oracle VirtualBox is
+      done (`feat(virtualbox): …`).
 - [ ] Cleanup of both legacy `.zshrc` blocks.
 
 ## 4. Parity

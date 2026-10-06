@@ -7,6 +7,8 @@
 # packages come from when it is not always on; roles/repos enables it only when needed.
 # 'swap: true' marks a package that replaces a conflicting one (ffmpeg-free -> ffmpeg): roles/packages
 # installs it first, with allowerasing. Native names may be dnf groups ('@multimedia').
+# A per-distro value {native: <name or list>, repo: <id>} names a repository only that distro
+# needs (it replaces the entry's 'repo:').
 # An id with no key for the current distro is a catalog bug and stops the run, so every id must
 # cover every supported distro (or use 'all'). The 'catalog' Molecule scenario checks that every
 # name exists on every supported distro.
@@ -51,6 +53,10 @@ alpi_catalog:
   steam:         {fedora: steam, el: ~}
   telegram:      {fedora: telegram-desktop, el: {flatpak: org.telegram.desktop}}
   vscode:        {all: code, repo: vscode}
+  # Fixed source per distro (PROPOSAL decision 5): RPM Fusion's akmod on Fedora (named, so
+  # roles/akmods_mok sees it), Oracle's repository on EL with the module build tools it needs.
+  virtualbox:    {fedora: [VirtualBox, akmod-VirtualBox],
+                  el: {native: [VirtualBox-7.2, kernel-devel, gcc, make, elfutils-libelf-devel], repo: virtualbox-oracle}}
 
   # --- Flatpaks ---
   bitwarden:           {all: {flatpak: com.bitwarden.desktop}}

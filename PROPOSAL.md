@@ -126,6 +126,10 @@ aliases:  {p7zip: 7zip}                  # renamed ids still resolve
   Secure Boot is on and any `akmod-*` package was resolved, which replaces AFPI's string match and
   will cover `akmod-VirtualBox` without changes. `roles/nvidia` rebuilds with akmods only when no
   module exists for the running kernel (AFPI rebuilt on every run until the reboot).
+- (2026-10-06) VirtualBox: a plain feature (`virtualbox`, on by default). The catalog names
+  `akmod-VirtualBox` on Fedora, so `roles/akmods_mok` picks it up; on EL a per-distro value
+  `{native: […], repo: virtualbox-oracle}` adds Oracle's repository only there. `roles/virtualbox`
+  (before `roles/packages`) creates the Oracle signing key with Secure Boot and the groups.
 
 ### User file (outside git)
 

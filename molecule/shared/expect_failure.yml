@@ -1,6 +1,7 @@
 ---
 # One failure case: runs env_setup (and the repos + packages roles when _case.packages_role is true) with
 # the case's settings and passes only if it fails with a message containing every _case.expect.
+# _case.broken_repo adds an unreachable repository for the duration of the case.
 - name: "Case | {{ _case.name }}"
   vars:
     alpi_profile: "{{ _case.profile | default(alpi_profile_unset) }}"
@@ -15,12 +16,29 @@
     - name: "Case | {{ _case.name }} | Run env_setup"
       ansible.builtin.include_tasks: ../../tasks/env_setup.yml
 
-    - name: "Case | {{ _case.name }} | Run the repos and packages roles"
+    - name: "Case | {{ _case.name }} | Run the repos role"
       ansible.builtin.include_role:
-        name: "{{ _role }}"
-      loop: [repos, packages]
-      loop_control:
-        loop_var: _role
+        name: repos
+      when: _case.packages_role | default(false)
+
+    # After the repos role, which would trip on it first. skip_if_unavailable=0: dnf must not
+    # ignore it (the default on both distros, made explicit).
+    - name: "Case | {{ _case.name }} | Add a broken repository"
+      ansible.builtin.copy:
+        dest: /etc/yum.repos.d/alpi-broken.repo
+        content: |
+          [alpi-broken]
+          name=ALPI test, unreachable on purpose
+          baseurl=file:///nonexistent/alpi-broken
+          enabled=1
+          gpgcheck=0
+          skip_if_unavailable=0
+        mode: "0644"
+      when: _case.broken_repo | default(false)
+
+    - name: "Case | {{ _case.name }} | Run the packages role"
+      ansible.builtin.include_role:
+        name: packages
       when: _case.packages_role | default(false)
 
     - name: "Case | {{ _case.name }} | It should have failed"
@@ -35,3 +53,9 @@
           - _case.expect | select('in', ansible_failed_result.msg) | list == _case.expect
         fail_msg: "Expected {{ _case.expect }} in: {{ ansible_failed_result.msg }}"
         quiet: true
+  always:
+    - name: "Case | {{ _case.name }} | Remove the broken repository"
+      ansible.builtin.file:
+        path: /etc/yum.repos.d/alpi-broken.repo
+        state: absent
+      when: _case.broken_repo | default(false)

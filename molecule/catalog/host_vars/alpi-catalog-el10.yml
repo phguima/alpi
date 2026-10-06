@@ -8,13 +8,14 @@ _golden:
     python3-pip, ShellCheck, testdisk, tmux, tuptime, unrar, unzip, uv, vim-enhanced, zsh, fira-code-fonts,
     ffmpeg, gstreamer1-plugins-bad-freeworld, gstreamer1-plugins-ugly, gstreamer1-plugin-libav, lynis, rkhunter,
     brave-browser, brave-origin, chromium, discord, gh, code, kde-gtk-config, ktorrent, plasma-sdk, flatseal,
-    gnome-tweaks, clamav, clamav-freshclam, libva-intel-driver, intel-media-driver]
+    gnome-tweaks, clamav, clamav-freshclam, VirtualBox-7.2, kernel-devel, gcc, make, elfutils-libelf-devel,
+    libva-intel-driver, intel-media-driver]
   swap: [ffmpeg]
   flatpak: [org.kde.drawy, org.telegram.desktop, com.bitwarden.desktop, net.displaycal.DisplayCAL, com.dec05eba.gpu_screen_recorder,
     com.slack.Slack, com.spotify.Client, com.rtosta.zapzap, us.zoom.Zoom, org.zotero.Zotero, com.markopejic.downloader,
     com.mattjakeman.ExtensionManager, de.haeckerfelix.Fragments, com.github.unrud.VideoDownloader]
-  features: {amd: true, asus: true, clamav: true, intel: true, nvidia: true, steam: false}
-  repos: [crb, epel, rpmfusion-free, rpmfusion-nonfree, brave, gh-cli, vscode]
+  features: {amd: true, asus: true, clamav: true, intel: true, nvidia: true, steam: false, virtualbox: true}
+  repos: [crb, epel, rpmfusion-free, rpmfusion-nonfree, brave, gh-cli, vscode, virtualbox-oracle]
   unavailable: [google-roboto-fonts, gstreamer1-plugins-bad-free-extras, chkrootkit, unhide, argyllcms, asusctl,
     supergfxctl, asusctl-rog-gui, mesa-va-drivers-freeworld, libva-utils, vdpauinfo, nvidia-driver, nvidia-build,
     nvidia-vulkan, nvidia-vaapi]

@@ -1,0 +1,67 @@
+---
+- name: Verify | Module signing keys, VirtualBox groups, NVIDIA settings
+  hosts: all
+  tasks:
+    - name: Verify | Resolve again
+      ansible.builtin.include_tasks: ../../tasks/env_setup.yml
+
+    - name: Verify | Look up the files
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /etc/modprobe.d/nvidia.conf
+        - /etc/pki/akmods/certs/public_key.der
+        - /var/lib/shim-signed/mok/MOK.der
+        - /var/lib/shim-signed/mok/MOK.priv
+      register: _files
+
+    - name: Verify | Read the fake mokutil log
+      ansible.builtin.command: cat /var/log/fake-mokutil.log
+      register: _mok_log
+      changed_when: false
+      failed_when: false
+
+    - name: Verify | Look up the VirtualBox groups
+      ansible.builtin.getent:
+        database: group
+        key: "{{ item }}"
+      loop: [vboxusers, vboxsf]
+
+    - name: Verify | Set the results
+      ansible.builtin.set_fact:
+        _nvidia_conf: "{{ _files.results[0].stat.exists }}"
+        _akmods_key: "{{ _files.results[1].stat.exists }}"
+        _oracle_key: "{{ _files.results[2].stat.exists }}"
+        _oracle_priv_mode: "{{ _files.results[3].stat.mode | default('') }}"
+        _imports: "{{ _mok_log.stdout_lines | default([]) | select('match', '--import ') | list }}"
+
+    - name: Verify | Secure Boot on Fedora, NVIDIA vetoed - akmods key from akmod-VirtualBox
+      ansible.builtin.assert:
+        that:
+          - is_secure_boot and not alpi_feature.nvidia
+          - _akmods_key and not _oracle_key and not _nvidia_conf
+          - _imports == ['--import /etc/pki/akmods/certs/public_key.der']
+          - "'password: test-mok-pw / test-mok-pw' in _mok_log.stdout_lines"
+        fail_msg: "mokutil log: {{ _mok_log.stdout_lines | default([]) }}"
+        quiet: true
+      when: inventory_hostname == 'alpi-sb-fedora44'
+
+    - name: Verify | No Secure Boot, NVIDIA on - settings only, no key, no mokutil call
+      ansible.builtin.assert:
+        that:
+          - not is_secure_boot
+          - _nvidia_conf and not _akmods_key and not _oracle_key
+          - _mok_log.rc != 0
+        quiet: true
+      when: inventory_hostname == 'alpi-nosb-fedora44'
+
+    - name: Verify | Secure Boot on EL - Oracle VirtualBox key, nothing NVIDIA
+      ansible.builtin.assert:
+        that:
+          - is_secure_boot
+          - _oracle_key and _oracle_priv_mode == '0600' and not _akmods_key and not _nvidia_conf
+          - _imports == ['--import /var/lib/shim-signed/mok/MOK.der']
+          - "'password: test-mok-pw / test-mok-pw' in _mok_log.stdout_lines"
+        fail_msg: "mokutil log: {{ _mok_log.stdout_lines | default([]) }}"
+        quiet: true
+      when: inventory_hostname == 'alpi-sb-el10'

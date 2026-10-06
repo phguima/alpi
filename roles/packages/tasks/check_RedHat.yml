@@ -15,6 +15,20 @@
     _native: "{{ alpi_pkgs.native + alpi_pkgs_extra.native }}"
   when: _native | length > 0
 
+# A repository whose metadata cannot be read stops dnf before it resolves any name, so nothing
+# would be reported missing: fail on that instead of passing.
+- name: Packages | Fail on unreadable repositories
+  ansible.builtin.assert:
+    that: _errors | length == 0
+    fail_msg: >-
+      Could not read the repository metadata, so the package names were not checked:
+      {{ _errors | join(' ') }}
+    quiet: true
+  vars:
+    _errors: >-
+      {{ (_dnf_dry_run.stdout_lines | default([]) + _dnf_dry_run.stderr_lines | default([]))
+         | select('search', 'Failed to download metadata') | map('trim') | unique }}
+
 - name: Packages | Set missing native packages
   ansible.builtin.set_fact:
     alpi_missing_native: >-

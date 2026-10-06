@@ -54,6 +54,20 @@
   loop_control:
     label: "{{ item.id }}"
 
+# repo_gpgcheck (signed metadata, e.g. Oracle VirtualBox): dnf asks before importing the metadata
+# key, so every non-interactive dnf call (the packages role's dry run included) fails on that
+# repository until the key is in. -y imports it.
+- name: Repos | Import metadata signing keys
+  ansible.builtin.command:
+    argv: [dnf, -y, makecache, --repo, "{{ item.id }}"]
+  environment:
+    LC_ALL: C
+  register: _repo_keys
+  changed_when: "'Importing GPG key' in _repo_keys.stdout + _repo_keys.stderr"
+  loop: "{{ alpi_repos_enabled | selectattr('type', 'eq', 'yum') | selectattr('repo_gpgcheck', 'defined') | selectattr('repo_gpgcheck') }}"
+  loop_control:
+    label: "{{ item.id }}"
+
 # 'dnf copr enable' rather than community.general.copr, which needs the dnf4 Python bindings
 # (python3-dnf) that a dnf5 system does not have to carry.
 - name: Repos | Enable COPR repositories

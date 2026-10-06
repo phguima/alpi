@@ -1,0 +1,33 @@
+---
+# Module signing and driver configuration: env_setup + roles/akmods_mok + roles/virtualbox +
+# roles/nvidia, no repos/packages (the 'catalog' scenario checks the names; nothing is
+# downloaded). NVIDIA is pinned on. Secure Boot is detected for real from a fake EFI variable
+# mounted over /sys/firmware (firmware/ here: bytes 06 00 00 00 01 = on), absent = legacy BIOS.
+#   alpi-sb-fedora44:   Secure Boot, NVIDIA vetoed: akmod-VirtualBox alone must trigger akmods_mok
+#   alpi-nosb-fedora44: no Secure Boot, NVIDIA on: modprobe settings, no key, no mokutil call
+#   alpi-sb-el10:       Secure Boot: Oracle VirtualBox key (no akmod on EL), NVIDIA unavailable
+# mokutil is a fake that logs calls (files/mokutil); kmodgenca and openssl are real. A container
+# cannot build or load modules: that, and the real enrollment, are left to the VM.
+platforms:
+  - name: alpi-sb-fedora44
+    image: registry.fedoraproject.org/fedora:44
+    pre_build_image: true
+    command: sleep infinity
+    security_opts: [unmask=/sys/firmware, label=disable]
+    volumes: ["${MOLECULE_SCENARIO_DIRECTORY}/firmware:/sys/firmware:ro"]
+  - name: alpi-nosb-fedora44
+    image: registry.fedoraproject.org/fedora:44
+    pre_build_image: true
+    command: sleep infinity
+  - name: alpi-sb-el10
+    image: docker.io/library/almalinux:10
+    pre_build_image: true
+    command: sleep infinity
+    security_opts: [unmask=/sys/firmware, label=disable]
+    volumes: ["${MOLECULE_SCENARIO_DIRECTORY}/firmware:/sys/firmware:ro"]
+provisioner:
+  options:
+    extra-vars: '{"is_nvidia": true, "is_asus": false, "is_intel": false, "is_amd": false}'
+  playbooks:
+    prepare: prepare.yml
+    converge: converge.yml

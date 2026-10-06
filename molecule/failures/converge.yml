@@ -46,6 +46,11 @@
         packages_role: true
         expect: ["Native packages (not in any enabled repository): nope-xyz.",
                  "Flatpaks (not on Flathub): org.nope.App.", "none of the listed packages was installed"]
+      - name: unreadable repository
+        profile: work
+        packages_role: true
+        broken_repo: true
+        expect: ["Could not read the repository metadata", "alpi-broken"]
   tasks:
     - name: Failures | Run the cases
       ansible.builtin.include_tasks: ../shared/expect_failure.yml

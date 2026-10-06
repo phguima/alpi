@@ -1,0 +1,61 @@
+---
+# VirtualBox (ported from AFPI/AAPI). Runs before roles/packages: the Oracle build signs its
+# modules at install time (and at every boot with a new kernel), so its key must exist first. The
+# packages come from the catalog (feature 'virtualbox').
+
+- name: VirtualBox | Configure
+  when: virtualbox_selected
+  block:
+    - name: VirtualBox | Prepare the Oracle module signing key (Secure Boot)
+      when: is_secure_boot and not virtualbox_akmod
+      block:
+        - name: VirtualBox | Install signing tools
+          ansible.builtin.package:
+            name: [mokutil, openssl]
+            state: present
+
+        - name: VirtualBox | Create the MOK key directory
+          ansible.builtin.file:
+            path: "{{ virtualbox_mok_dir }}"
+            state: directory
+            owner: root
+            group: root
+            mode: '0700'
+
+        - name: VirtualBox | Generate the MOK signing key pair
+          ansible.builtin.command:
+            cmd: >-
+              openssl req -nodes -new -x509 -newkey rsa:2048 -days 36500 -outform DER
+              -addext extendedKeyUsage=codeSigning
+              -subj "/CN={{ ansible_facts['hostname'] }} VirtualBox module signing/"
+              -keyout {{ virtualbox_mok_dir }}/MOK.priv -out {{ virtualbox_mok_dir }}/MOK.der
+            creates: "{{ virtualbox_mok_dir }}/MOK.priv"
+
+        - name: VirtualBox | Restrict the private key
+          ansible.builtin.file:
+            path: "{{ virtualbox_mok_dir }}/MOK.priv"
+            owner: root
+            group: root
+            mode: '0600'
+
+        - name: VirtualBox | Enroll the Oracle key
+          ansible.builtin.include_role:
+            name: akmods_mok
+            tasks_from: enroll
+          vars:
+            mok_key_der: "{{ virtualbox_mok_dir }}/MOK.der"
+            mok_key_label: VirtualBox
+
+    # The packages create vboxusers too; creating both first lets the user join before the install.
+    - name: VirtualBox | Ensure the vboxusers and vboxsf groups exist
+      ansible.builtin.group:
+        name: "{{ item }}"
+        state: present
+      loop: [vboxusers, vboxsf]
+
+    - name: VirtualBox | Add the user to vboxusers and vboxsf
+      ansible.builtin.user:
+        name: "{{ user_name }}"
+        groups: [vboxusers, vboxsf]
+        append: true
+      when: user_name != 'root'

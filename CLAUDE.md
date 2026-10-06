@@ -9,8 +9,9 @@ are in English.
 
 Skeleton stage (created on 2026-10-05; skeleton done the same day). `PROPOSAL.md` holds the architecture (reviewed by an
 adversarial agent); `TODO.md` holds the work plan (decisions are recorded in `PROPOSAL.md`).
-**Read both before starting.** When an item is done, tick it (`- [x]`, with the commit's short
-hash) in `TODO.md`; remove a section only once all its items are ticked. Record the validation in
+**Read both before starting.** When an item is done, tick it (`- [x]`) in `TODO.md` in the same
+commit, naming that commit by its title (a commit cannot contain its own hash; older ticks carry
+short hashes); remove a section only once all its items are ticked. Record the validation in
 the commit message.
 
 Decision of 2026-10-05: **new** repo, without AFPI's history. AFPI and AAPI stay active until
@@ -22,7 +23,7 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - `site.yml`: `tasks/env_setup.yml` (support matrix assert → profile assert → user/hardware/DE
   facts, ported from AFPI → `group_by` into `os_<distro>`, `os_<distro>_<major>`,
   `profile_<name>` → machine-settings assert → `tasks/resolve.yml`), then the roles (`repos`,
-  `akmods_mok`, `packages`, `common`, `nvidia` so far).
+  `akmods_mok`, `virtualbox`, `packages`, `common`, `nvidia` so far).
 - `tasks/resolve.yml` + `filter_plugins/alpi.py`: catalog lookup, merge of the package/feature
   layers, all validation (fails before anything changes). Keep logic in the filter plugin, not in
   long Jinja expressions.
@@ -32,14 +33,22 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - `host_vars/127.0.0.1/bootstrap.yml` (written by `bootstrap.sh`: `alpi_profile`, hostname, git
   identity) and `custom.yml` (the user's, see `custom.yml.example`), both git-ignored.
 - `roles/repos` (before `packages`): enables `alpi_repos_enabled` from `resolve.yml` (the distro's
-  always-on repos, then the ones the selected catalog entries name with `repo:`).
-- `roles/packages`: name checks first (`check_<os_family>.yml`: dnf dry run; `flatpak remote-info`),
+  always-on repos, then the ones the selected catalog entries name with `repo:`). Repositories with
+  `repo_gpgcheck` get `dnf -y makecache` so their metadata key is imported; otherwise every
+  non-interactive dnf call fails on them.
+- `roles/packages`: name checks first (`check_<os_family>.yml`: dnf dry run, which fails outright
+  when a repository's metadata cannot be read instead of reporting nothing; `flatpak remote-info`),
   then replacements (catalog `swap: true`, installed with `allowerasing`: `ffmpeg`,
   `mesa-va-drivers-freeworld`), base, user extras, explicit uninstalls. Needs the `repos` role
   before it (section 2). Native names may be dnf groups (`@multimedia`).
 - `roles/akmods_mok` (before `packages`): Secure Boot signing key + MOK enrollment request, only
   when Secure Boot is on and an `akmod-*` package was resolved (akmods signs at build time, so the
-  key must exist first). `mok_password` in `group_vars/all/secureboot.yml`.
+  key must exist first). `mok_password` in `group_vars/all/secureboot.yml`. `tasks/enroll.yml`
+  (MOK enrollment of one key) is shared with `roles/virtualbox`.
+- `roles/virtualbox` (before `packages`): on a non-akmod build (Oracle, EL) with Secure Boot, its
+  own key in `/var/lib/shim-signed/mok` (vboxdrv.sh signs with it); `vboxusers`/`vboxsf` groups.
+- Catalog values per distro may be `{native: …, repo: …}`: a repository only that distro needs
+  (Oracle VirtualBox on EL).
 - `roles/nvidia` (after `packages`): `/etc/modprobe.d/nvidia.conf`; akmods rebuild + `dracut` only
   when no module exists for the running kernel. Runs only when `akmod-nvidia` was resolved
   (NVIDIA detected, Fedora, not skipped).
@@ -96,9 +105,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     must fail with its message, `shared/expect_failure.yml`; Fedora + Alma), `unsupported`
     (Debian 13), `bootstrap` (bootstrap.sh with scripted answers), `common` (env_setup +
     `roles/common` on `almalinux/10-init` with systemd: static hostname via hostnamectl, git),
-    `nvidia` (env_setup + `akmods_mok` + `nvidia`, no driver download; Secure Boot detected from a
-    fake EFI variable mounted over `/sys/firmware` on one container, absent on the other; fake
-    `mokutil` in `files/`, real `kmodgenca`).
+    `secureboot` (env_setup + `akmods_mok`, `virtualbox`, `nvidia`, nothing downloaded; Secure Boot
+    detected from a fake EFI variable mounted over `/sys/firmware`: Fedora with Secure Boot and
+    NVIDIA vetoed, Fedora without, EL with; fake `mokutil` in `files/`, real `kmodgenca`/openssl).
   - Hostname in a rootless container: the kernel (transient) hostname cannot be changed, and
     `CAP_SYS_ADMIN` breaks systemd (units fail with 243/CREDENTIALS). So `common` starts the
     container as `noir` with the image's empty `/etc/hostname` (`--no-hostname` in

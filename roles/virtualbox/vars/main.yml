@@ -1,0 +1,7 @@
+---
+# VirtualBox was selected (feature on, not skipped), and how its modules are built: an akmod
+# (Fedora, roles/akmods_mok holds the key) or Oracle's vboxdrv.sh (EL, the key below).
+virtualbox_selected: "{{ (alpi_pkgs.native + alpi_pkgs_extra.native) | select('match', '^VirtualBox(-|$)') | list | length > 0 }}"
+virtualbox_akmod: "{{ 'akmod-VirtualBox' in (alpi_pkgs.native + alpi_pkgs_extra.native) }}"
+# Oracle's vboxdrv.sh signs its modules with this key pair when Secure Boot is on
+virtualbox_mok_dir: /var/lib/shim-signed/mok

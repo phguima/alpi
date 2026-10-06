@@ -14,7 +14,9 @@ def alpi_resolve(ids, catalog, keys, aliases=None):
       missing:     ids in the catalog with no entry for any of the keys (catalog bug);
       unavailable: ids marked ~ (null) for this distro (skipped with a warning);
       repos:       repository ids that the resolved native packages need (an entry's 'repo'
-                   key, a string or a list; Flatpak values need no repository);
+                   key, a string or a list; Flatpak values need no repository). A per-distro
+                   value {native: <name or list>, repo: <id or list>} names its own
+                   repository instead, for a source that only one distro needs;
       swap:        native names of entries with 'swap: true', which replace a conflicting
                    package (ffmpeg-free -> ffmpeg) and are installed first with allowerasing.
                    They are in 'native' too, so name checks and verification cover them.
@@ -48,11 +50,14 @@ def alpi_resolve(ids, catalog, keys, aliases=None):
         elif isinstance(value, dict) and "flatpak" in value:
             add("flatpak", [value["flatpak"]])
         else:
+            repo = entry.get("repo") or []
+            if isinstance(value, dict):
+                repo = value.get("repo") or []
+                value = value["native"]
             names = [str(v) for v in value] if isinstance(value, (list, tuple)) else [str(value)]
             add("native", names)
             if entry.get("swap"):
                 add("swap", names)
-            repo = entry.get("repo") or []
             add("repos", [repo] if isinstance(repo, str) else list(repo))
     return out
 

@@ -1,0 +1,36 @@
+---
+# Requests MOK enrollment of one signing key (DER), once. Shared by this role's akmods key and the
+# Oracle VirtualBox key (roles/virtualbox, include_role tasks_from: enroll). Vars:
+#   mok_key_der:   the public key to enroll
+#   mok_key_label: what it signs, for the reminder
+- name: MOK | Require mok_password
+  ansible.builtin.assert:
+    that: mok_password is defined and mok_password | length > 0
+    fail_msg: "Secure Boot is enabled: set mok_password (group_vars/all/secureboot.yml or custom.yml)."
+    quiet: true
+
+# "is already enrolled" / "is already in the enrollment request" -> nothing to do
+- name: MOK | Check enrollment state of {{ mok_key_label }}
+  ansible.builtin.command: mokutil --test-key {{ mok_key_der }}
+  register: mok_state
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: MOK | Request enrollment of {{ mok_key_label }}
+  ansible.builtin.command:
+    cmd: mokutil --import {{ mok_key_der }}
+    stdin: "{{ mok_password }}\n{{ mok_password }}"
+  when: "'already' not in mok_state.stdout"
+  register: mok_import
+  no_log: true
+
+- name: MOK | Remind to enroll {{ mok_key_label }} on next boot
+  ansible.builtin.debug:
+    msg:
+      - "=================================================================="
+      - "Secure Boot: {{ mok_key_label }} signing key queued for enrollment."
+      - "REBOOT, choose 'Enroll MOK' in the blue MokManager screen and"
+      - "type the MOK password. Its modules load after that."
+      - "=================================================================="
+  when: mok_import is changed

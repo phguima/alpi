@@ -20,3 +20,10 @@ alpi_repos_os:
   rpmfusion-nonfree:
     type: rpm
     url: "https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
+  # VirtualBox is not packaged for EL10 (catalog: virtualbox)
+  virtualbox-oracle:
+    type: yum
+    description: Oracle VirtualBox
+    baseurl: "https://download.virtualbox.org/virtualbox/rpm/el/{{ ansible_facts['distribution_major_version'] }}/$basearch"
+    gpgkey: https://www.virtualbox.org/download/oracle_vbox_2016.asc
+    repo_gpgcheck: true

@@ -1,24 +1,28 @@
 ---
-- name: NVIDIA | Guard against running on the host
+- name: Secure Boot | Guard against running on the host
   hosts: all
   gather_facts: false
   tasks:
-    - name: NVIDIA | Require ALPI_TARGET
+    - name: Secure Boot | Require ALPI_TARGET
       ansible.builtin.assert:
         that: lookup('env', 'ALPI_TARGET') | length > 0
         fail_msg: ALPI_TARGET is not set; this scenario must target its containers. Set it in molecule.yml.
         quiet: true
 
-- name: NVIDIA | env_setup + roles/akmods_mok + roles/nvidia
+- name: Secure Boot | env_setup + roles/akmods_mok, virtualbox, nvidia
   hosts: all
   tasks:
-    - name: NVIDIA | Environment setup
+    - name: Secure Boot | Environment setup
       ansible.builtin.import_tasks: ../../tasks/env_setup.yml
 
-    - name: NVIDIA | Signing key
+    - name: Secure Boot | akmods signing key
       ansible.builtin.import_role:
         name: akmods_mok
 
-    - name: NVIDIA | Driver configuration
+    - name: Secure Boot | VirtualBox
+      ansible.builtin.import_role:
+        name: virtualbox
+
+    - name: Secure Boot | NVIDIA driver configuration
       ansible.builtin.import_role:
         name: nvidia

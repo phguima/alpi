@@ -12,11 +12,13 @@ features_default:
   amd: auto
   steam: true
   clamav: true
+  virtualbox: true
 
 # Package ids (catalog) each feature adds to the base set while it is on.
 feature_packages:
   steam: [steam]
   clamav: [clamav, clamav-freshclam]
+  virtualbox: [virtualbox]
   asus: [asusctl, supergfxctl, asusctl-rog-gui]
   intel: [libva-intel-driver, intel-media-driver]
   amd: [mesa-va-drivers-freeworld, libva-utils, vdpauinfo]
