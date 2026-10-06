@@ -21,7 +21,7 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - `site.yml`: `tasks/env_setup.yml` (support matrix assert → profile assert → user/hardware/DE
   facts, ported from AFPI → `group_by` into `os_<distro>`, `os_<distro>_<major>`,
   `profile_<name>` → machine-settings assert → `tasks/resolve.yml`), then the roles (`repos`,
-  `packages`, `common` so far).
+  `akmods_mok`, `packages`, `common`, `nvidia` so far).
 - `tasks/resolve.yml` + `filter_plugins/alpi.py`: catalog lookup, merge of the package/feature
   layers, all validation (fails before anything changes). Keep logic in the filter plugin, not in
   long Jinja expressions.
@@ -36,6 +36,12 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   then replacements (catalog `swap: true`, installed with `allowerasing`: `ffmpeg`,
   `mesa-va-drivers-freeworld`), base, user extras, explicit uninstalls. Needs the `repos` role
   before it (section 2). Native names may be dnf groups (`@multimedia`).
+- `roles/akmods_mok` (before `packages`): Secure Boot signing key + MOK enrollment request, only
+  when Secure Boot is on and an `akmod-*` package was resolved (akmods signs at build time, so the
+  key must exist first). `mok_password` in `group_vars/all/secureboot.yml`.
+- `roles/nvidia` (after `packages`): `/etc/modprobe.d/nvidia.conf`; akmods rebuild + `dracut` only
+  when no module exists for the running kernel. Runs only when `akmod-nvidia` was resolved
+  (NVIDIA detected, Fedora, not skipped).
 - Hardware features (`alpi_hardware_features`: nvidia, asus, intel, amd) follow detection and can
   only be vetoed; their packages come from `feature_packages`.
 - `roles/common`: hostname (only when the profile sets `alpi_manage_hostname`) and the git
@@ -88,7 +94,10 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `shared/verify_native_controller.yml`), `failures` (every validation
     must fail with its message, `shared/expect_failure.yml`; Fedora + Alma), `unsupported`
     (Debian 13), `bootstrap` (bootstrap.sh with scripted answers), `common` (env_setup +
-    `roles/common` on `almalinux/10-init` with systemd: static hostname via hostnamectl, git).
+    `roles/common` on `almalinux/10-init` with systemd: static hostname via hostnamectl, git),
+    `nvidia` (env_setup + `akmods_mok` + `nvidia`, no driver download; Secure Boot detected from a
+    fake EFI variable mounted over `/sys/firmware` on one container, absent on the other; fake
+    `mokutil` in `files/`, real `kmodgenca`).
   - Hostname in a rootless container: the kernel (transient) hostname cannot be changed, and
     `CAP_SYS_ADMIN` breaks systemd (units fail with 243/CREDENTIALS). So `common` starts the
     container as `noir` with the image's empty `/etc/hostname` (`--no-hostname` in

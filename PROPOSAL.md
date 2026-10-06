@@ -121,6 +121,11 @@ aliases:  {p7zip: 7zip}                  # renamed ids still resolve
   checks. Intel and AMD video acceleration are hardware features (`intel`, `amd`) with
   `feature_packages`, like ASUS. A package that exists on EL but is deliberately left out there
   (RPM Fusion's `@multimedia`, which breaks against EPEL) goes in `packages_os`, not `~`.
+- (2026-10-06) NVIDIA: the driver, build, Vulkan and VA-API packages are catalog ids in
+  `feature_packages.nvidia` (Fedora only). `roles/akmods_mok` runs before `roles/packages` when
+  Secure Boot is on and any `akmod-*` package was resolved, which replaces AFPI's string match and
+  will cover `akmod-VirtualBox` without changes. `roles/nvidia` rebuilds with akmods only when no
+  module exists for the running kernel (AFPI rebuilt on every run until the reboot).
 
 ### User file (outside git)
 

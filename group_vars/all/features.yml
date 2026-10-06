@@ -20,3 +20,4 @@ feature_packages:
   asus: [asusctl, supergfxctl, asusctl-rog-gui]
   intel: [libva-intel-driver, intel-media-driver]
   amd: [mesa-va-drivers-freeworld, libva-utils, vdpauinfo]
+  nvidia: [nvidia-driver, nvidia-build, nvidia-vulkan, nvidia-vaapi]

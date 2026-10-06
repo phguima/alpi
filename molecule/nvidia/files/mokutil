@@ -1,0 +1,16 @@
+#!/bin/sh
+# Fake mokutil for Molecule: logs every call and simulates the enrollment state of one key.
+state=/var/lib/fake-mokutil.requested
+log=/var/log/fake-mokutil.log
+echo "$*" >> "$log"
+case "$1" in
+    --test-key)
+        if [ -f "$state" ]; then echo "$2 is already in the enrollment request"; exit 1; fi
+        echo "$2 is not enrolled"; exit 0 ;;
+    --import)
+        read -r p1; read -r p2
+        echo "password: $p1 / $p2" >> "$log"
+        touch "$state"; exit 0 ;;
+    *)
+        echo "fake mokutil: unsupported: $*" >&2; exit 2 ;;
+esac

@@ -1,0 +1,24 @@
+---
+# roles/akmods_mok + roles/nvidia (env_setup first; no repos/packages, so the ~1 GB driver is not
+# downloaded: the 'catalog' scenario checks its names). NVIDIA is pinned on. Secure Boot is
+# detected for real from a fake EFI variable mounted over /sys/firmware (firmware/ here: bytes
+# 06 00 00 00 01 = on) on one container and absent (legacy BIOS) on the other. mokutil is a fake
+# that logs calls (files/mokutil); kmodgenca is the real one. A container cannot build or load the
+# module: akmods is reported as failed, and the build path is left to the VM.
+platforms:
+  - name: alpi-nvidia-sb
+    image: registry.fedoraproject.org/fedora:44
+    pre_build_image: true
+    command: sleep infinity
+    security_opts: [unmask=/sys/firmware, label=disable]
+    volumes: ["${MOLECULE_SCENARIO_DIRECTORY}/firmware:/sys/firmware:ro"]
+  - name: alpi-nvidia-nosb
+    image: registry.fedoraproject.org/fedora:44
+    pre_build_image: true
+    command: sleep infinity
+provisioner:
+  options:
+    extra-vars: '{"is_nvidia": true, "is_asus": false, "is_intel": false, "is_amd": false}'
+  playbooks:
+    prepare: prepare.yml
+    converge: converge.yml

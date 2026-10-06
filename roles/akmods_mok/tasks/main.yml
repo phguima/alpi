@@ -1,0 +1,54 @@
+---
+# Secure Boot signing key for akmod-built modules (ported from AFPI). Runs before roles/packages:
+# akmods signs the modules it builds with this key, so it must exist before any akmod-* package is
+# installed. Only with Secure Boot and when the resolved sets contain an akmod package (NVIDIA
+# today). Idempotent; the enrollment itself is confirmed by hand in MokManager on the next boot.
+
+- name: MOK | Prepare the akmods signing key
+  when:
+    - is_secure_boot
+    - (alpi_pkgs.native + alpi_pkgs_extra.native) | select('match', '^akmod-') | list | length > 0
+  block:
+    - name: MOK | Require mok_password
+      ansible.builtin.assert:
+        that: mok_password is defined and mok_password | length > 0
+        fail_msg: "Secure Boot is enabled: set mok_password (group_vars/all/secureboot.yml or custom.yml)."
+        quiet: true
+
+    - name: MOK | Install signing tools
+      ansible.builtin.package:
+        name: [akmods, mokutil, openssl]
+        state: present
+
+    # No --force: that creates a brand-new pair on every run and repoints the symlinks to it,
+    # leaving the already-enrolled key unused.
+    - name: MOK | Generate akmods signing key pair
+      ansible.builtin.command:
+        cmd: kmodgenca -a
+        creates: /etc/pki/akmods/certs/public_key.der
+
+    # "is already enrolled" / "is already in the enrollment request" -> nothing to do
+    - name: MOK | Check enrollment state
+      ansible.builtin.command: mokutil --test-key /etc/pki/akmods/certs/public_key.der
+      register: akmods_mok_state
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: MOK | Request enrollment
+      ansible.builtin.command:
+        cmd: mokutil --import /etc/pki/akmods/certs/public_key.der
+        stdin: "{{ mok_password }}\n{{ mok_password }}"
+      when: "'already' not in akmods_mok_state.stdout"
+      register: akmods_mok_import
+      no_log: true
+
+    - name: MOK | Remind to enroll the key on next boot
+      ansible.builtin.debug:
+        msg:
+          - "=================================================================="
+          - "Secure Boot: akmods signing key queued for enrollment."
+          - "REBOOT, choose 'Enroll MOK' in the blue MokManager screen and"
+          - "type the MOK password. Akmod modules (NVIDIA) load after that."
+          - "=================================================================="
+      when: akmods_mok_import is changed

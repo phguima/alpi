@@ -14,5 +14,8 @@
 
   roles:
     - { role: repos, tags: [repos] }
+    # Before packages: akmods signs the modules it builds with this key
+    - { role: akmods_mok, tags: [akmods_mok, secureboot] }
     - { role: packages, tags: [packages] }
     - { role: common, tags: [common] }
+    - { role: nvidia, tags: [nvidia] }

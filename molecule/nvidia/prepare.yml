@@ -1,0 +1,14 @@
+---
+- name: Prepare | Shared
+  ansible.builtin.import_playbook: ../shared/prepare.yml
+
+- name: Prepare | Fake mokutil
+  hosts: all
+  gather_facts: false
+  tasks:
+    # /usr/local/bin comes before /usr/bin, so it shadows the real mokutil akmods_mok installs
+    - name: Prepare | Install the fake mokutil
+      ansible.builtin.copy:
+        src: files/mokutil
+        dest: /usr/local/bin/mokutil
+        mode: "0755"

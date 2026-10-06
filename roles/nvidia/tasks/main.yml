@@ -1,0 +1,78 @@
+---
+# NVIDIA driver configuration (ported from AFPI's nvidia and hardware roles). The packages come
+# from the catalog (feature_packages.nvidia, installed by roles/packages) and roles/akmods_mok
+# prepared the Secure Boot key before that. Everything here takes effect on the next reboot.
+
+- name: NVIDIA | Configure the driver
+  when: nvidia_driver_selected
+  block:
+    # Installed systems have it (kmod); a minimal one may not yet, before the driver arrives.
+    - name: NVIDIA | Ensure /etc/modprobe.d exists
+      ansible.builtin.file:
+        path: /etc/modprobe.d
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: NVIDIA | Configure power management
+      ansible.builtin.copy:
+        dest: /etc/modprobe.d/nvidia.conf
+        content: |
+          # Enable deep power management
+          options nvidia NVreg_DynamicPowerManagement=0x02
+          options nvidia NVreg_EnableS0ixPowerManagement=1
+
+          # Improve suspend/resume stability (Fedora uses tmpfs for /tmp)
+          options nvidia NVreg_TemporaryFilePath=/var/tmp
+        owner: root
+        group: root
+        mode: '0644'
+
+    # AFPI rebuilt on every run until the reboot; a module already built for the running kernel
+    # means there is nothing to do.
+    - name: NVIDIA | Check for a module built for the running kernel
+      ansible.builtin.command: modinfo -k {{ ansible_facts['kernel'] }} nvidia
+      register: nvidia_modinfo
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: NVIDIA | Build the module for the running kernel
+      when: nvidia_modinfo.rc != 0
+      block:
+        - name: NVIDIA | Wait for akmods builds started by the install
+          ansible.builtin.shell: |
+            while pgrep -x akmods >/dev/null || pgrep -x rpmbuild >/dev/null; do
+              sleep 5
+            done
+          async: 1200
+          poll: 10
+          changed_when: false
+
+        - name: NVIDIA | Build and sign the module (akmods)
+          ansible.builtin.command: akmods --force --kernel {{ ansible_facts['kernel'] }} --akmod nvidia
+          register: nvidia_akmods
+          changed_when: nvidia_akmods.rc == 0
+          failed_when: false
+
+        - name: NVIDIA | Update the initramfs
+          ansible.builtin.command: dracut --force
+          when: nvidia_akmods is changed
+          changed_when: true
+
+        - name: NVIDIA | Report a failed build
+          ansible.builtin.debug:
+            msg: >-
+              akmods could not build the NVIDIA module now (rc {{ nvidia_akmods.rc }}); akmods.service
+              retries at boot. {{ nvidia_akmods.stderr | default('') | trim }}
+          when: nvidia_akmods is not changed
+
+        - name: NVIDIA | Recommend a reboot
+          ansible.builtin.debug:
+            msg:
+              - "=================================================="
+              - "A system REBOOT is REQUIRED to load the NVIDIA driver."
+              - "Vulkan, VA-API and power settings are already in place."
+              - "=================================================="
+          when: nvidia_akmods is changed

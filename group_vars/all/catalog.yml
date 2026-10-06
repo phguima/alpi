@@ -96,6 +96,12 @@ alpi_catalog:
   mesa-va-drivers-freeworld: {fedora: mesa-va-drivers-freeworld, el: ~, swap: true}
   libva-utils:         {fedora: libva-utils, el: ~}
   vdpauinfo:           {fedora: vdpauinfo, el: ~}
+  # NVIDIA proprietary driver (RPM Fusion nonfree akmod; roles/akmods_mok and roles/nvidia).
+  nvidia-driver: {fedora: [akmod-nvidia, xorg-x11-drv-nvidia, xorg-x11-drv-nvidia-cuda,
+                           xorg-x11-drv-nvidia-libs, xorg-x11-drv-nvidia-libs.i686], el: ~}
+  nvidia-build:  {fedora: [akmods, kmodtool, gcc, kernel-devel, kernel-headers], el: ~}
+  nvidia-vulkan: {fedora: [vulkan, xorg-x11-drv-nvidia-cuda-libs], el: ~}
+  nvidia-vaapi:  {fedora: libva-nvidia-driver, el: ~}           # VA-API and NVENC/NVDEC
   asusctl:         {fedora: asusctl, el: ~, repo: asus-linux}
   supergfxctl:     {fedora: supergfxctl, el: ~, repo: asus-linux}
   asusctl-rog-gui: {fedora: asusctl-rog-gui, el: ~, repo: asus-linux}

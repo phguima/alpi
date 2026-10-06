@@ -21,6 +21,19 @@
           features: "{{ alpi_feature }}"
           repos: "{{ alpi_repos_enabled | map(attribute='id') | list }}"
 
+    - name: Verify | NVIDIA left alone on EL (feature on, driver unavailable)
+      ansible.builtin.stat:
+        path: /etc/modprobe.d/nvidia.conf
+      register: _nvidia_conf
+
+    - name: Verify | No NVIDIA configuration, driver ids reported unavailable
+      ansible.builtin.assert:
+        that:
+          - alpi_feature.nvidia
+          - not _nvidia_conf.stat.exists
+          - "'nvidia-driver' in alpi_pkgs.unavailable"
+        quiet: true
+
     - name: Verify | Read the hostname and the git config
       ansible.builtin.command: "{{ item }}"
       loop:
