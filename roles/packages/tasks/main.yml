@@ -6,6 +6,15 @@
 - name: Packages | Check that every package exists
   ansible.builtin.include_tasks: check.yml
 
+# Replacements first (catalog 'swap: true', e.g. ffmpeg-free -> ffmpeg), so the base install
+# below finds them in place. dnf only: no other package manager is supported yet.
+- name: Packages | Install replacement packages (allowerasing)
+  ansible.builtin.dnf:
+    name: "{{ alpi_pkgs.swap }}"
+    state: present
+    allowerasing: true
+  when: alpi_pkgs.swap | length > 0
+
 - name: Packages | Install base packages
   ansible.builtin.package:
     name: "{{ alpi_pkgs.native }}"

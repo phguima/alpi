@@ -115,6 +115,12 @@ aliases:  {p7zip: 7zip}                  # renamed ids still resolve
   for the distro is a catalog bug and stops the run in `env_setup`.
 - Features add package sets while they are on (`feature_packages: {asus: [asusctl, …]}`), so
   `features: {asus: false}` drops the packages and, through them, the ASUS COPR.
+- (2026-10-06) `swap: true` marks a catalog entry that replaces a conflicting package
+  (`ffmpeg-free` → `ffmpeg`, `mesa-va-drivers-freeworld`). `roles/packages` installs those first
+  with `allowerasing`, so AFPI's separate "swap" tasks become catalog data and get the same name
+  checks. Intel and AMD video acceleration are hardware features (`intel`, `amd`) with
+  `feature_packages`, like ASUS. A package that exists on EL but is deliberately left out there
+  (RPM Fusion's `@multimedia`, which breaks against EPEL) goes in `packages_os`, not `~`.
 
 ### User file (outside git)
 

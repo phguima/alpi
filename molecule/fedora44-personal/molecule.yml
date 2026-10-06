@@ -1,7 +1,8 @@
 ---
 # Fedora 44, personal profile: repos (RPM Fusion, Brave, VS Code, GitHub CLI, the ASUS COPR) and
-# the packages role (base, real Flatpaks, extra, explicit uninstall). is_asus is forced through
-# extra vars (they win over the detected fact) so the ASUS feature and its COPR are exercised.
+# the packages role (base, real Flatpaks, extra, explicit uninstall). ASUS, Intel and AMD are forced
+# through extra vars (they win over the detected facts) so the ASUS COPR, the Intel/AMD video
+# packages and both swaps (ffmpeg, mesa-va-drivers-freeworld) are exercised.
 platforms:
   - name: alpi-fedora44-personal
     image: registry.fedoraproject.org/fedora:44
@@ -9,4 +10,4 @@ platforms:
     command: sleep infinity
 provisioner:
   options:
-    extra-vars: '{"is_asus": true}'
+    extra-vars: '{"is_nvidia": false, "is_asus": true, "is_intel": true, "is_amd": true}'

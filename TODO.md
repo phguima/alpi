@@ -7,8 +7,10 @@ its Molecule scenarios / unit tests (see `CLAUDE.md`).
 
 - [ ] Port the roles with the specific tasks in `tasks/Fedora.yml`; fill `catalog.yml` and
       `packages.yml` from AFPI's lists. Done: repos (RPM Fusion, Brave, VS Code, GitHub CLI, ASUS
-      COPR) and the application lists (DNF common/KDE/GNOME, Flatpaks, ClamAV and Steam as
-      features). Left for their roles: hardware (Intel/AMD/NVIDIA, codecs), fonts, VirtualBox.
+      COPR), the application lists (DNF common/KDE/GNOME, Flatpaks, ClamAV and Steam as
+      features), fonts, codecs (ffmpeg swap, @multimedia on Fedora) and Intel/AMD video
+      acceleration (hardware features). Left: NVIDIA driver + `akmods_mok` (Fedora; Vulkan,
+      VA-API, `/etc/modprobe.d/nvidia.conf`), then VirtualBox as a feature.
 - [ ] ASUS feature tasks beyond the packages (`/etc/asusd`, `supergfxd.service`, ROG GUI
       autostart); needs a systemd image in Molecule.
 - [ ] Personal aliases (`open/close-thevoid`, LUKS UUID) to `host_vars`.

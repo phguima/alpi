@@ -33,7 +33,11 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - `roles/repos` (before `packages`): enables `alpi_repos_enabled` from `resolve.yml` (the distro's
   always-on repos, then the ones the selected catalog entries name with `repo:`).
 - `roles/packages`: name checks first (`check_<os_family>.yml`: dnf dry run; `flatpak remote-info`),
-  then base, user extras, explicit uninstalls. Needs the `repos` role before it (section 2).
+  then replacements (catalog `swap: true`, installed with `allowerasing`: `ffmpeg`,
+  `mesa-va-drivers-freeworld`), base, user extras, explicit uninstalls. Needs the `repos` role
+  before it (section 2). Native names may be dnf groups (`@multimedia`).
+- Hardware features (`alpi_hardware_features`: nvidia, asus, intel, amd) follow detection and can
+  only be vetoed; their packages come from `feature_packages`.
 - `roles/common`: hostname (only when the profile sets `alpi_manage_hostname`) and the git
   identity/defaults in the user's `~/.gitconfig` (`group_vars/all/machine.yml`, values from
   `bootstrap.yml`; validated in `env_setup.yml`).
@@ -89,8 +93,11 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `CAP_SYS_ADMIN` breaks systemd (units fail with 243/CREDENTIALS). So `common` starts the
     container as `noir` with the image's empty `/etc/hostname` (`--no-hostname` in
     `extra_opts`) and checks the static hostname; the transient one is left to the VM.
-  - Extra vars win over set_fact, so a scenario forces detected hardware with
-    `provisioner.options.extra-vars` (e.g. `'{"is_asus": true}'` in `fedora44-personal`).
+  - Extra vars win over set_fact, so detected hardware is pinned with
+    `provisioner.options.extra-vars`: all false in `.config/molecule/config.yml`. A scenario that
+    sets its own `extra-vars` replaces that string, so it lists all four (`is_nvidia`, `is_asus`,
+    `is_intel`, `is_amd`). Never let a scenario detect hardware: `lspci` in a rootless container
+    sees the host's GPU once `pciutils` is installed.
   - Images are bare: `shared/prepare.yml` installs python3 and sudo; the podman connection runs
     `raw` without a shell (wrap in `sh -c`). Bare Fedora lacks the Python rpm bindings, so verify
     with `rpm -q --whatprovides` (`shared/verify_installed.yml`), not `package_facts`.

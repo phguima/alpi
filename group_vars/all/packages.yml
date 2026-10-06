@@ -28,6 +28,15 @@ packages_base:
   - uv
   - vim
   - zsh
+  # Fonts
+  - fira-code-fonts
+  - google-roboto-fonts
+  # Multimedia codecs (@multimedia is in packages_os on Fedora)
+  - ffmpeg
+  - gstreamer1-plugins-bad-free-extras
+  - gstreamer1-plugins-bad-freeworld
+  - gstreamer1-plugins-ugly
+  - gstreamer1-plugin-libav
   # Security (ClamAV is a feature)
   - chkrootkit
   - lynis

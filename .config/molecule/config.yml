@@ -5,6 +5,11 @@ driver:
   name: podman
 provisioner:
   name: ansible
+  options:
+    # Hardware is pinned, never detected: lspci in a rootless container sees the host's PCI
+    # devices once pciutils gets installed. Extra vars win over set_fact. A scenario that sets its
+    # own extra-vars replaces this string, so it must list all four.
+    extra-vars: '{"is_nvidia": false, "is_asus": false, "is_intel": false, "is_amd": false}'
   env:
     # site.yml targets localhost unless this is set; molecule/shared/converge.yml checks it
     ALPI_TARGET: all

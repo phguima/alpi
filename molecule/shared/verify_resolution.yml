@@ -12,6 +12,7 @@
   vars:
     _got:
       native: "{{ alpi_pkgs.native }}"
+      swap: "{{ alpi_pkgs.swap }}"
       flatpak: "{{ alpi_pkgs.flatpak }}"
       extra: "{{ alpi_pkgs_extra.native + alpi_pkgs_extra.flatpak }}"
       absent: "{{ alpi_pkgs_absent.native + alpi_pkgs_absent.flatpak }}"

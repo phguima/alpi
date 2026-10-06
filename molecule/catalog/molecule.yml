@@ -1,6 +1,6 @@
 ---
 # Every catalog name must exist on every supported distro: repos role + the packages role's name
-# checks (dnf dry run, Flathub lookup), with KDE, GNOME and ASUS forced on so all lists are
+# checks (dnf dry run, Flathub lookup), with KDE, GNOME, ASUS, Intel and AMD forced on so all lists are
 # included. Installs nothing from the lists. verify.yml compares the full resolved sets.
 platforms:
   - name: alpi-catalog-fedora44
@@ -13,6 +13,6 @@ platforms:
     command: sleep infinity
 provisioner:
   options:
-    extra-vars: '{"is_kde": true, "is_gnome": true, "is_asus": true}'
+    extra-vars: '{"is_kde": true, "is_gnome": true, "is_nvidia": false, "is_asus": true, "is_intel": true, "is_amd": true}'
   playbooks:
     converge: converge.yml

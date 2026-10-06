@@ -9,3 +9,7 @@ platforms:
     image: docker.io/library/almalinux:10
     pre_build_image: true
     command: sleep infinity
+provisioner:
+  options:
+    # Intel and AMD forced on: Intel's drivers install, AMD's packages are all unavailable on EL.
+    extra-vars: '{"is_nvidia": false, "is_asus": false, "is_intel": true, "is_amd": true}'

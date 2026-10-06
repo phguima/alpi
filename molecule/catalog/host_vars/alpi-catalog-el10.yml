@@ -2,17 +2,20 @@
 alpi_profile: work
 
 # Expected full resolved sets (verify.yml). Reviewed against AFPI 2.9 / AAPI 1.1 lists;
-# KDE, GNOME and ASUS are forced on in molecule.yml.
+# KDE, GNOME, ASUS, Intel and AMD are forced on in molecule.yml.
 _golden:
   native: [7zip, 7zip-standalone, curl, fastfetch, git, htop, hwinfo, lm_sensors, nodejs, nvtop, pipx,
-    python3-pip, ShellCheck, testdisk, tmux, tuptime, unrar, unzip, uv, vim-enhanced, zsh, lynis, rkhunter,
+    python3-pip, ShellCheck, testdisk, tmux, tuptime, unrar, unzip, uv, vim-enhanced, zsh, fira-code-fonts,
+    ffmpeg, gstreamer1-plugins-bad-freeworld, gstreamer1-plugins-ugly, gstreamer1-plugin-libav, lynis, rkhunter,
     brave-browser, brave-origin, chromium, discord, gh, code, kde-gtk-config, ktorrent, plasma-sdk, flatseal,
-    gnome-tweaks, clamav, clamav-freshclam]
+    gnome-tweaks, clamav, clamav-freshclam, libva-intel-driver, intel-media-driver]
+  swap: [ffmpeg]
   flatpak: [org.kde.drawy, org.telegram.desktop, com.bitwarden.desktop, net.displaycal.DisplayCAL, com.dec05eba.gpu_screen_recorder,
     com.slack.Slack, com.spotify.Client, com.rtosta.zapzap, us.zoom.Zoom, org.zotero.Zotero, com.markopejic.downloader,
     com.mattjakeman.ExtensionManager, de.haeckerfelix.Fragments, com.github.unrud.VideoDownloader]
-  features: {asus: true, clamav: true, nvidia: false, steam: false}
+  features: {amd: true, asus: true, clamav: true, intel: true, nvidia: false, steam: false}
   repos: [crb, epel, rpmfusion-free, rpmfusion-nonfree, brave, gh-cli, vscode]
-  unavailable: [chkrootkit, unhide, argyllcms, asusctl, supergfxctl, asusctl-rog-gui]
+  unavailable: [google-roboto-fonts, gstreamer1-plugins-bad-free-extras, chkrootkit, unhide, argyllcms, asusctl,
+    supergfxctl, asusctl-rog-gui, mesa-va-drivers-freeworld, libva-utils, vdpauinfo]
   extra: []
   absent: []

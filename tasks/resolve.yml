@@ -22,7 +22,7 @@
 
 - name: Resolve | Set feature flags
   ansible.builtin.set_fact:
-    alpi_feature: "{{ alpi_features_merged | alpi_features(alpi_hardware_features, {'nvidia': is_nvidia, 'asus': is_asus}) }}"
+    alpi_feature: "{{ alpi_features_merged | alpi_features(alpi_hardware_features, {'nvidia': is_nvidia, 'asus': is_asus, 'intel': is_intel, 'amd': is_amd}) }}"
 
 - name: Resolve | Select package ids
   ansible.builtin.set_fact:

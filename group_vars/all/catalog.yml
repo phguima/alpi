@@ -5,6 +5,8 @@
 # Values: a native package name, a list of names, {flatpak: <app id>}, or ~ (unavailable: the id
 # is skipped with a warning). 'repo:' names the repository (group_vars/all/repos.yml) the native
 # packages come from when it is not always on; roles/repos enables it only when needed.
+# 'swap: true' marks a package that replaces a conflicting one (ffmpeg-free -> ffmpeg): roles/packages
+# installs it first, with allowerasing. Native names may be dnf groups ('@multimedia').
 # An id with no key for the current distro is a catalog bug and stops the run, so every id must
 # cover every supported distro (or use 'all'). The 'catalog' Molecule scenario checks that every
 # name exists on every supported distro.
@@ -73,7 +75,27 @@ alpi_catalog:
   media-downloader:    {all: {flatpak: com.markopejic.downloader}}
   plasma-sdk:          {all: plasma-sdk}
 
+  # --- Fonts ---
+  fira-code-fonts:     {all: fira-code-fonts}           # EPEL on EL
+  google-roboto-fonts: {fedora: google-roboto-fonts, el: ~}
+
+  # --- Multimedia codecs (RPM Fusion) ---
+  ffmpeg:              {all: ffmpeg, swap: true}         # replaces ffmpeg-free
+  # RPM Fusion's @multimedia adds freeworld packages built against newer libraries than EPEL
+  # ships, which breaks the transaction on EL: Fedora only (packages_os), not unavailable.
+  multimedia:          {fedora: "@multimedia", el: ~}
+  gstreamer1-plugins-bad-free-extras: {fedora: gstreamer1-plugins-bad-free-extras, el: ~}
+  gstreamer1-plugins-bad-freeworld:   {all: gstreamer1-plugins-bad-freeworld}
+  gstreamer1-plugins-ugly:            {all: gstreamer1-plugins-ugly}
+  gstreamer1-plugin-libav:            {all: gstreamer1-plugin-libav}   # was gstreamer1-libav
+
   # --- Hardware (feature_packages) ---
+  # Video acceleration. EL10's mesa has no VA-API drivers and no freeworld build exists for it.
+  libva-intel-driver:  {all: libva-intel-driver}
+  intel-media-driver:  {all: intel-media-driver}         # RPM Fusion nonfree
+  mesa-va-drivers-freeworld: {fedora: mesa-va-drivers-freeworld, el: ~, swap: true}
+  libva-utils:         {fedora: libva-utils, el: ~}
+  vdpauinfo:           {fedora: vdpauinfo, el: ~}
   asusctl:         {fedora: asusctl, el: ~, repo: asus-linux}
   supergfxctl:     {fedora: supergfxctl, el: ~, repo: asus-linux}
   asusctl-rog-gui: {fedora: asusctl-rog-gui, el: ~, repo: asus-linux}
@@ -82,3 +104,4 @@ alpi_catalog:
 alpi_catalog_aliases:
   p7zip: 7zip
   lm_sensors: lm-sensors
+  gstreamer1-libav: gstreamer1-plugin-libav

@@ -36,8 +36,9 @@
         profile: work
         packages_add: [steam]
         strict: true
-        # The default set already has ids unavailable on EL (chkrootkit, unhide, argyllcms)
-        expect: ["Not available on AlmaLinux: chkrootkit, unhide, argyllcms, steam", "alpi_strict is on"]
+        # The default set already has ids unavailable on EL (fonts, codecs, security, argyllcms)
+        expect: ["Not available on AlmaLinux: google-roboto-fonts, gstreamer1-plugins-bad-free-extras,
+                  chkrootkit, unhide, argyllcms, steam", "alpi_strict is on"]
       - name: names not found
         profile: work
         # Like a real run, repos first: every real name resolves, only the bad ones are reported

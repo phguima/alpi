@@ -3,11 +3,13 @@
 # package name). Layers: features_default here, features_profile (group_vars/profile_*), features
 # (host_vars/127.0.0.1/custom.yml, applied last). Unknown names stop the run.
 # Hardware features take 'auto' (on when detected) or false (veto); they are never forced on.
-alpi_hardware_features: [nvidia, asus]
+alpi_hardware_features: [nvidia, asus, intel, amd]
 
 features_default:
   nvidia: auto
   asus: auto
+  intel: auto
+  amd: auto
   steam: true
   clamav: true
 
@@ -16,3 +18,5 @@ feature_packages:
   steam: [steam]
   clamav: [clamav, clamav-freshclam]
   asus: [asusctl, supergfxctl, asusctl-rog-gui]
+  intel: [libva-intel-driver, intel-media-driver]
+  amd: [mesa-va-drivers-freeworld, libva-utils, vdpauinfo]

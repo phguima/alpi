@@ -33,15 +33,18 @@
     dest: /opt/alpi/host_vars/127.0.0.1/custom.yml
     mode: "0644"
 
+# The scenario's pinned hardware (Molecule extra vars) goes along, or this run would detect its own.
 - name: Verify | Resolve with the native controller
   ansible.builtin.command:
-    cmd: ansible-playbook site.yml --tags resolve -e ansible_become=false
+    argv: [ansible-playbook, site.yml, --tags, resolve, -e, ansible_become=false, -e, "{{ _hardware | to_json }}"]
     chdir: /opt/alpi
   environment:
     ANSIBLE_BECOME_ASK_PASS: "False"
     ANSIBLE_NOCOLOR: "1"
   register: _native
   changed_when: false
+  vars:
+    _hardware: {is_nvidia: "{{ is_nvidia }}", is_asus: "{{ is_asus }}", is_intel: "{{ is_intel }}", is_amd: "{{ is_amd }}"}
 
 - name: Verify | Native resolution matches the golden values
   ansible.builtin.assert:

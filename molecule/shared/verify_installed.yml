@@ -16,8 +16,20 @@
 - name: Verify | Query native packages
   ansible.builtin.command:
     argv: "{{ ['rpm', '-q', '--whatprovides'] + [item] }}"
-  loop: "{{ alpi_pkgs.native + alpi_pkgs_extra.native + alpi_pkgs_absent.native }}"
+  loop: "{{ (alpi_pkgs.native + alpi_pkgs_extra.native + alpi_pkgs_absent.native) | reject('match', '@') }}"
   register: _rpm
+  changed_when: false
+  failed_when: false
+
+# dnf groups ('@multimedia') are not packages: ask dnf about each one. dnf5's
+# 'group list --installed' prints nothing even for installed groups; 'group info' is reliable.
+- name: Verify | Query dnf groups
+  ansible.builtin.command:
+    argv: [dnf, -q, group, info, "{{ item | regex_replace('^@', '') }}"]
+  environment:
+    LC_ALL: C
+  loop: "{{ (alpi_pkgs.native + alpi_pkgs_extra.native) | select('match', '@') | list }}"
+  register: _groups
   changed_when: false
   failed_when: false
 
@@ -33,10 +45,12 @@
       - _missing | length == 0
       - _present | length == 0
       - _missing_flatpak | length == 0
-    fail_msg: "Not installed: {{ _missing + _missing_flatpak }}. Should be absent: {{ _present }}."
+      - _missing_groups | length == 0
+    fail_msg: "Not installed: {{ _missing + _missing_flatpak + _missing_groups }}. Should be absent: {{ _present }}."
     quiet: true
   vars:
     _installed: "{{ _rpm.results | selectattr('rc', 'eq', 0) | map(attribute='item') | list }}"
-    _missing: "{{ (alpi_pkgs.native + alpi_pkgs_extra.native) | difference(_installed) }}"
+    _missing: "{{ (alpi_pkgs.native + alpi_pkgs_extra.native) | reject('match', '@') | difference(_installed) }}"
+    _missing_groups: "{{ _groups.results | rejectattr('stdout', 'search', '(?m)^Installed\\s*:\\s*yes') | map(attribute='item') | list }}"
     _present: "{{ alpi_pkgs_absent.native | intersect(_installed) }}"
     _missing_flatpak: "{{ (alpi_pkgs.flatpak + alpi_pkgs_extra.flatpak) | difference(_flatpak_list.stdout_lines | default([])) }}"

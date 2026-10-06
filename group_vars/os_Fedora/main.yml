@@ -1,6 +1,6 @@
 ---
 alpi_catalog_keys: [fedora, all]
-packages_os: []
+packages_os: [multimedia]
 
 # DNF plugins (config-manager, copr, needs-restarting), installed first by roles/repos
 alpi_dnf_plugins: [dnf-plugins-core, dnf5-plugins]

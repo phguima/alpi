@@ -23,6 +23,9 @@ CATALOG = {
     "brave": {"all": "brave-browser", "repo": "brave"},
     "asusctl": {"fedora": ["asusctl", "supergfxctl"], "el": None, "repo": ["asus-linux"]},
     "signal": {"fedora": {"flatpak": "org.signal.Signal"}, "el": "signal-desktop", "repo": "signal"},
+    "ffmpeg": {"all": "ffmpeg", "swap": True},
+    "mesa-freeworld": {"fedora": ["mesa-va-drivers-freeworld"], "el": None, "swap": True},
+    "codecs-flatpak": {"all": {"flatpak": "org.example.Codecs"}, "swap": True},
 }
 ALIASES = {"p7zip": "7zip"}
 FEDORA = ["fedora", "all"]
@@ -84,7 +87,7 @@ class TestResolve:
 
     def test_empty_input(self):
         assert resolve(None, FEDORA) == {
-            "native": [], "flatpak": [], "unknown": [], "missing": [], "unavailable": [], "repos": []
+            "native": [], "flatpak": [], "unknown": [], "missing": [], "unavailable": [], "repos": [], "swap": []
         }
 
     def test_repo_of_a_resolved_package(self):
@@ -102,6 +105,18 @@ class TestResolve:
 
     def test_repos_deduplicated(self):
         assert resolve(["brave", "brave"], FEDORA)["repos"] == ["brave"]
+
+    def test_swap_names_are_also_native(self):
+        out = resolve(["git", "ffmpeg", "mesa-freeworld"], FEDORA)
+        assert out["swap"] == ["ffmpeg", "mesa-va-drivers-freeworld"]
+        assert out["native"] == ["git", "ffmpeg", "mesa-va-drivers-freeworld"]
+
+    def test_no_swap_when_unavailable(self):
+        out = resolve(["mesa-freeworld"], EL10)
+        assert out["swap"] == [] and out["unavailable"] == ["mesa-freeworld"]
+
+    def test_no_swap_for_flatpaks_or_raw_names(self):
+        assert resolve(["codecs-flatpak", "pkg:ffmpeg"], FEDORA)["swap"] == []
 
 
 class TestRepos:
