@@ -6,10 +6,12 @@ platforms:
     image: registry.fedoraproject.org/fedora:44
     pre_build_image: true
     command: sleep infinity
+    volumes: ["alpi-dnf-failures-fedora44:/var/cache/libdnf5"]
   - name: alpi-failures-el10
     image: docker.io/library/almalinux:10
     pre_build_image: true
     command: sleep infinity
+    volumes: ["alpi-dnf-failures-el10:/var/cache/dnf"]
 provisioner:
   playbooks:
     converge: converge.yml

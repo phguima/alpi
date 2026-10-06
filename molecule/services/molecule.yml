@@ -11,11 +11,13 @@ platforms:
     pre_build_image: true
     command: /sbin/init
     systemd: always
+    volumes: ["alpi-dnf-svc-on:/var/cache/dnf"]
   - name: alpi-svc-skip
     image: docker.io/almalinux/10-init
     pre_build_image: true
     command: /sbin/init
     systemd: always
+    volumes: ["alpi-dnf-svc-skip:/var/cache/dnf"]
 provisioner:
   playbooks:
     prepare: prepare.yml

@@ -1,0 +1,52 @@
+---
+# Installs a collection (and its dependencies) into the target's ~/.ansible/collections from a
+# download cached on the Molecule controller, so no scenario waits on Galaxy (it hung for 10+
+# minutes several times). Unpacking the tarball is what 'ansible-galaxy collection install' does;
+# a later 'ansible-galaxy collection install <name>' (bootstrap.sh) then answers "Nothing to do"
+# without contacting Galaxy. Var: _collections_spec, e.g. 'community.general:>=11.0.0,<12.0.0'.
+# Refresh: delete ~/.cache/alpi-molecule/collections.
+- name: Collections | Set the cache directory
+  ansible.builtin.set_fact:
+    _collections_dir: >-
+      {{ lookup('env', 'HOME') }}/.cache/alpi-molecule/collections/{{ _collections_spec | regex_replace('[^A-Za-z0-9.]+', '_') }}
+
+- name: Collections | Download {{ _collections_spec }} once, on the controller
+  ansible.builtin.command:
+    argv: [ansible-galaxy, collection, download, "{{ _collections_spec }}", -p, "{{ _collections_dir }}"]
+    creates: "{{ _collections_dir }}/requirements.yml"
+  delegate_to: localhost
+  run_once: true
+  become: false
+
+- name: Collections | List the downloaded tarballs
+  ansible.builtin.find:
+    paths: "{{ _collections_dir }}"
+    patterns: "*.tar.gz"
+  delegate_to: localhost
+  run_once: true
+  become: false
+  register: _collection_tarballs
+
+# <namespace>-<name>-<version>.tar.gz -> ansible_collections/<namespace>/<name>
+- name: Collections | Create the collection directories
+  ansible.builtin.file:
+    path: "/root/.ansible/collections/ansible_collections/{{ _parts[0] }}/{{ _parts[1] }}"
+    state: directory
+    mode: "0755"
+  vars:
+    _parts: "{{ item.path | basename | split('-') }}"
+  loop: "{{ _collection_tarballs.files }}"
+  loop_control:
+    label: "{{ item.path | basename }}"
+
+- name: Collections | Unpack into ~/.ansible/collections
+  ansible.builtin.unarchive:
+    src: "{{ item.path }}"
+    dest: "{{ _dest }}"
+    creates: "{{ _dest }}/MANIFEST.json"
+  vars:
+    _parts: "{{ item.path | basename | split('-') }}"
+    _dest: "/root/.ansible/collections/ansible_collections/{{ _parts[0] }}/{{ _parts[1] }}"
+  loop: "{{ _collection_tarballs.files }}"
+  loop_control:
+    label: "{{ item.path | basename }}"

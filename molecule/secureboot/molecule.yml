@@ -14,17 +14,18 @@ platforms:
     pre_build_image: true
     command: sleep infinity
     security_opts: [unmask=/sys/firmware, label=disable]
-    volumes: ["${MOLECULE_SCENARIO_DIRECTORY}/firmware:/sys/firmware:ro"]
+    volumes: ["${MOLECULE_SCENARIO_DIRECTORY}/firmware:/sys/firmware:ro", "alpi-dnf-sb-fedora44:/var/cache/libdnf5"]
   - name: alpi-nosb-fedora44
     image: registry.fedoraproject.org/fedora:44
     pre_build_image: true
     command: sleep infinity
+    volumes: ["alpi-dnf-nosb-fedora44:/var/cache/libdnf5"]
   - name: alpi-sb-el10
     image: docker.io/library/almalinux:10
     pre_build_image: true
     command: sleep infinity
     security_opts: [unmask=/sys/firmware, label=disable]
-    volumes: ["${MOLECULE_SCENARIO_DIRECTORY}/firmware:/sys/firmware:ro"]
+    volumes: ["${MOLECULE_SCENARIO_DIRECTORY}/firmware:/sys/firmware:ro", "alpi-dnf-sb-el10:/var/cache/dnf"]
 provisioner:
   options:
     extra-vars: '{"is_nvidia": true, "is_asus": false, "is_intel": false, "is_amd": false}'

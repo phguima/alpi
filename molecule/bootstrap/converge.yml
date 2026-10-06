@@ -31,6 +31,13 @@
         mode: preserve
       loop: [bootstrap.sh, site.yml, group_vars, custom.yml.example]
 
+    # bootstrap.sh still runs its 'ansible-galaxy collection install'; with the collection in place
+    # it answers "Nothing to do" without contacting Galaxy.
+    - name: Bootstrap | Install community.general from the controller's cache
+      ansible.builtin.include_tasks: ../shared/collections.yml
+      vars:
+        _collections_spec: community.general
+
     - name: Bootstrap | Check for settings from an earlier run
       ansible.builtin.stat:
         path: "{{ _dir }}/host_vars/127.0.0.1/bootstrap.yml"

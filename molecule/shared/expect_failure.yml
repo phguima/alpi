@@ -35,6 +35,8 @@
           skip_if_unavailable=0
         mode: "0644"
       when: _case.broken_repo | default(false)
+      # Test scaffolding, added and removed on every run: not a change under test (idempotence)
+      changed_when: false
 
     - name: "Case | {{ _case.name }} | Run the packages role"
       ansible.builtin.include_role:
@@ -59,3 +61,4 @@
         path: /etc/yum.repos.d/alpi-broken.repo
         state: absent
       when: _case.broken_repo | default(false)
+      changed_when: false

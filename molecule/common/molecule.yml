@@ -13,6 +13,7 @@ platforms:
     systemd: always
     hostname: noir
     extra_opts: [--no-hostname]
+    volumes: ["alpi-dnf-common-el10:/var/cache/dnf"]
 provisioner:
   playbooks:
     converge: converge.yml

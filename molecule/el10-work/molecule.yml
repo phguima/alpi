@@ -9,6 +9,7 @@ platforms:
     image: docker.io/library/almalinux:10
     pre_build_image: true
     command: sleep infinity
+    volumes: ["alpi-dnf-el10-work:/var/cache/dnf"]
 provisioner:
   options:
     # Intel, AMD and NVIDIA forced on: Intel's drivers install; AMD's and NVIDIA's packages are

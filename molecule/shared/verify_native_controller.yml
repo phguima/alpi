@@ -6,13 +6,16 @@
     name: ansible-core
     state: present
 
+- name: Verify | Read this ansible-core's version
+  ansible.builtin.command: python3 -c 'from ansible.release import __version__ as v; print(v)'
+  register: _core
+  changed_when: false
+
+# Same pin as bootstrap.sh: community.general 12.x needs ansible-core 2.17+
 - name: Verify | Install community.general for this ansible-core
-  ansible.builtin.shell: |
-    v=$(python3 -c 'from ansible.release import __version__ as v; print(v)')
-    case "$v" in 2.16.*) spec='community.general:>=11.0.0,<12.0.0' ;; *) spec='community.general' ;; esac
-    ansible-galaxy collection install "$spec"
-  register: _galaxy
-  changed_when: "'was installed successfully' in _galaxy.stdout"
+  ansible.builtin.include_tasks: collections.yml
+  vars:
+    _collections_spec: "{{ 'community.general:>=11.0.0,<12.0.0' if _core.stdout is version('2.17', '<') else 'community.general' }}"
 
 - name: Verify | Copy the project
   ansible.builtin.copy:

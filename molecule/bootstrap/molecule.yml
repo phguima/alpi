@@ -8,6 +8,7 @@ platforms:
     image: registry.fedoraproject.org/fedora:44
     pre_build_image: true
     command: sleep infinity
+    volumes: ["alpi-dnf-bootstrap-fedora44:/var/cache/libdnf5"]
 provisioner:
   playbooks:
     converge: converge.yml

@@ -7,10 +7,12 @@ platforms:
     image: registry.fedoraproject.org/fedora:44
     pre_build_image: true
     command: sleep infinity
+    volumes: ["alpi-dnf-catalog-fedora44:/var/cache/libdnf5"]
   - name: alpi-catalog-el10
     image: docker.io/library/almalinux:10
     pre_build_image: true
     command: sleep infinity
+    volumes: ["alpi-dnf-catalog-el10:/var/cache/dnf"]
 provisioner:
   options:
     extra-vars: '{"is_kde": true, "is_gnome": true, "is_nvidia": true, "is_asus": true, "is_intel": true, "is_amd": true}'

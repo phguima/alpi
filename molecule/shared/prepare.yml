@@ -1,13 +1,16 @@
 ---
 # Bare images may lack Python (Ansible modules), sudo (site.yml uses become) and the package the
-# scenarios remove.
+# scenarios remove. dnf keeps what it downloads, in the container's cache volume.
 - name: Molecule | Prepare
   hosts: all
   gather_facts: false
   tasks:
     - name: Molecule | Install Python, sudo and the package to remove
       # The podman connection runs raw commands without a shell
+      # keepcache: downloaded packages stay in the per-container cache volume (molecule.yml)
       ansible.builtin.raw: >-
-        sh -c 'if command -v dnf >/dev/null; then dnf -y -q install python3 sudo nano;
+        sh -c 'if command -v dnf >/dev/null; then
+        grep -q "^keepcache" /etc/dnf/dnf.conf || echo keepcache=True >> /etc/dnf/dnf.conf;
+        dnf -y -q install python3 sudo nano;
         else apt-get -qq update && apt-get -qq install -y python3 sudo; fi'
       changed_when: false

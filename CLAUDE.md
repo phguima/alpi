@@ -85,7 +85,14 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   idempotence step replaces the manual "run twice". Hardware-only checks (Secure Boot/MOK, real
   reboot) stay in the user's VM.
 - ALPI setup (2026-10-05):
-  - Run everything: `molecule test --all`; one scenario: `molecule test -s <name>`. Unit tests:
+  - Run with `tests/run.sh quick` while working (no real installs, a few minutes), `tests/run.sh
+    full` before a commit, or `tests/run.sh <scenario>…`: pytest first, then one scenario at a
+    time (a failure does not stop the rest), logs in `~/.cache/alpi-molecule/logs/`, timed summary.
+    Speed-ups: each container has its own dnf cache volume (`alpi-dnf-<instance>`, `keepcache`,
+    set in `shared/prepare.yml`); collections come from `~/.cache/alpi-molecule/collections`
+    (`shared/collections.yml`, downloaded once on the controller) instead of Galaxy. Cleanup:
+    `podman volume rm $(podman volume ls -q --filter name=alpi-dnf-); rm -rf ~/.cache/alpi-molecule`.
+    Plain Molecule still works: `molecule test --all` / `molecule test -s <name>`. Unit tests:
     `~/.local/share/pipx/venvs/molecule/bin/python -m pytest -q tests/unit` (the `pytest` in
     `~/.local/bin` is an old broken pip install of the user's; leave it alone).
   - In this harness, pipe Molecule's output (`molecule … 2>&1 | cat`): Ansible refuses to run
@@ -132,8 +139,11 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   - `failures` runs every case in one play, and `group_by` groups stay for the whole play: a case
     that depends on profile group_vars must come before cases that join another profile group
     (with two profile groups the alphabetically last one wins, e.g. `profile_work`).
-  - Expected noise in a green `molecule test --all` log (checked 2026-10-06); only the
-    `SCENARIO RECAP` decides pass/fail:
+  - Pass/fail is Molecule's exit code and the absence of `Executed: Failed` lines, **not** the
+    `SCENARIO RECAP`: after a failed step Molecule runs cleanup and the recap can still say
+    `failed=0` (a non-zero `missing=` is the hint). This hid an idempotence failure on
+    2026-10-06. `tests/run.sh` checks both.
+  - Expected noise in a green log (checked 2026-10-06):
     - `fatal:` / `[ERROR]: Task failed` lines in `failures`: each case fails on purpose and
       `shared/expect_failure.yml` asserts the message (a case that does not fail, or fails with
       another message, turns the scenario red).

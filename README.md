@@ -28,13 +28,14 @@ ansible-playbook site.yml -K
 
 ## 🧪 Tests
 
-Every change ships with tests. [Molecule](https://ansible.readthedocs.io/projects/molecule/) runs the playbook in podman containers (never on the host); pytest covers the filter plugin.
+Every change ships with tests. [Molecule](https://ansible.readthedocs.io/projects/molecule/) runs the playbook in podman containers (never on the host); pytest covers the filter plugin. `tests/run.sh` runs them one scenario at a time and prints a timed summary; package downloads are cached in podman volumes (`alpi-dnf-*`) and Ansible collections in `~/.cache/alpi-molecule`, so only the first run downloads everything.
 
 ```bash
 pipx install molecule && pipx inject molecule 'molecule-plugins[podman]' pytest
 ansible-galaxy collection install containers.podman
-molecule test --all                       # catalog, common, secureboot, services, fedora44-personal, el10-work, failures, unsupported, bootstrap
-~/.local/share/pipx/venvs/molecule/bin/python -m pytest -q tests/unit
+tests/run.sh quick                        # pytest + scenarios without real installs (a few minutes)
+tests/run.sh full                         # every scenario, before a commit
+tests/run.sh el10-work                    # just the named scenarios
 ```
 
 ## ⚖️ License
