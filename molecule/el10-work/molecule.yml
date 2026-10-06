@@ -14,3 +14,6 @@ provisioner:
     # Intel, AMD and NVIDIA forced on: Intel's drivers install; AMD's and NVIDIA's packages are
     # unavailable on EL, so roles/nvidia and roles/akmods_mok must do nothing.
     extra-vars: '{"is_nvidia": true, "is_asus": false, "is_intel": true, "is_amd": true}'
+    # No systemd here: service roles are covered by the 'services' scenario. Setting skip-tags
+    # replaces Molecule's default, so its own tags are repeated.
+    skip-tags: molecule-notest,notest,clamav

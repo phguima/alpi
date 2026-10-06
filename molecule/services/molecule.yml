@@ -1,0 +1,22 @@
+---
+# Roles that manage systemd services, alone (env_setup + the role; the packages they need are
+# installed by prepare.yml, not by the packages role). AlmaLinux publishes an init image, Fedora
+# does not; the units have the same names on both.
+#   alpi-svc-on:   clamav feature on, freshclam installed: the service is enabled and running
+#   alpi-svc-skip: clamav feature on, clamav-freshclam skipped and not installed: nothing to do
+#                  (AFPI/AAPI enabled freshclam unconditionally and failed here)
+platforms:
+  - name: alpi-svc-on
+    image: docker.io/almalinux/10-init
+    pre_build_image: true
+    command: /sbin/init
+    systemd: always
+  - name: alpi-svc-skip
+    image: docker.io/almalinux/10-init
+    pre_build_image: true
+    command: /sbin/init
+    systemd: always
+provisioner:
+  playbooks:
+    prepare: prepare.yml
+    converge: converge.yml

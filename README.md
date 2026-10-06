@@ -33,7 +33,7 @@ Every change ships with tests. [Molecule](https://ansible.readthedocs.io/project
 ```bash
 pipx install molecule && pipx inject molecule 'molecule-plugins[podman]' pytest
 ansible-galaxy collection install containers.podman
-molecule test --all                       # catalog, common, secureboot, fedora44-personal, el10-work, failures, unsupported, bootstrap
+molecule test --all                       # catalog, common, secureboot, services, fedora44-personal, el10-work, failures, unsupported, bootstrap
 ~/.local/share/pipx/venvs/molecule/bin/python -m pytest -q tests/unit
 ```
 

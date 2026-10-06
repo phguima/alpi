@@ -1,0 +1,4 @@
+---
+alpi_profile: work
+# Feature on, freshclam skipped: the role must not touch the (missing) service
+packages_skip: [clamav-freshclam]

@@ -1,0 +1,6 @@
+---
+# The freshclam package was selected (catalog id, so the distro's name does not matter: clamav-update
+# on Fedora, clamav-freshclam on EL). False when the clamav feature is off or the id is skipped.
+clamav_freshclam_selected: >-
+  {{ 'clamav-freshclam' in ((alpi_ids_base + alpi_ids_extra)
+     | reject('in', alpi_pkgs.unavailable + alpi_pkgs_extra.unavailable) | list) }}

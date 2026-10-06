@@ -1,0 +1,20 @@
+---
+- name: Services | Guard against running on the host
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Services | Require ALPI_TARGET
+      ansible.builtin.assert:
+        that: lookup('env', 'ALPI_TARGET') | length > 0
+        fail_msg: ALPI_TARGET is not set; this scenario must target its containers. Set it in molecule.yml.
+        quiet: true
+
+- name: Services | env_setup + service roles
+  hosts: all
+  tasks:
+    - name: Services | Environment setup
+      ansible.builtin.import_tasks: ../../tasks/env_setup.yml
+
+    - name: Services | ClamAV
+      ansible.builtin.import_role:
+        name: clamav

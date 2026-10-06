@@ -23,7 +23,8 @@ scenarios / unit tests (see `CLAUDE.md`).
 - [ ] Personal aliases (`open/close-thevoid`, LUKS UUID) to `host_vars`.
 - [ ] Feature gates:
   - [x] VirtualBox: driven by the resolved set, no string match (`feat(virtualbox): …`).
-  - [ ] ClamAV: freshclam is enabled unconditionally.
+  - [x] ClamAV: `roles/clamav` enables freshclam only when its package was resolved
+        (`feat(clamav): …`).
   - [ ] Flatpak overrides only for installed apps.
 - [ ] `flatpak_filesystem_overrides` empty in the repo, ZapZap in `custom.yml.example`.
 

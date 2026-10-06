@@ -1,0 +1,9 @@
+---
+# ClamAV signature updates (ported from AFPI/AAPI, which enabled freshclam unconditionally and broke
+# when ClamAV was skipped). The packages come from the catalog (feature 'clamav').
+- name: ClamAV | Enable and start the freshclam service
+  ansible.builtin.systemd_service:
+    name: clamav-freshclam.service
+    enabled: true
+    state: started
+  when: clamav_freshclam_selected | bool

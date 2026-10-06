@@ -1,0 +1,17 @@
+---
+- name: Prepare | Shared
+  ansible.builtin.import_playbook: ../shared/prepare.yml
+
+- name: Prepare | Packages the service roles manage
+  hosts: alpi-svc-on
+  gather_facts: false
+  tasks:
+    - name: Prepare | Install EPEL
+      ansible.builtin.package:
+        name: epel-release
+        state: present
+
+    - name: Prepare | Install ClamAV and freshclam
+      ansible.builtin.package:
+        name: [clamav, clamav-freshclam]
+        state: present

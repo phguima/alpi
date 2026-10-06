@@ -23,7 +23,7 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - `site.yml`: `tasks/env_setup.yml` (support matrix assert → profile assert → user/hardware/DE
   facts, ported from AFPI → `group_by` into `os_<distro>`, `os_<distro>_<major>`,
   `profile_<name>` → machine-settings assert → `tasks/resolve.yml`), then the roles (`repos`,
-  `akmods_mok`, `virtualbox`, `packages`, `common`, `nvidia` so far).
+  `akmods_mok`, `virtualbox`, `packages`, `common`, `clamav`, `nvidia` so far).
 - `tasks/resolve.yml` + `filter_plugins/alpi.py`: catalog lookup, merge of the package/feature
   layers, all validation (fails before anything changes). Keep logic in the filter plugin, not in
   long Jinja expressions.
@@ -47,6 +47,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   (MOK enrollment of one key) is shared with `roles/virtualbox`.
 - `roles/virtualbox` (before `packages`): on a non-akmod build (Oracle, EL) with Secure Boot, its
   own key in `/var/lib/shim-signed/mok` (vboxdrv.sh signs with it); `vboxusers`/`vboxsf` groups.
+- `roles/clamav` (after `packages`): enables `clamav-freshclam.service` only when the
+  `clamav-freshclam` catalog id was resolved (feature on, not skipped). Gate service roles on the
+  resolved ids, never on the feature flag alone.
 - Catalog values per distro may be `{native: …, repo: …}`: a repository only that distro needs
   (Oracle VirtualBox on EL).
 - `roles/nvidia` (after `packages`): `/etc/modprobe.d/nvidia.conf`; akmods rebuild + `dracut` only
@@ -107,7 +110,12 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `roles/common` on `almalinux/10-init` with systemd: static hostname via hostnamectl, git),
     `secureboot` (env_setup + `akmods_mok`, `virtualbox`, `nvidia`, nothing downloaded; Secure Boot
     detected from a fake EFI variable mounted over `/sys/firmware`: Fedora with Secure Boot and
-    NVIDIA vetoed, Fedora without, EL with; fake `mokutil` in `files/`, real `kmodgenca`/openssl).
+    NVIDIA vetoed, Fedora without, EL with; fake `mokutil` in `files/`, real `kmodgenca`/openssl),
+    `services` (env_setup + service roles on `almalinux/10-init` with systemd; prepare installs
+    the packages: freshclam enabled and running, and skipped cleanly when its id is skipped).
+  - `fedora44-personal` and `el10-work` have no systemd: they skip service roles by tag
+    (`skip-tags: molecule-notest,notest,clamav`; setting skip-tags replaces Molecule's default,
+    so its own tags are repeated). Add each new service role's tag there.
   - Hostname in a rootless container: the kernel (transient) hostname cannot be changed, and
     `CAP_SYS_ADMIN` breaks systemd (units fail with 243/CREDENTIALS). So `common` starts the
     container as `noir` with the image's empty `/etc/hostname` (`--no-hostname` in
