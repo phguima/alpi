@@ -8,9 +8,10 @@ are in English.
 ## Work status
 
 Skeleton stage (created on 2026-10-05; skeleton done the same day). `PROPOSAL.md` holds the architecture (reviewed by an
-adversarial agent); `TODO.md` holds **only what is left** (decisions are recorded in `PROPOSAL.md`).
-**Read both before starting.** When an item is done, remove it from `TODO.md` and record the
-validation in the commit message.
+adversarial agent); `TODO.md` holds the work plan (decisions are recorded in `PROPOSAL.md`).
+**Read both before starting.** When an item is done, tick it (`- [x]`, with the commit's short
+hash) in `TODO.md`; remove a section only once all its items are ticked. Record the validation in
+the commit message.
 
 Decision of 2026-10-05: **new** repo, without AFPI's history. AFPI and AAPI stay active until
 parity; code comes in step by step, ported from them. Changes made there in the meantime (e.g.
