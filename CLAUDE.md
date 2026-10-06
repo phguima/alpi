@@ -86,6 +86,19 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `raw` without a shell (wrap in `sh -c`). Bare Fedora lacks the Python rpm bindings, so verify
     with `rpm -q --whatprovides` (`shared/verify_installed.yml`), not `package_facts`.
   - A failure-case harness must be shown to fail on a case that should not fail before trusting it.
+  - Expected noise in a green `molecule test --all` log (checked 2026-10-06); only the
+    `SCENARIO RECAP` decides pass/fail:
+    - `fatal:` / `[ERROR]: Task failed` lines in `failures`: each case fails on purpose and
+      `shared/expect_failure.yml` asserts the message (a case that does not fail, or fails with
+      another message, turns the scenario red).
+    - `CRITICAL 'molecule/default/molecule.yml' glob failed`: there is no `default` scenario, so
+      Molecule disables shared state and carries on.
+    - `Another version of 'containers.podman' … was found`: Fedora's `ansible` package ships one
+      under `/usr/lib/python3.*`, the one in `~/.ansible/collections` is used.
+    - Recheck after a Molecule, `ansible-core` or Fedora `ansible` upgrade (tracked in `TODO.md`,
+      "Maintenance"): the CRITICAL line may stop being harmless (Molecule could start requiring
+      `default` or exit non-zero) and the `~/.ansible/collections` copy of `containers.podman`
+      must stay the newer one (reinstall with `--force`); the log's version warning shows both.
 - The manual podman recipes below remain for quick experiments.
 
 ## Tests — in a container or VM, never on the host
