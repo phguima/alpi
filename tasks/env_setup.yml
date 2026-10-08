@@ -1,7 +1,7 @@
 ---
 # Environment discovery: support matrix first (before anything else is read or changed), then
-# user, hardware and desktop facts, then the dynamic groups that load group_vars/os_* and
-# group_vars/profile_*, then package and feature resolution.
+# user, hardware and desktop facts, then the dynamic groups that load group_vars/os_*, then package
+# and feature resolution.
 
 - name: Env Setup | Ensure the distro is supported
   ansible.builtin.assert:
@@ -13,17 +13,6 @@
       ALPI does not support {{ ansible_facts['distribution'] }}
       {{ ansible_facts['distribution_version'] }}. Supported:
       {% for d, v in alpi_supported.items() %}{{ d }} {{ v.min }}{{ '' if v.min == v.max else '-' ~ v.max }}{{ '' if loop.last else ', ' }}{% endfor %}.
-    quiet: true
-  tags: [always]
-
-- name: Env Setup | Ensure a profile is chosen
-  ansible.builtin.assert:
-    that:
-      - alpi_profile is defined
-      - alpi_profile in alpi_profiles
-    fail_msg: >-
-      alpi_profile must be one of {{ alpi_profiles | join(', ') }}
-      (got: {{ alpi_profile | default('nothing') }}). Run ./bootstrap.sh or pass -e alpi_profile=<name>.
     quiet: true
   tags: [always]
 
@@ -141,24 +130,22 @@
     is_kde: "{{ 'KDE' in detected_xdg or 'PLASMA' in detected_xdg }}"
   tags: [always, system, detection]
 
-# group_vars/os_<distro>, os_<distro>_<major> and profile_<name> load once the host is in these
-# groups (only the directories that exist count).
-- name: Env Setup | Join the distro and profile groups
+# group_vars/os_<distro> and os_<distro>_<major> load once the host is in these groups (only the
+# directories that exist count).
+- name: Env Setup | Join the distro groups
   ansible.builtin.group_by:
     key: "{{ item }}"
   loop:
     - "os_{{ ansible_facts['distribution'] }}"
     - "os_{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_major_version'] }}"
-    - "profile_{{ alpi_profile }}"
   changed_when: false
   tags: [always]
 
-# Same rules as bootstrap.sh, for values written by hand (custom.yml, -e). After group_by: the
-# profile decides whether the hostname is managed.
+# Same rules as bootstrap.sh, for values written by hand (custom.yml, -e).
 - name: Env Setup | Validate machine settings
   ansible.builtin.assert:
     that:
-      - not alpi_manage_hostname or system_hostname | length == 0 or system_hostname is regex('^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$')
+      - system_hostname | length == 0 or system_hostname is regex('^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$')
       - git_user_email | length == 0 or git_user_email is regex('^[^\\s@]+@[^\\s@]+$')
     fail_msg: >-
       Invalid machine settings (host_vars/127.0.0.1/): system_hostname '{{ system_hostname }}'

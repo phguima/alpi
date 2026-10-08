@@ -1,5 +1,4 @@
 ---
-alpi_profile: personal
 mok_password: test-mok-pw
 # NVIDIA vetoed: the akmods key must come from akmod-VirtualBox alone
 features: {nvidia: false}

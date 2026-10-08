@@ -1,7 +1,8 @@
 ---
 # Features: items with their own configuration tasks, switched by a flag (never by removing a
-# package name). Layers: features_default here, features_profile (group_vars/profile_*), features
-# (host_vars/127.0.0.1/custom.yml, applied last). Unknown names stop the run.
+# package name). Layers: features_default here, features_selection (host_vars/127.0.0.1/
+# selection.yml, written by pick.py), features (host_vars/127.0.0.1/custom.yml, applied last).
+# Unknown names stop the run.
 # Hardware features take 'auto' (on when detected) or false (veto); they are never forced on.
 alpi_hardware_features: [nvidia, asus, intel, amd]
 

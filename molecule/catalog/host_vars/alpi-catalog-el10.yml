@@ -1,6 +1,4 @@
 ---
-alpi_profile: work
-
 # Expected full resolved sets (verify.yml). Reviewed against AFPI 2.9 / AAPI 1.1 lists;
 # KDE, GNOME and all hardware are forced on in molecule.yml.
 _golden:
@@ -14,9 +12,9 @@ _golden:
   flatpak: [org.kde.drawy, org.telegram.desktop, com.bitwarden.desktop, net.displaycal.DisplayCAL, com.dec05eba.gpu_screen_recorder,
     com.slack.Slack, com.spotify.Client, com.rtosta.zapzap, us.zoom.Zoom, org.zotero.Zotero, com.markopejic.downloader,
     com.mattjakeman.ExtensionManager, de.haeckerfelix.Fragments, com.github.unrud.VideoDownloader]
-  features: {amd: true, asus: true, clamav: true, intel: true, nvidia: true, steam: false, virtualbox: true}
+  features: {amd: true, asus: true, clamav: true, intel: true, nvidia: true, steam: true, virtualbox: true}
   repos: [crb, epel, rpmfusion-free, rpmfusion-nonfree, brave, gh-cli, vscode, virtualbox-oracle]
-  unavailable: [google-roboto-fonts, gstreamer1-plugins-bad-free-extras, chkrootkit, unhide, argyllcms, asusctl,
+  unavailable: [google-roboto-fonts, gstreamer1-plugins-bad-free-extras, chkrootkit, unhide, argyllcms, steam, asusctl,
     supergfxctl, asusctl-rog-gui, mesa-va-drivers-freeworld, libva-utils, vdpauinfo, nvidia-driver, nvidia-build,
     nvidia-vulkan, nvidia-vaapi]
   extra: []

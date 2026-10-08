@@ -30,10 +30,11 @@
     state: directory
     mode: "0755"
 
-- name: Verify | Copy the scenario settings as custom.yml
+# The scenario's host_vars directory holds custom.yml and selection.yml, as on a real machine
+- name: Verify | Copy the scenario settings
   ansible.builtin.copy:
-    src: "host_vars/{{ inventory_hostname }}.yml"
-    dest: /opt/alpi/host_vars/127.0.0.1/custom.yml
+    src: "host_vars/{{ inventory_hostname }}/"
+    dest: /opt/alpi/host_vars/127.0.0.1/
     mode: "0644"
 
 # The scenario's pinned hardware (Molecule extra vars) goes along, or this run would detect its own.

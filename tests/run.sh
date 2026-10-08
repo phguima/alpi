@@ -22,6 +22,11 @@ case "${1:-quick}" in
 esac
 
 PYTHON=~/.local/share/pipx/venvs/molecule/bin/python
+# Molecule runs the first ansible-playbook in PATH. The venv's own ansible-core (a Molecule
+# dependency) comes first, so every machine tests with the same recent controller: EL10's system
+# ansible-core 2.16 has dnf5 bugs (no install by URL, no libdnf5 in Fedora's bare image) that a
+# real Fedora run, with Fedora's own ansible-core, never meets.
+export PATH="$(dirname "$PYTHON"):$PATH"
 LOGS=~/.cache/alpi-molecule/logs
 mkdir -p "$LOGS"
 

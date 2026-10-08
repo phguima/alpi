@@ -2,15 +2,15 @@
 # Package and feature resolution (PROPOSAL.md, "Customization"). Every check runs here, before
 # any role changes the system. Results:
 #   alpi_feature:    feature name -> bool (resolved first: features add package sets)
-#   alpi_pkgs:       base set (repo defaults + distro + desktop + profile + enabled features'
-#                    packages, minus skips)
+#   alpi_pkgs:       base set (repo defaults + distro + desktop + enabled features' packages +
+#                    the picker's additions, minus the picker's and the user's skips)
 #   alpi_pkgs_extra: the user's packages_add (installed in a separate step, after the base)
 #   alpi_pkgs_absent: the user's packages_absent (explicit uninstall)
 #   alpi_repos_enabled: repository definitions to enable, in order (roles/repos)
 
 - name: Resolve | Merge features
   ansible.builtin.set_fact:
-    alpi_features_merged: "{{ features_default | combine(features_profile | default({}), features | default({})) }}"
+    alpi_features_merged: "{{ features_default | combine(features_selection | default({}), features | default({})) }}"
 
 - name: Resolve | Check feature names
   ansible.builtin.assert:
@@ -29,10 +29,10 @@
     alpi_ids_base: >-
       {{ (packages_base + (packages_os | default([]))
           + (packages_kde if is_kde else []) + (packages_gnome if is_gnome else [])
-          + (packages_profile | default([]))
+          + (packages_selection_add | default([]))
           + (feature_packages | default({}) | alpi_feature_ids(alpi_feature)))
          | alpi_canonical(alpi_catalog_aliases) | unique
-         | reject('in', packages_profile_skip | default([]) | alpi_canonical(alpi_catalog_aliases))
+         | reject('in', packages_selection_skip | default([]) | alpi_canonical(alpi_catalog_aliases))
          | reject('in', packages_skip | default([]) | alpi_canonical(alpi_catalog_aliases)) | list }}
     alpi_ids_extra: >-
       {{ packages_add | default([]) | alpi_canonical(alpi_catalog_aliases) | unique
@@ -92,7 +92,6 @@
 - name: Resolve | Summary
   ansible.builtin.debug:
     msg:
-      profile: "{{ alpi_profile }}"
       distro: "{{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_major_version'] }}"
       desktop: "{{ 'KDE' if is_kde else ('GNOME' if is_gnome else 'none detected') }}"
       native: "{{ alpi_pkgs.native }}"

@@ -1,0 +1,6 @@
+---
+# As pick.py writes it: differences from the defaults. Flatseal is a GNOME package, listed by the
+# picker only under GNOME; added here, it must be installed without a desktop.
+packages_selection_add: [flatseal]
+packages_selection_skip: [chromium, discord, drawy, displaycal, gpu-screen-recorder]
+features_selection: {}

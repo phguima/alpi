@@ -1,8 +1,9 @@
 ---
-# Fedora 44, personal profile: repos (RPM Fusion, Brave, VS Code, GitHub CLI, the ASUS COPR) and
-# the packages role (base, real Flatpaks, extra, explicit uninstall). ASUS, Intel and AMD are forced
-# through extra vars (they win over the detected facts) so the ASUS COPR, the Intel/AMD video
-# packages and both swaps (ffmpeg, mesa-va-drivers-freeworld) are exercised.
+# Fedora 44, personal machine (custom.yml + selection.yml): repos (RPM Fusion, Brave, VS Code,
+# GitHub CLI, the ASUS COPR) and the packages role (base, real Flatpaks, extra, explicit uninstall).
+# ASUS, Intel and AMD are forced through extra vars (they win over the detected facts) so the ASUS
+# COPR, the Intel/AMD video packages and both swaps (ffmpeg, mesa-va-drivers-freeworld) are
+# exercised.
 platforms:
   - name: alpi-fedora44-personal
     image: registry.fedoraproject.org/fedora:44

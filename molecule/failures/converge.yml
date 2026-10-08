@@ -3,51 +3,43 @@
   hosts: all
   vars:
     _cases:
-      - name: no profile
-        expect: ["alpi_profile must be one of personal, work"]
-      - name: unknown profile
-        profile: home
-        expect: ["alpi_profile must be one of personal, work", "got: home"]
-      # Must be the first case that reaches group_by: groups joined by earlier cases stay for the
-      # whole play, and profile_work (alphabetically after profile_personal) would win and turn
-      # alpi_manage_hostname off.
       - name: invalid hostname
-        profile: personal
         system_hostname: bad_name
         expect: ["Invalid machine settings", "system_hostname 'bad_name'"]
       - name: unknown package id
-        profile: work
         packages_add: [nope, git]
         expect: ["Unknown package ids", "nope"]
       - name: installed and absent
-        profile: work
         packages_absent: [git]
         expect: ["Both installed and in packages_absent: git"]
+      # A selection.yml written before an id was removed from the catalog (pick.py drops those
+      # on its next run)
+      - name: unknown id in the selection
+        packages_selection_add: [gone-from-catalog]
+        expect: ["Unknown package ids", "gone-from-catalog"]
+      - name: unknown feature in the selection
+        features_selection: {old-feature: false}
+        expect: ["Unknown features: old-feature"]
       - name: unknown feature
-        profile: work
         features: {steamm: true}
         expect: ["Unknown features: steamm"]
       - name: invalid e-mail
-        profile: work
         git_user_email: "no-at-sign"
         expect: ["Invalid machine settings", "git_user_email 'no-at-sign'"]
       - name: strict mode
         only: AlmaLinux
-        profile: work
         packages_add: [steam]
         strict: true
         # The default set already has ids unavailable on EL (fonts, codecs, security, argyllcms)
         expect: ["Not available on AlmaLinux: google-roboto-fonts, gstreamer1-plugins-bad-free-extras,
                   chkrootkit, unhide, argyllcms, steam", "alpi_strict is on"]
       - name: names not found
-        profile: work
         # Like a real run, repos first: every real name resolves, only the bad ones are reported
         packages_add: ["pkg:nope-xyz", "flatpak:org.nope.App"]
         packages_role: true
         expect: ["Native packages (not in any enabled repository): nope-xyz.",
                  "Flatpaks (not on Flathub): org.nope.App.", "none of the listed packages was installed"]
       - name: unreadable repository
-        profile: work
         packages_role: true
         broken_repo: true
         expect: ["Could not read the repository metadata", "alpi-broken"]

@@ -1,11 +1,11 @@
 ---
-# Machine settings shared by every distro: hostname (only when the profile manages it) and git.
+# Machine settings shared by every distro: hostname (only when one is set) and git.
 # Values are validated in tasks/env_setup.yml, before anything changes.
 
 - name: System | Set the hostname
   ansible.builtin.hostname:
     name: "{{ system_hostname }}"
-  when: alpi_manage_hostname and system_hostname | length > 0
+  when: system_hostname | length > 0
   tags: [system, hostname]
 
 # git_config needs the git binary; it is in the base list too, but this role must not depend on it.

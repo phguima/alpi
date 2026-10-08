@@ -1,7 +1,7 @@
 ---
 # bootstrap.sh end to end: installs ansible-core + community.general, moves the AFPI/AAPI-style
-# host_vars/127.0.0.1.yml, asks the questions (bad answers are asked again) and writes
-# host_vars/127.0.0.1/bootstrap.yml. The answers are piped through script(1), which gives the
+# host_vars/127.0.0.1.yml, asks the questions (bad answers are asked again), writes
+# host_vars/127.0.0.1/bootstrap.yml and runs the picker (text mode), which writes selection.yml. The answers are piped through script(1), which gives the
 # script a terminal; a pass-through sudo shim keeps the real sudo from swallowing them.
 platforms:
   - name: alpi-bootstrap-fedora44

@@ -1,6 +1,4 @@
 ---
-alpi_profile: personal
-
 # Expected full resolved sets (verify.yml). Reviewed against AFPI 2.9 / AAPI 1.1 lists;
 # KDE, GNOME and all hardware are forced on in molecule.yml.
 _golden:

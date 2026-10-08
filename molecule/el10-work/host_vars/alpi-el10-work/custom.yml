@@ -1,0 +1,9 @@
+---
+# custom.yml and selection.yml side by side, as on a real machine: both files' skips must apply
+# (each layer has its own keys; the same key in both files would not merge). The 'catalog'
+# scenario checks every name; Flatpaks are installed by fedora44-personal. Skipped here:
+# Flatpaks and the heaviest downloads (part here, part in selection.yml).
+packages_skip: [slack, spotify, zapzap, zoom, zotero]
+packages_add: ["pkg:tree", steam]
+packages_absent: ["pkg:nano"]
+# No hostname and no git identity: the hostname is left alone, only the git defaults are written.

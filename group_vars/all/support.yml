@@ -7,7 +7,5 @@ alpi_supported:
   Fedora: {min: 41, max: 44}
   AlmaLinux: {min: 10, max: 10}
 
-alpi_profiles: [personal, work]
-
 # true: ids marked unavailable (~) on this distro stop the run instead of being skipped.
 alpi_strict: false

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # ALPI (Ansible Linux Post-Install) Bootstrap Script
-# Installs Ansible for the running distro and asks the per-machine settings (profile, hostname,
-# git identity), so ansible-playbook never stops for input.
+# Installs Ansible for the running distro, asks the per-machine settings (hostname, git identity)
+# and runs the package picker (pick.py), so ansible-playbook never stops for input.
 
 set -e
 
@@ -27,9 +27,10 @@ fi
 . /etc/os-release
 case "$ID" in
     fedora|almalinux)
-        # ansible-core everywhere (EL10 has no full 'ansible' package); pciutils for GPU detection
-        prompt "Installing ansible-core, pciutils and PyYAML ($PRETTY_NAME)..."
-        sudo dnf install -y ansible-core pciutils python3-pyyaml
+        # ansible-core everywhere (EL10 has no full 'ansible' package); pciutils for GPU detection;
+        # newt for whiptail (pick.py)
+        prompt "Installing ansible-core, pciutils, PyYAML and whiptail ($PRETTY_NAME)..."
+        sudo dnf install -y ansible-core pciutils python3-pyyaml newt
         ;;
     *)
         error "$PRETTY_NAME is not supported (yet). See group_vars/all/support.yml."
@@ -75,30 +76,21 @@ ask() {
     printf -v "$1" '%s' "${answer:-$3}"
 }
 
-profiles=$(python3 -c 'import yaml; print(" ".join(yaml.safe_load(open("group_vars/all/support.yml"))["alpi_profiles"]))')
-profile="" new_hostname="" git_name="" git_email=""  # set by ask()
+new_hostname="" git_name="" git_email=""  # set by ask()
 if [ -t 0 ]; then
-    saved_profile=$(yaml_get alpi_profile "$HOST_VARS")
+    # Empty leaves the hostname alone (a work machine named by IT); '-' forgets a saved one.
+    current_hostname=$(hostnamectl hostname 2>/dev/null || true)
+    current_hostname="${current_hostname:-$HOSTNAME}"
+    saved_hostname=$(yaml_get system_hostname "$HOST_VARS")
     while true; do
-        ask profile "Profile (${profiles// /, })" "${saved_profile:-personal}"
-        [[ " $profiles " == *" $profile "* ]] && break
-        error "Unknown profile '${profile}'."
+        ask new_hostname "Hostname (now '${current_hostname}'; empty: leave it as it is, '-': forget the saved one)" "$saved_hostname"
+        [ "$new_hostname" = "-" ] && new_hostname="" && break
+        # RFC 1123 label: letters, digits and '-', 1-63 chars, no leading/trailing '-'
+        if [ -z "$new_hostname" ] || [[ "$new_hostname" =~ ^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$ ]]; then
+            break
+        fi
+        error "Invalid hostname '${new_hostname}': use letters, digits and '-' (max 63 chars)."
     done
-
-    # The profile decides whether the hostname is managed (group_vars/profile_*/main.yml)
-    if [ "$(yaml_get alpi_manage_hostname "group_vars/profile_${profile}/main.yml")" = "True" ]; then
-        current_hostname=$(hostnamectl hostname 2>/dev/null || true)
-        current_hostname="${current_hostname:-$HOSTNAME}"
-        saved_hostname=$(yaml_get system_hostname "$HOST_VARS")
-        while true; do
-            ask new_hostname "Hostname" "${saved_hostname:-$current_hostname}"
-            # RFC 1123 label: letters, digits and '-', 1-63 chars, no leading/trailing '-'
-            if [[ "$new_hostname" =~ ^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$ ]]; then
-                break
-            fi
-            error "Invalid hostname '${new_hostname}': use letters, digits and '-' (max 63 chars)."
-        done
-    fi
 
     # Git identity: defaults to what was saved before, then to the current ~/.gitconfig.
     # Leaving both empty means the playbook does not touch user.name/user.email.
@@ -113,14 +105,15 @@ if [ -t 0 ]; then
         error "Invalid e-mail '${git_email}'."
     done
 
-    python3 - "$HOST_VARS" "$profile" "$new_hostname" "$git_name" "$git_email" <<'PY'
+    python3 - "$HOST_VARS" "$new_hostname" "$git_name" "$git_email" <<'PY'
 import os, sys, yaml
-path, profile, hostname, name, email = sys.argv[1:]
+path, hostname, name, email = sys.argv[1:]
 data = {}
 if os.path.exists(path):
     with open(path) as f:
         data = yaml.safe_load(f) or {}
-data.update({"alpi_profile": profile, "git_user_name": name, "git_user_email": email})
+data.pop("alpi_profile", None)  # profiles were replaced by pick.py (2026-10-08)
+data.update({"git_user_name": name, "git_user_email": email})
 if hostname:
     data["system_hostname"] = hostname
 else:
@@ -130,17 +123,20 @@ with open(path, "w") as f:
     f.write("# Hand-written settings go in custom.yml next to this file (see custom.yml.example).\n")
     yaml.safe_dump(data, f, sort_keys=False, allow_unicode=True, default_flow_style=False)
 PY
-    success "Settings saved to ${HOST_VARS} (profile '${profile}')."
+    success "Settings saved to ${HOST_VARS}."
+
+    # 4. Packages and features: only what this distro offers; saved to selection.yml
+    python3 pick.py
 else
-    warn "No terminal: settings not asked. The playbook uses ${HOST_VARS} if it exists."
+    warn "No terminal: settings and packages not asked. The playbook uses ${HOST_VARS_DIR}/ if it exists."
 fi
 
 if [ ! -f "$HOST_VARS_DIR/custom.yml" ]; then
-    warn "No ${HOST_VARS_DIR}/custom.yml: repository defaults only. To customize packages and features:"
+    prompt "Packages outside the catalog, uninstalls or hardware vetoes go in a custom.yml:"
     echo -e "      ${C_YELLOW}cp custom.yml.example ${HOST_VARS_DIR}/custom.yml${C_RESET}"
 fi
 
-# 4. Optional vault (API keys)
+# 5. Optional vault (API keys)
 VAULT_FLAG=""
 if [ -f "group_vars/all/secrets.yml" ]; then
     if grep -q "\$ANSIBLE_VAULT" "group_vars/all/secrets.yml"; then
@@ -151,9 +147,9 @@ if [ -f "group_vars/all/secrets.yml" ]; then
     fi
 fi
 
-# 5. Final instructions
+# 6. Final instructions
 echo ""
 prompt "Bootstrap complete! Preview what will be installed (changes nothing):"
 echo -e "${C_GREEN}ansible-playbook site.yml -K --tags resolve${VAULT_FLAG}${C_RESET}"
-prompt "Then run the full playbook:"
+prompt "Change the package choice later with ./pick.py. Then run the full playbook:"
 echo -e "${C_GREEN}ansible-playbook site.yml -K${VAULT_FLAG}${C_RESET}"

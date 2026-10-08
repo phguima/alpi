@@ -4,10 +4,11 @@
 # _case.broken_repo adds an unreachable repository for the duration of the case.
 - name: "Case | {{ _case.name }}"
   vars:
-    alpi_profile: "{{ _case.profile | default(alpi_profile_unset) }}"
     packages_add: "{{ _case.packages_add | default([]) }}"
     packages_skip: "{{ _case.packages_skip | default([]) }}"
     packages_absent: "{{ _case.packages_absent | default([]) }}"
+    packages_selection_add: "{{ _case.packages_selection_add | default([]) }}"
+    features_selection: "{{ _case.features_selection | default({}) }}"
     features: "{{ _case.features | default({}) }}"
     alpi_strict: "{{ _case.strict | default(false) }}"
     system_hostname: "{{ _case.system_hostname | default('') }}"

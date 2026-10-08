@@ -1,7 +1,0 @@
----
-# Work machine (AAPI): never touches the hostname, no games.
-alpi_manage_hostname: false
-packages_profile: []
-packages_profile_skip: []
-features_profile:
-  steam: false

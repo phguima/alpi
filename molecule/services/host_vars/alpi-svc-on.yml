@@ -1,2 +1,2 @@
 ---
-alpi_profile: work
+# Defaults only: ClamAV on, so freshclam must be enabled and running

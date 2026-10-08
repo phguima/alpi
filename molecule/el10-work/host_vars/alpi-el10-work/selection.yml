@@ -1,0 +1,7 @@
+---
+# As pick.py writes it: differences from the defaults. Steam is not listed by the picker on EL
+# (unavailable); this is a selection made on Fedora and carried over.
+packages_selection_add: []
+packages_selection_skip: [chromium, discord, drawy, telegram, bitwarden, displaycal, gpu-screen-recorder]
+features_selection:
+  steam: false

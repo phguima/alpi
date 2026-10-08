@@ -7,5 +7,4 @@
       vars:
         _case:
           name: Debian 13
-          profile: work
           expect: ["ALPI does not support Debian 13", "Supported: Fedora 41-44, AlmaLinux 10"]

@@ -8,10 +8,10 @@
         src: /opt/alpi/host_vars/127.0.0.1/bootstrap.yml
       register: _file
 
-    - name: Verify | Settings from the last run, git identity kept
+    - name: Verify | Settings from the last run, git identity kept, legacy profile dropped
       ansible.builtin.assert:
         that:
-          - _saved.alpi_profile == 'personal'
+          - "'alpi_profile' not in _saved"
           - _saved.system_hostname == 'noir'
           - _saved.git_user_name == 'Test User'
           - _saved.git_user_email == 't@example.com'
@@ -19,6 +19,23 @@
         quiet: true
       vars:
         _saved: "{{ _file.content | b64decode | from_yaml }}"
+
+    - name: Verify | Read the selection
+      ansible.builtin.slurp:
+        src: /opt/alpi/host_vars/127.0.0.1/selection.yml
+      register: _sel_file
+
+    - name: Verify | Selection holds only the differences from the defaults
+      ansible.builtin.assert:
+        that:
+          - _sel.packages_selection_add == []
+          - _sel.packages_selection_skip == ['tmux', 'chkrootkit']
+          - "_sel.features_selection == {'steam': false}"
+          - _sel.keys() | list | sort == ['features_selection', 'packages_selection_add', 'packages_selection_skip']
+        fail_msg: "{{ _sel | to_json }}"
+        quiet: true
+      vars:
+        _sel: "{{ _sel_file.content | b64decode | from_yaml }}"
 
     - name: Verify | Legacy file is gone
       ansible.builtin.stat:

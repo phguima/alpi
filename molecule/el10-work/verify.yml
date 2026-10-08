@@ -5,11 +5,22 @@
     - name: Verify | Installed
       ansible.builtin.include_tasks: ../shared/verify_installed.yml
 
-    - name: Verify | Steam stays out (feature off, and unavailable on EL even when added)
+    - name: Verify | Steam stays out (feature off in selection.yml, and unavailable on EL even when added)
       ansible.builtin.assert:
         that:
           - not alpi_feature.steam
           - "'steam' in alpi_pkgs_extra.unavailable"
+        quiet: true
+
+    - name: Verify | Skips from both selection.yml and custom.yml applied
+      ansible.builtin.assert:
+        that:
+          - "'chromium' not in alpi_pkgs.native"
+          - "'org.telegram.desktop' not in alpi_pkgs.flatpak"
+          - "'com.slack.Slack' not in alpi_pkgs.flatpak"
+          - "'com.rtosta.zapzap' not in alpi_pkgs.flatpak"
+          - "'brave-browser' in alpi_pkgs.native"
+        fail_msg: "native: {{ alpi_pkgs.native }}, flatpak: {{ alpi_pkgs.flatpak }}"
         quiet: true
 
     - name: Verify | Same resolution with EL10's ansible-core 2.16
@@ -42,7 +53,7 @@
       register: _out
       changed_when: false
 
-    - name: Verify | Hostname untouched (work profile), only the git defaults set
+    - name: Verify | Hostname untouched (none set), only the git defaults set
       ansible.builtin.assert:
         that:
           - _out.results[0].stdout == 'alpi-el10-work'

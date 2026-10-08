@@ -3,7 +3,7 @@
 # AAPI 1.1. Other layers, each with its own keys so nothing is overwritten (the merge happens
 # once, in tasks/resolve.yml):
 #   group_vars/os_*:      packages_os
-#   group_vars/profile_*: packages_profile, packages_profile_skip
+#   host_vars/127.0.0.1/selection.yml (pick.py): packages_selection_add, packages_selection_skip
 #   features (group_vars/all/features.yml): feature_packages while a feature is on
 #   host_vars/127.0.0.1/custom.yml: packages_add, packages_skip, packages_absent (applied last)
 packages_base:

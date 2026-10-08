@@ -10,6 +10,14 @@
         that: alpi_feature.steam and alpi_feature.asus and alpi_feature.clamav
         quiet: true
 
+    - name: Verify | selection.yml applied (Flatseal added without a desktop, Chromium skipped)
+      ansible.builtin.assert:
+        that:
+          - "'flatseal' in alpi_pkgs.native"
+          - "'chromium' not in alpi_pkgs.native"
+          - "'com.slack.Slack' not in alpi_pkgs.flatpak"
+        quiet: true
+
     - name: Verify | Read the git config
       ansible.builtin.command: git config --file /root/.gitconfig --list
       register: _git

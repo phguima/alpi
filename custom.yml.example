@@ -1,11 +1,12 @@
 ---
 # Copy to host_vars/127.0.0.1/custom.yml (git-ignored) and edit. Applied last: it wins over the
-# repository defaults and the profile. Ids come from group_vars/all/catalog.yml; names outside the
+# repository defaults and the picker's selection.yml (./pick.py, which covers catalog packages and
+# features; this file is for the rest). Ids come from group_vars/all/catalog.yml; names outside the
 # catalog use a prefix: "pkg:<native package>" or "flatpak:<app id>".
 
-# Features to switch (see group_vars/all/features.yml). Hardware ones accept only false (veto).
+# Features to switch (see group_vars/all/features.yml). Hardware ones accept only false (veto):
+# the picker does not list them.
 features: {}
-#  steam: false
 #  nvidia: false
 
 # Extra packages, installed after the base set

@@ -1,6 +1,7 @@
 # ALPI — Ansible Linux Post-Install
 
-Architecture proposal (2026-10-05). Revised after an adversarial review.
+Architecture proposal (2026-10-05). Revised after an adversarial review. Profiles replaced by the
+package picker on 2026-10-08 (see "Decisions (2026-10-08)").
 
 ## Goal
 
@@ -33,13 +34,15 @@ keeps the duplication, and every new distro would become a whole repository.
 ### Three independent axes
 
 1. **Distro**: detected from `ansible_facts`.
-2. **Hardware**: detected (NVIDIA, ASUS, AMD, Secure Boot). The profile or the user can **only
-   veto** it (`nvidia: auto | false`).
-3. **Machine/user**: lives in `host_vars`, outside git. The thevoid UUID leaves the repository and
-   comes here.
+2. **Hardware**: detected (NVIDIA, ASUS, AMD, Secure Boot). The user can **only veto** it
+   (`nvidia: auto | false`).
+3. **Machine/user**: lives in `host_vars`, outside git: the hostname and git identity
+   (`bootstrap.yml`), the package and feature choice (`selection.yml`, written by the picker) and
+   hand-written settings (`custom.yml`). The thevoid UUID leaves the repository and comes here.
 
-The **profile** (`personal`, `work`) carries policy (hostname, hardware vetoes) and package/feature
-sets (e.g. `work` skips steam and discord). It can never turn on hardware that was not detected.
+There are no profiles (removed on 2026-10-08). What a profile used to decide is a choice made on
+the machine: the hostname is managed only when one is given, and packages and features are picked
+from what the running distro offers (see "Package picker").
 
 ### Structure
 
@@ -52,9 +55,10 @@ alpi/
   group_vars/
     all/                    # shared: user, git, flatpaks, zsh, ai_tools; secrets.yml (vault)
     os_Fedora/  os_AlmaLinux_10/  os_Debian_13/ …
-    profile_personal/  profile_work/
+  pick.py                   # package picker (run by bootstrap, or on its own)
   host_vars/127.0.0.1/      # git-ignored
     bootstrap.yml           # written by bootstrap (hostname, git identity)
+    selection.yml           # written by pick.py (differences from the defaults)
     custom.yml              # written by the user (see custom.yml.example)
   roles/
     repos/                  # NEW, runs first: rpmfusion/epel/crb/copr | apt sources/extrepo/PPA
@@ -70,10 +74,9 @@ behavior differs.
 
 ### Design rules
 
-- **Precedence:** do not use `include_vars` for distro/profile, because it has higher priority than
-  `host_vars` and the profile would silently override the user. Instead, `group_by` creates dynamic
-  groups (`os_<distro>`, `os_<distro>_<major>`, `profile_<name>`) and the data lives in
-  `group_vars/`. That keeps `host_vars` and `-e` on top. Layers never share a key (each has its own
+- **Precedence:** do not use `include_vars` for distro data, because it has higher priority than
+  `host_vars` and would silently override the user. Instead, `group_by` creates dynamic groups
+  (`os_<distro>`, `os_<distro>_<major>`) and the data lives in `group_vars/`. That keeps `host_vars` and `-e` on top. Layers never share a key (each has its own
   `packages_*`/`features_*` names), so the order between groups does not matter;
   `ansible_group_priority` would not help anyway, since it only works in the inventory source.
 - **Explicit support:** an allowlist of (distro, version) with an assert before loading any
@@ -143,9 +146,11 @@ packages_absent: [akregator]   # explicit uninstall (see Removal)
 
 ### Rules
 
-- **Merging:** each layer uses its own keys (`packages_base`, `packages_profile`, `packages_add`,
-  `packages_skip`). A single `set_fact` builds the final list:
-  `(base + profile + add) | unique | difference(skip)`. The user layer is applied last. Never use
+- **Merging:** each layer uses its own keys (`packages_base`, `packages_selection_add`,
+  `packages_selection_skip`, `packages_add`, `packages_skip`). Files in the same `host_vars`
+  directory do not merge a shared key (the last one loaded wins), so `selection.yml` and
+  `custom.yml` never share one. A single `set_fact` builds the final list:
+  `(base + selection_add + add) | unique | difference(selection_skip + skip)`. The user layer is applied last. Never use
   `hash_behaviour`.
 - **Validation** (in `env_setup`, before anything changes on the system):
   - an unknown id stops the run and lists all unknown ids;
@@ -162,10 +167,32 @@ packages_absent: [akregator]   # explicit uninstall (see Removal)
   happens only through `packages_absent` (catalog ids or prefixed raw names, same validation),
   with `autoremove: false` so dependencies are not cascaded away. An id in both an install list
   and `packages_absent` is an error.
-- **Separate files:** bootstrap rewrites its own `bootstrap.yml` with PyYAML, which would wipe
-  hand-written comments. That is why `custom.yml` is a separate file. Since both stay outside git,
-  `git pull` never conflicts.
-- **No interactive picker in bootstrap:** it would re-implement the catalog in bash.
+- **Separate files:** bootstrap and the picker rewrite their own files (`bootstrap.yml`,
+  `selection.yml`) with PyYAML, which would wipe hand-written comments. That is why `custom.yml` is
+  a separate file. Since all three stay outside git, `git pull` never conflicts.
+
+### Package picker (2026-10-08)
+
+`pick.py` (Python, run by `bootstrap.sh` or on its own) replaces the profiles. The 2026-10-05
+objection to a picker was that it would re-implement the catalog in bash; in Python it reuses the
+catalog files and `filter_plugins/alpi.py` (`alpi_resolve`), so it lists exactly what the playbook
+would resolve.
+
+- **Only what this system offers:** ids that are `~` on the running distro are hidden, so are the
+  packages of a desktop that is not running (same `XDG_CURRENT_DESKTOP` rule as `env_setup`) and
+  features whose packages are all unavailable (Steam on EL). Packages a feature owns
+  (`feature_packages`) are switched through the feature, not listed on their own.
+- **Hardware is not listed:** it follows detection; vetoes stay in `custom.yml`. The picker would
+  have to repeat the detection (`lspci`) to show it.
+- **Defaults pre-checked:** `packages_base` + `packages_os` + the running desktop's list, and
+  `features_default`.
+- **Stored as differences** in `selection.yml`: `packages_selection_add`, `packages_selection_skip`,
+  `features_selection`. Defaults added to the repository later still arrive with `git pull`.
+  Saved entries for ids the picker does not list this time (another desktop's packages) are kept;
+  ids no longer in the catalog are dropped with a warning (the playbook fails on them until then).
+- **Interface:** `whiptail` checklists (bootstrap installs `newt`), plain prompts otherwise or with
+  `ALPI_PICKER=text`. Cancel leaves `selection.yml` as it was. No terminal, no picker: the
+  playbook uses the defaults (and Molecule never runs it).
 
 ### Flatpak permissions (already in AFPI/AAPI)
 
@@ -202,7 +229,7 @@ Each of these becomes a feature or is guarded by the resolved package set.
 ## Tests
 
 - **Golden test:** a play that only prints the resolved package, flatpak and feature sets for each
-  (distro, profile, DE). The output is compared with what AFPI and AAPI install today. This is what
+  (distro, DE, selection). The output is compared with what AFPI and AAPI install today. This is what
   proves parity.
 - **Podman containers** (`fedora:44`, `almalinux:10`, …) per role, run twice to check idempotency.
   The full `site.yml` does not run in a container (no systemd/grub).
@@ -216,7 +243,8 @@ Each of these becomes a feature or is guarded by the resolved package set.
    directory) and `group_vars/all/secrets.yml` stay compatible.
 2. **Restructure** around the three axes, the catalog, the `repos` role and `group_by`. Personal
    aliases go to `host_vars`.
-3. **Fold in the AAPI deltas** as `os_AlmaLinux_10` + the `work` profile. Carry both legacy
+3. **Fold in the AAPI deltas** as `os_AlmaLinux_10` (the work machine's choices go in its
+   `selection.yml`). Carry both legacy
    `.zshrc` block cleanups (`NVIDIA AND API CONFIGURATION` and `API CONFIGURATION`).
 4. **Prove parity** with the golden test + containers + VM.
 5. **Freeze AAPI** with a README pointing to ALPI. The in-progress AFPI work (`noir` reinstall,
@@ -232,8 +260,21 @@ Each of these becomes a feature or is guarded by the resolved package set.
 2. **Uninstall:** yes, only through an explicit `packages_absent` list, without autoremove.
 3. **Unknown catalog id:** fail early, in `env_setup`, listing every unknown id.
 4. **Profile:** policy + package/feature sets; hardware stays detected and can only be vetoed.
+   *Superseded on 2026-10-08: no profiles, see below.*
 5. **VirtualBox:** fixed source per distro: RPM Fusion akmod + kmodgenca on Fedora, Oracle repo on
    EL. No user choice.
 6. **Debian/Ubuntu:** after Fedora + AlmaLinux parity, and only with a test VM. Reserve the slots
    (support matrix, catalog columns) now; write no tasks for them yet.
 7. **Desktops:** GNOME and KDE from the start (parity requires both).
+
+## Decisions (2026-10-08)
+
+1. **Profiles removed.** Deciding a machine's packages by a name chosen in advance (`personal`,
+   `work`) does not fit: the choice belongs to the machine. They carried little (`work`: no
+   hostname, no Steam). Replaced by:
+   - the hostname: managed only when `bootstrap.sh` is given one (empty leaves it alone);
+   - packages and features: `pick.py`, listing only what the running distro offers, saved as
+     differences from the defaults in `host_vars/127.0.0.1/selection.yml`.
+2. **Hardware vetoes stay in `custom.yml`**, not in the picker (no second detection).
+3. A `bootstrap.yml` written before this keeps working: `alpi_profile` is ignored by the playbook
+   and dropped by the next `bootstrap.sh`.

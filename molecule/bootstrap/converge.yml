@@ -5,6 +5,8 @@
     _dir: /opt/alpi
     _env:
       PATH: "/opt/shim:{{ ansible_facts['env']['PATH'] }}"
+      # bootstrap.sh installs whiptail; the scripted answers need the picker's text prompts
+      ALPI_PICKER: text
   tasks:
     - name: Bootstrap | Install script(1)
       ansible.builtin.package:
@@ -29,7 +31,7 @@
         src: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/{{ item }}"
         dest: "{{ _dir }}/"
         mode: preserve
-      loop: [bootstrap.sh, site.yml, group_vars, custom.yml.example]
+      loop: [bootstrap.sh, pick.py, filter_plugins, site.yml, group_vars, custom.yml.example]
 
     # bootstrap.sh still runs its 'ansible-galaxy collection install'; with the collection in place
     # it answers "Nothing to do" without contacting Galaxy.
@@ -43,19 +45,23 @@
         path: "{{ _dir }}/host_vars/127.0.0.1/bootstrap.yml"
       register: _saved
 
-    # AFPI/AAPI kept the settings in host_vars/127.0.0.1.yml; bootstrap.sh must move it.
+    # AFPI/AAPI kept the settings in host_vars/127.0.0.1.yml; bootstrap.sh must move it. The
+    # profile from an earlier ALPI must be dropped.
     - name: Bootstrap | Legacy settings file
       ansible.builtin.copy:
         dest: "{{ _dir }}/host_vars/127.0.0.1.yml"
-        content: "system_hostname: old\ngit_user_name: \"O'Neil\"\n"
+        content: "system_hostname: old\ngit_user_name: \"O'Neil\"\nalpi_profile: personal\n"
         mode: "0644"
       when: not _saved.stat.exists
 
-    # Unknown profile and invalid e-mail are asked again. 'work' never asks for the hostname
-    # and drops the one from the legacy file.
-    - name: Bootstrap | First run (work)
+    # Invalid hostname and e-mail are asked again; '-' forgets the saved hostname. The picker
+    # (text mode) rejects a line with an unknown id and applies nothing from it. +/- answers do
+    # not depend on an earlier run (idempotence repeats this play).
+    - name: Bootstrap | First run
       ansible.builtin.shell:
-        cmd: printf 'bogus\nwork\nTest User\nnot-an-email\nt@example.com\n' | script -qec ./bootstrap.sh /dev/null
+        cmd: >-
+          printf 'bad_name\n-\nTest User\nnot-an-email\nt@example.com\n-steam\n\n-tmux nope\n-tmux\n\n'
+          | script -qec ./bootstrap.sh /dev/null
         chdir: "{{ _dir }}"
       environment: "{{ _env }}"
       register: _run1
@@ -64,10 +70,12 @@
     - name: Bootstrap | First run asked again after the bad answers
       ansible.builtin.assert:
         that:
-          - "\"Unknown profile 'bogus'\" in _run1.stdout"
+          - "\"Invalid hostname 'bad_name'\" in _run1.stdout"
           - "\"Invalid e-mail 'not-an-email'\" in _run1.stdout"
-          - "'Hostname' not in _run1.stdout"
-          - "\"profile 'work'\" in _run1.stdout"
+          - "'Unknown: nope. Nothing changed.' in _run1.stdout"
+          # Only a real change is echoed: tmux is already off when idempotence repeats this
+          - "_saved.stat.exists or 'tmux: off' in _run1.stdout"
+          - "'Selection saved to' in _run1.stdout"
           - "not _saved.stat.exists or 'Moved host_vars/127.0.0.1.yml' not in _run1.stdout"
         fail_msg: "{{ _run1.stdout }}"
         quiet: true
@@ -79,19 +87,19 @@
         quiet: true
       when: not _saved.stat.exists
 
-    # 'personal' asks for the hostname; Enter keeps the saved git identity.
-    - name: Bootstrap | Second run (personal)
+    # Enter keeps the saved git identity and the saved selection (Steam stays off); one more skip.
+    - name: Bootstrap | Second run
       ansible.builtin.shell:
-        cmd: printf 'personal\nnoir\n\n\n' | script -qec ./bootstrap.sh /dev/null
+        cmd: printf 'noir\n\n\n\n-chkrootkit\n\n' | script -qec ./bootstrap.sh /dev/null
         chdir: "{{ _dir }}"
       environment: "{{ _env }}"
       register: _run2
       changed_when: false
 
-    - name: Bootstrap | Second run asked for the hostname
+    - name: Bootstrap | Second run saved the settings and the selection
       ansible.builtin.assert:
         that:
-          - "'Hostname' in _run2.stdout"
-          - "\"profile 'personal'\" in _run2.stdout"
+          - "'Settings saved to' in _run2.stdout"
+          - "'2 skipped, features changed: steam=False' in _run2.stdout"
         fail_msg: "{{ _run2.stdout }}"
         quiet: true

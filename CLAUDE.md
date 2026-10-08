@@ -20,18 +20,26 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 
 ## Layout (skeleton, 2026-10-05)
 
-- `site.yml`: `tasks/env_setup.yml` (support matrix assert → profile assert → user/hardware/DE
-  facts, ported from AFPI → `group_by` into `os_<distro>`, `os_<distro>_<major>`,
-  `profile_<name>` → machine-settings assert → `tasks/resolve.yml`), then the roles (`repos`,
+- `site.yml`: `tasks/env_setup.yml` (support matrix assert → user/hardware/DE facts, ported from
+  AFPI → `group_by` into `os_<distro>`, `os_<distro>_<major>` → machine-settings assert →
+  `tasks/resolve.yml`), then the roles (`repos`,
   `akmods_mok`, `virtualbox`, `packages`, `common`, `clamav`, `nvidia` so far).
 - `tasks/resolve.yml` + `filter_plugins/alpi.py`: catalog lookup, merge of the package/feature
   layers, all validation (fails before anything changes). Keep logic in the filter plugin, not in
   long Jinja expressions.
-- `group_vars/all/{support,catalog,packages,features,repos,machine}.yml`, `group_vars/os_*/`,
-  `group_vars/profile_*/`: each layer has its own keys, so group order does not matter
-  (`ansible_group_priority` does not work in `group_vars/`).
-- `host_vars/127.0.0.1/bootstrap.yml` (written by `bootstrap.sh`: `alpi_profile`, hostname, git
-  identity) and `custom.yml` (the user's, see `custom.yml.example`), both git-ignored.
+- `group_vars/all/{support,catalog,packages,features,repos,machine}.yml`, `group_vars/os_*/`:
+  each layer has its own keys, so group order does not matter (`ansible_group_priority` does not
+  work in `group_vars/`).
+- No profiles (removed 2026-10-08, PROPOSAL "Decisions (2026-10-08)"). `host_vars/127.0.0.1/`
+  (git-ignored): `bootstrap.yml` (written by `bootstrap.sh`: hostname, git identity),
+  `selection.yml` (written by `pick.py`: `packages_selection_add/_skip`, `features_selection`,
+  differences from the defaults) and `custom.yml` (the user's, see `custom.yml.example`, applied
+  last). Files in one `host_vars` directory do not merge a shared key: never reuse a key across
+  them.
+- `pick.py`: the package picker (whiptail, or text prompts with `ALPI_PICKER=text`). Reads the
+  catalog files and reuses `filter_plugins/alpi.py`, so it lists exactly what the playbook would
+  resolve on the running distro/desktop; hardware features are not listed (vetoes in
+  `custom.yml`). Unit tests in `tests/unit/test_pick.py` (fake `/etc/os-release`).
 - `roles/repos` (before `packages`): enables `alpi_repos_enabled` from `resolve.yml` (the distro's
   always-on repos, then the ones the selected catalog entries name with `repo:`). Repositories with
   `repo_gpgcheck` get `dnf -y makecache` so their metadata key is imported; otherwise every
@@ -57,7 +65,7 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   (NVIDIA detected, Fedora, not skipped).
 - Hardware features (`alpi_hardware_features`: nvidia, asus, intel, amd) follow detection and can
   only be vetoed; their packages come from `feature_packages`.
-- `roles/common`: hostname (only when the profile sets `alpi_manage_hostname`) and the git
+- `roles/common`: hostname (only when `system_hostname` is set) and the git
   identity/defaults in the user's `~/.gitconfig` (`group_vars/all/machine.yml`, values from
   `bootstrap.yml`; validated in `env_setup.yml`).
 - Golden test: `ansible-playbook site.yml --tags resolve` only resolves and prints the sets.
@@ -78,7 +86,7 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   The Molecule controller runs on the host, but every playbook run targets the scenario's
   container, never the host: plays get their hosts from Molecule's inventory, not `localhost`.
 - Layout: `molecule/<scenario>/` (`molecule.yml`, `converge.yml`, `verify.yml`), one scenario per
-  distro/profile or role as needed. Use systemd-enabled images (`command: /sbin/init`) where
+  distro or role as needed. Use systemd-enabled images (`command: /sbin/init`) where
   services are involved. `verify.yml` asserts the outcome (packages, files, settings), not only
   that the run did not fail.
 - Run: `molecule test -s <scenario>` (create → converge → idempotence → verify → destroy). The
@@ -97,7 +105,11 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `~/.local/bin` is an old broken pip install of the user's; leave it alone).
   - In this harness, pipe Molecule's output (`molecule … 2>&1 | cat`): Ansible refuses to run
     with non-blocking stdio.
-  - Molecule uses the host's `ansible-core` (`/usr/bin`, 2.20) and needs `containers.podman` in
+  - Molecule runs the first `ansible-playbook` in `PATH`. `tests/run.sh` puts the pipx venv's own
+    `ansible-core` (a Molecule dependency, 2.21 on 2026-10-08) first, so both machines test with
+    the same controller; the system one is 2.20 on the Fedora personal machine and 2.16 on the
+    AlmaLinux 10 work machine, whose dnf5 module cannot install by URL. Plain `molecule test`
+    uses the system one. It needs `containers.podman` in
     `~/.ansible/collections` (`ansible-galaxy collection install containers.podman -p
     ~/.ansible/collections --force`; the copy in Fedora's `ansible` package is not searched).
   - `.config/molecule/config.yml` is the base config: podman driver, `ALPI_TARGET=all` (site.yml
@@ -111,9 +123,11 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     reviewing the diff), `fedora44-personal`, `el10-work` (real installs, heaviest apps skipped;
     `shared/verify_installed.yml` checks everything resolved is installed; `el10-work` also
     resolves with EL10's own ansible-core 2.16 inside the container,
-    `shared/verify_native_controller.yml`), `failures` (every validation
-    must fail with its message, `shared/expect_failure.yml`; Fedora + Alma), `unsupported`
-    (Debian 13), `bootstrap` (bootstrap.sh with scripted answers), `common` (env_setup +
+    `shared/verify_native_controller.yml`; both keep their settings in a host_vars directory,
+    `host_vars/<instance>/{custom,selection}.yml`, like a real machine, and check that both
+    files' layers apply), `failures` (every validation must fail with its message,
+    `shared/expect_failure.yml`; Fedora + Alma), `unsupported` (Debian 13), `bootstrap`
+    (bootstrap.sh with scripted answers, picker in text mode), `common` (env_setup +
     `roles/common` on `almalinux/10-init` with systemd: static hostname via hostnamectl, git),
     `secureboot` (env_setup + `akmods_mok`, `virtualbox`, `nvidia`, nothing downloaded; Secure Boot
     detected from a fake EFI variable mounted over `/sys/firmware`: Fedora with Secure Boot and
@@ -136,9 +150,7 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `raw` without a shell (wrap in `sh -c`). Bare Fedora lacks the Python rpm bindings, so verify
     with `rpm -q --whatprovides` (`shared/verify_installed.yml`), not `package_facts`.
   - A failure-case harness must be shown to fail on a case that should not fail before trusting it.
-  - `failures` runs every case in one play, and `group_by` groups stay for the whole play: a case
-    that depends on profile group_vars must come before cases that join another profile group
-    (with two profile groups the alphabetically last one wins, e.g. `profile_work`).
+  - `failures` runs every case in one play, and `group_by` groups stay for the whole play.
   - Pass/fail is Molecule's exit code and the absence of `Executed: Failed` lines, **not** the
     `SCENARIO RECAP`: after a failed step Molecule runs cleanup and the recap can still say
     `failed=0` (a non-zero `missing=` is the hint). This hid an idempotence failure on

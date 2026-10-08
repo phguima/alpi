@@ -1,7 +1,7 @@
 ---
-# AlmaLinux 10, work profile: resolution + the packages role, and the same resolution run by EL10's
-# own ansible-core 2.16 inside the container (a real run uses it as the controller; Molecule's
-# controller is the host's newer ansible-core).
+# AlmaLinux 10, work machine (custom.yml + selection.yml): resolution + the packages role, and
+# the same resolution run by EL10's own ansible-core 2.16 inside the container (a real run uses
+# it as the controller; Molecule's controller is the host's newer ansible-core).
 # Repos: CRB, EPEL, RPM Fusion EL, Brave, VS Code, GitHub CLI. Flatpaks are covered by
 # fedora44-personal and skipped here.
 platforms:
