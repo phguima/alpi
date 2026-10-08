@@ -4,33 +4,18 @@ Work plan. Done items are ticked (with the commit); a section is removed once al
 ticked. Architecture, rationale and decisions in `PROPOSAL.md`. Every item ships with its Molecule
 scenarios / unit tests (see `CLAUDE.md`).
 
-## 2. Bring in AFPI (Fedora, personal machine)
+## 2. Bring in the rest of AFPI (not listed in the first pass)
 
-- [x] Port AFPI's roles and lists:
-  - [x] Repositories: RPM Fusion, Brave, VS Code, GitHub CLI, ASUS COPR (`c952aff`).
-  - [x] Application lists: DNF common/KDE/GNOME, Flatpaks, ClamAV and Steam as features
-        (`0649a6a`, validated in `9080809`).
-  - [x] Fonts, codecs (ffmpeg swap, @multimedia on Fedora), Intel/AMD video acceleration
-        (`5b24977`).
-  - [x] NVIDIA driver + `akmods_mok` (`56afb1b`).
-  - [x] VirtualBox as a feature: RPM Fusion akmod on Fedora, Oracle repository + own key on EL
-        (`feat(virtualbox): …`).
-- [x] Apply `system_hostname` and the git identity (`8d90381`).
-- [x] Replace the profiles with the package picker (`pick.py`, `selection.yml`), listing only
-      what the running distro offers (`feat(picker): …`).
-- [x] ASUS feature tasks beyond the packages (`/etc/asusd`, `supergfxd.service`, ROG GUI
-      autostart), with a Fedora 44 + systemd image built by the `asus` scenario
-      (`feat(asus): …`).
-- [x] Personal aliases (`open/close-thevoid`, LUKS UUID) to `host_vars` (`luks_volumes`,
-      `zsh_aliases_custom` in `custom.yml`), with the zsh/Oh My Zsh setup they live in
-      (`roles/zsh`; API keys block still to port) (`feat(zsh): …`).
-- [x] Feature gates:
-  - [x] VirtualBox: driven by the resolved set, no string match (`feat(virtualbox): …`).
-  - [x] ClamAV: `roles/clamav` enables freshclam only when its package was resolved
-        (`feat(clamav): …`).
-  - [x] Flatpak overrides only for apps being installed (`feat(flatpak): …`).
-- [x] `flatpak_filesystem_overrides` empty in the repo, ZapZap in `custom.yml.example`
-      (`feat(flatpak): …`).
+AAPI has the same roles (with dnf4 differences); port each for both distros.
+
+- [ ] System update (`update` role): dnf configuration, full upgrade, stop when a reboot is
+      needed.
+- [ ] Kernel maintenance (old and debug kernels, debug repositories) and GRUB settings.
+- [ ] Desktop: Konsole profile and colors (KDE), Ptyxis settings (GNOME), cedilla (`.XCompose`).
+- [ ] `~/wks` workspace directory.
+- [ ] AI tools: Claude Code, pipx tools (Playwright), Antigravity CLI and IDE (AppImage, menu
+      entry), and the API keys block in `.zshrc` (goes with section 3's legacy block cleanup).
+- [ ] Steam shortcut that runs on the NVIDIA GPU.
 
 ## 3. Bring in AAPI (AlmaLinux 10, work machine)
 

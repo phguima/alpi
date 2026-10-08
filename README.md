@@ -1,13 +1,13 @@
 # ALPI (Ansible Linux Post-Install)
 
-[![Project Status: Design](https://img.shields.io/badge/Project%20Status-Design-yellow.svg)](#-project-status)
+[![Project Status: Porting](https://img.shields.io/badge/Project%20Status-Porting-yellow.svg)](#-project-status)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 ALPI is a single Ansible post-install for Linux workstations. It detects the running distribution and applies the right setup for it. It unifies [AFPI](https://github.com/phguima/afpi) (Fedora) and [AAPI](https://github.com/phguima/aapi) (AlmaLinux 10), and is designed to take in other distributions (Debian, Ubuntu…) later.
 
 ## 📊 Project Status
 
-*   **Stage:** skeleton. Distro detection, the package catalog, the package picker and user customization work (validated on Fedora 44 and AlmaLinux 10 containers); the roles from AFPI/AAPI are not ported yet. The architecture is described in [`PROPOSAL.md`](PROPOSAL.md) and the work plan is in [`TODO.md`](TODO.md).
+*   **Stage:** porting. Ported from AFPI so far: repositories, the package catalog and picker, codecs, NVIDIA and VirtualBox (with Secure Boot signing), ClamAV, ASUS, Flatpak overrides, hostname, git and zsh. Still to port: system update, kernel maintenance and GRUB, desktop and terminal settings, AI tools, then AAPI's AlmaLinux 10 differences and parity checks on a VM. Validated in Fedora 44 and AlmaLinux 10 containers. The architecture is described in [`PROPOSAL.md`](PROPOSAL.md) and the work plan is in [`TODO.md`](TODO.md).
 *   **Until parity is reached, use AFPI (Fedora) or AAPI (AlmaLinux 10).**
 
 ## 🧭 Design in short
@@ -18,7 +18,7 @@ ALPI is a single Ansible post-install for Linux workstations. It detects the run
 *   **User customization:** a git-ignored `host_vars/127.0.0.1/custom.yml` adds packages outside the catalog, uninstalls and vetoes hardware features, so `git pull` never conflicts with local changes.
 *   **Explicit support matrix:** the playbook stops right away on an unsupported distribution or version.
 
-## 🚀 Usage (skeleton)
+## 🚀 Usage
 
 ```bash
 ./bootstrap.sh                                   # installs Ansible, asks hostname/git identity, runs the picker
