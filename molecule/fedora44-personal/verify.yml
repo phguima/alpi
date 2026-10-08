@@ -18,6 +18,29 @@
           - "'com.slack.Slack' not in alpi_pkgs.flatpak"
         quiet: true
 
+    - name: Verify | Read the Flatpak override files
+      ansible.builtin.slurp:
+        src: "/root/.local/share/flatpak/overrides/{{ item }}"
+      loop: [com.rtosta.zapzap, com.bitwarden.desktop]
+      register: _overrides
+
+    - name: Verify | Check for an override of the skipped app
+      ansible.builtin.stat:
+        path: /root/.local/share/flatpak/overrides/us.zoom.Zoom
+      register: _zoom_override
+
+    - name: Verify | Overrides applied to installed apps only
+      ansible.builtin.assert:
+        that:
+          - "alpi_flatpak_overrides | map(attribute='app') | list == ['com.bitwarden.desktop', 'com.rtosta.zapzap']"
+          - "'filesystems=/srv/wks:ro;' in _files['com.rtosta.zapzap']"
+          - "'ALPI_TEST=1' in _files['com.bitwarden.desktop']"
+          - not _zoom_override.stat.exists
+        fail_msg: "{{ _files | to_json }}"
+        quiet: true
+      vars:
+        _files: "{{ dict(_overrides.results | map(attribute='item') | zip(_overrides.results | map(attribute='content') | map('b64decode'))) }}"
+
     - name: Verify | Read the git config
       ansible.builtin.command: git config --file /root/.gitconfig --list
       register: _git

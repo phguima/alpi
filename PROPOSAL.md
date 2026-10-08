@@ -216,6 +216,13 @@ In ALPI:
 - The fixed Bitwarden and Zoom overrides (Wayland, cedilla) can become the same mechanism,
   generalized to `flatpak_overrides: {app: [flags]}` and applied only when the app is in the
   resolved set.
+- (2026-10-08, done) Layers, each with its own key: `flatpak_overrides_kde` in
+  `group_vars/all/flatpak.yml` (Bitwarden, Zoom; KDE sessions only, as in AFPI), then the user's
+  `flatpak_overrides` (flags) and `flatpak_filesystem_overrides` (folders, AFPI's key) in
+  `custom.yml`. Flags add up per app; a flag not starting with `--` stops the run in `resolve`.
+  Only apps in the resolved Flatpak sets get overrides, so skipping an app skips them. The task
+  reports a change only when the override file differs (AFPI always reported none). Removing an
+  entry does not undo it: `flatpak override --user --reset <app>`.
 
 ### Traps in the current code to fix during migration
 

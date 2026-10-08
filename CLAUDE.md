@@ -49,6 +49,11 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   then replacements (catalog `swap: true`, installed with `allowerasing`: `ffmpeg`,
   `mesa-va-drivers-freeworld`), base, user extras, explicit uninstalls. Needs the `repos` role
   before it (section 2). Native names may be dnf groups (`@multimedia`).
+- Flatpak overrides: `group_vars/all/flatpak.yml` (`flatpak_overrides_kde`: Bitwarden, Zoom) plus
+  the user's `flatpak_overrides` and `flatpak_filesystem_overrides` (`custom.yml`), merged by
+  `alpi_flatpak_overrides` in `resolve.yml` into `alpi_flatpak_overrides`, only for apps in the
+  resolved Flatpak sets; applied at the end of `roles/packages` with `flatpak override --user`
+  (changed only when the override file differs). Removing an entry does not undo it.
 - `roles/akmods_mok` (before `packages`): Secure Boot signing key + MOK enrollment request, only
   when Secure Boot is on and an `akmod-*` package was resolved (akmods signs at build time, so the
   key must exist first). `mok_password` in `group_vars/all/secureboot.yml`. `tasks/enroll.yml`

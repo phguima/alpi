@@ -6,6 +6,13 @@
 packages_skip: [slack, spotify, zoom, zotero]
 packages_add: ["pkg:tree"]
 packages_absent: ["pkg:nano"]
+# Flatpak overrides (no desktop here, so none from the repository's KDE layer): ZapZap and
+# Bitwarden are installed and get theirs; Zoom is skipped above, so its override must not apply.
+flatpak_filesystem_overrides:
+  com.rtosta.zapzap: ["/srv/wks:ro"]
+flatpak_overrides:
+  com.bitwarden.desktop: [--env=ALPI_TEST=1]
+  us.zoom.Zoom: [--env=ALPI_TEST=1]
 # No system_hostname: hostnamectl needs systemd (scenario 'common' covers it).
 git_user_name: Test User
 git_user_email: test@example.com

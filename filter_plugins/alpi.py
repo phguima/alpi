@@ -109,6 +109,34 @@ def alpi_features(merged, hardware, detected):
     return out
 
 
+def alpi_flatpak_overrides(layers, filesystem, selected):
+    """Merge Flatpak override layers and keep the apps that are selected.
+
+    layers:     list of {app id: [flatpak override flags]} (repo, desktop, user), merged in order;
+    filesystem: {app id: [folders]}, the user's folder grants, turned into --filesystem=<folder>;
+    selected:   Flatpak app ids in the resolved sets (only those get overrides).
+    Returns {"apply": [{"app", "flags"}], "skipped": [app ids not selected],
+             "invalid": ["<app>: <flag>" for flags not starting with "--"]}.
+    """
+    merged = {}
+    sources = list(layers or []) + [
+        {app: ["--filesystem=" + str(f) for f in folders or []] for app, folders in (filesystem or {}).items()}
+    ]
+    for layer in sources:
+        for app, flags in (layer or {}).items():
+            out = merged.setdefault(str(app), [])
+            out.extend(str(f) for f in flags or [] if str(f) not in out)
+    selected = set(selected or [])
+    result = {"apply": [], "skipped": [], "invalid": []}
+    for app, flags in merged.items():
+        result["invalid"].extend(f"{app}: {f}" for f in flags if not f.startswith("--"))
+        if app not in selected:
+            result["skipped"].append(app)
+        elif flags:
+            result["apply"].append({"app": app, "flags": flags})
+    return result
+
+
 class FilterModule(object):
     def filters(self):
         return {
@@ -117,4 +145,5 @@ class FilterModule(object):
             "alpi_features": alpi_features,
             "alpi_repos": alpi_repos,
             "alpi_feature_ids": alpi_feature_ids,
+            "alpi_flatpak_overrides": alpi_flatpak_overrides,
         }

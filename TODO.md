@@ -22,12 +22,13 @@ scenarios / unit tests (see `CLAUDE.md`).
       autostart). Needs systemd in Molecule: `common` uses `almalinux/10-init`, but the ASUS
       packages are Fedora only, so a Fedora image with systemd is still needed.
 - [ ] Personal aliases (`open/close-thevoid`, LUKS UUID) to `host_vars`.
-- [ ] Feature gates:
+- [x] Feature gates:
   - [x] VirtualBox: driven by the resolved set, no string match (`feat(virtualbox): …`).
   - [x] ClamAV: `roles/clamav` enables freshclam only when its package was resolved
         (`feat(clamav): …`).
-  - [ ] Flatpak overrides only for installed apps.
-- [ ] `flatpak_filesystem_overrides` empty in the repo, ZapZap in `custom.yml.example`.
+  - [x] Flatpak overrides only for apps being installed (`feat(flatpak): …`).
+- [x] `flatpak_filesystem_overrides` empty in the repo, ZapZap in `custom.yml.example`
+      (`feat(flatpak): …`).
 
 ## 3. Bring in AAPI (AlmaLinux 10, work machine)
 

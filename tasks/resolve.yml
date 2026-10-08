@@ -7,6 +7,7 @@
 #   alpi_pkgs_extra: the user's packages_add (installed in a separate step, after the base)
 #   alpi_pkgs_absent: the user's packages_absent (explicit uninstall)
 #   alpi_repos_enabled: repository definitions to enable, in order (roles/repos)
+#   alpi_flatpak_overrides: [{app, flags}] for the selected Flatpak apps (roles/packages)
 
 - name: Resolve | Merge features
   ansible.builtin.set_fact:
@@ -89,6 +90,26 @@
   ansible.builtin.set_fact:
     alpi_repos_enabled: "{{ _repos.enabled }}"
 
+- name: Resolve | Select Flatpak overrides
+  ansible.builtin.set_fact:
+    _overrides: >-
+      {{ [flatpak_overrides_kde | default({}) if is_kde else {}, flatpak_overrides | default({})]
+         | alpi_flatpak_overrides(flatpak_filesystem_overrides | default({}),
+                                  alpi_pkgs.flatpak + alpi_pkgs_extra.flatpak) }}
+
+- name: Resolve | Check Flatpak override flags
+  ansible.builtin.assert:
+    that: _overrides.invalid | length == 0
+    fail_msg: >-
+      Flatpak override flags must start with '--' (flatpak_overrides in
+      host_vars/127.0.0.1/custom.yml; folders go in flatpak_filesystem_overrides):
+      {{ _overrides.invalid | join(', ') }}.
+    quiet: true
+
+- name: Resolve | Set Flatpak overrides
+  ansible.builtin.set_fact:
+    alpi_flatpak_overrides: "{{ _overrides.apply }}"
+
 - name: Resolve | Summary
   ansible.builtin.debug:
     msg:
@@ -101,3 +122,4 @@
       unavailable_skipped: "{{ alpi_pkgs.unavailable + alpi_pkgs_extra.unavailable }}"
       features: "{{ alpi_feature }}"
       repos: "{{ alpi_repos_enabled | map(attribute='id') }}"
+      flatpak_overrides: "{{ alpi_flatpak_overrides | map(attribute='app') }}"

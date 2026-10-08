@@ -9,6 +9,7 @@
     packages_absent: "{{ _case.packages_absent | default([]) }}"
     packages_selection_add: "{{ _case.packages_selection_add | default([]) }}"
     features_selection: "{{ _case.features_selection | default({}) }}"
+    flatpak_overrides: "{{ _case.flatpak_overrides | default({}) }}"
     features: "{{ _case.features | default({}) }}"
     alpi_strict: "{{ _case.strict | default(false) }}"
     system_hostname: "{{ _case.system_hostname | default('') }}"

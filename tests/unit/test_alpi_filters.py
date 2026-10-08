@@ -181,5 +181,41 @@ class TestFeatures:
 
     def test_filters_are_registered(self):
         assert set(alpi.FilterModule().filters()) == {
-            "alpi_resolve", "alpi_canonical", "alpi_features", "alpi_repos", "alpi_feature_ids"
+            "alpi_resolve", "alpi_canonical", "alpi_features", "alpi_repos", "alpi_feature_ids",
+            "alpi_flatpak_overrides",
         }
+
+
+# --- alpi_flatpak_overrides --------------------------------------------------------------------
+
+BW = "com.bitwarden.desktop"
+ZOOM = "us.zoom.Zoom"
+ZAP = "com.rtosta.zapzap"
+
+
+def test_flatpak_overrides_merge_layers_and_folders_in_order():
+    res = alpi.alpi_flatpak_overrides(
+        [{BW: ["--socket=wayland", "--nosocket=x11"]}, {BW: ["--socket=wayland", "--env=A=1"]}],
+        {BW: ["/srv/wks:ro"]},
+        [BW],
+    )
+    assert res == {"apply": [{"app": BW, "flags": ["--socket=wayland", "--nosocket=x11", "--env=A=1",
+                                                   "--filesystem=/srv/wks:ro"]}],
+                   "skipped": [], "invalid": []}
+
+
+def test_flatpak_overrides_only_for_selected_apps():
+    res = alpi.alpi_flatpak_overrides([{BW: ["--socket=wayland"], ZOOM: ["--socket=wayland"]}],
+                                      {ZAP: ["/srv/wks:ro"]}, [BW, ZAP])
+    assert [a["app"] for a in res["apply"]] == [BW, ZAP]
+    assert res["skipped"] == [ZOOM]
+
+
+def test_flatpak_overrides_report_flags_without_dashes_even_when_skipped():
+    res = alpi.alpi_flatpak_overrides([{BW: ["socket=wayland"], ZOOM: ["-x"]}], {}, [BW])
+    assert res["invalid"] == [f"{BW}: socket=wayland", f"{ZOOM}: -x"]
+
+
+@pytest.mark.parametrize("layers, filesystem", [(None, None), ([None, {}], {}), ([{BW: None}], {BW: []})])
+def test_flatpak_overrides_empty_inputs(layers, filesystem):
+    assert alpi.alpi_flatpak_overrides(layers, filesystem, [BW]) == {"apply": [], "skipped": [], "invalid": []}

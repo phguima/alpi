@@ -19,3 +19,4 @@
       unavailable: "{{ alpi_pkgs.unavailable + alpi_pkgs_extra.unavailable }}"
       features: "{{ alpi_feature }}"
       repos: "{{ alpi_repos_enabled | map(attribute='id') | list }}"
+      flatpak_overrides: "{{ alpi_flatpak_overrides | map(attribute='app') | list }}"

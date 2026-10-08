@@ -1,0 +1,27 @@
+---
+# Flatpak overrides (flatpak override --user <flags> <app>), applied by roles/packages only to apps
+# in the resolved Flatpak sets: skipping an app (picker, packages_skip) skips its overrides too.
+# Layers, each with its own key: flatpak_overrides_kde here (KDE sessions only), then the user's
+# flatpak_overrides and flatpak_filesystem_overrides (host_vars/127.0.0.1/custom.yml). Flags of
+# the same app add up across layers. Removing an entry does not undo it on the machine:
+# 'flatpak override --user --reset <app>' does.
+
+flatpak_overrides_kde:
+  # Bitwarden runs on native Wayland (the Flatpak wrapper picks the display mode from the granted
+  # sockets); the cedilla works there without GTK_IM_MODULE. X11 stays only as a fallback.
+  com.bitwarden.desktop:
+    - --socket=wayland
+    - --socket=fallback-x11
+    - --nosocket=x11
+    - --unset-env=GTK_IM_MODULE
+    - --env=XDG_CURRENT_DESKTOP=KDE
+    - --env=GTK_USE_PORTAL=1
+  # Zoom hardcodes QT_QPA_PLATFORM=xcb, so it always runs on XWayland; the cedilla works there
+  # through ~/.XCompose without the IM modules (--unset-env only cleans up older overrides).
+  us.zoom.Zoom:
+    - --socket=wayland
+    - --unset-env=GTK_IM_MODULE
+    - --unset-env=QT_IM_MODULE
+    - --env=XDG_CURRENT_DESKTOP=KDE
+    - --env=GTK_USE_PORTAL=1
+    - --nofilesystem=home

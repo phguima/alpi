@@ -21,3 +21,5 @@ _golden:
   unavailable: []
   extra: []
   absent: []
+  # KDE forced: the repository's KDE overrides, both apps selected
+  flatpak_overrides: [com.bitwarden.desktop, us.zoom.Zoom]

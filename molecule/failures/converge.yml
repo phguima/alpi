@@ -20,6 +20,9 @@
       - name: unknown feature in the selection
         features_selection: {old-feature: false}
         expect: ["Unknown features: old-feature"]
+      - name: flatpak override flag without dashes
+        flatpak_overrides: {com.bitwarden.desktop: [socket=wayland]}
+        expect: ["Flatpak override flags must start with '--'", "com.bitwarden.desktop: socket=wayland"]
       - name: unknown feature
         features: {steamm: true}
         expect: ["Unknown features: steamm"]

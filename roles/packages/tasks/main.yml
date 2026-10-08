@@ -53,3 +53,27 @@
     name: "{{ alpi_pkgs_absent.flatpak }}"
     state: absent
   when: alpi_pkgs_absent.flatpak | length > 0
+
+# Overrides for the selected apps (tasks/resolve.yml), written to the user's
+# ~/.local/share/flatpak/overrides/<app>. 'flatpak override' merges into that file, so the task
+# reports a change only when the file differs afterwards.
+- name: Packages | Apply Flatpak overrides
+  ansible.builtin.shell:
+    cmd: |
+      set -e
+      set -- {{ ([item.app] + item.flags) | map('quote') | join(' ') }}
+      app=$1; shift
+      file="$XDG_DATA_HOME/flatpak/overrides/$app"
+      before=$(cat "$file" 2>/dev/null || true)
+      flatpak override --user "$@" "$app"
+      [ "$before" = "$(cat "$file" 2>/dev/null)" ] || echo ALPI_CHANGED
+  environment:
+    HOME: "{{ user_home }}"
+    XDG_DATA_HOME: "{{ user_home }}/.local/share"
+  become_user: "{{ user_name }}"
+  loop: "{{ alpi_flatpak_overrides }}"
+  loop_control:
+    label: "{{ item.app }}"
+  register: _flatpak_override
+  changed_when: "'ALPI_CHANGED' in _flatpak_override.stdout"
+  tags: [flatpak]

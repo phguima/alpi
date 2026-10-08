@@ -22,8 +22,13 @@ packages_skip: []
 packages_absent: []
 #  - "pkg:akregator"
 
-# Extra host folders Flatpak apps may read (drag and drop from outside granted folders fails).
-# Not applied yet: comes with the apps role (TODO.md, section 2).
+# Flatpak overrides, applied only to apps being installed (group_vars/all/flatpak.yml).
+# Extra host folders an app may read: a file dragged from a folder the sandbox was not granted
+# reaches the app as a path it cannot open (ZapZap: "the file has no content"). ':ro' = read-only.
 flatpak_filesystem_overrides: {}
 #  com.rtosta.zapzap:
 #    - "{{ user_home }}/wks:ro"
+# Any other 'flatpak override' flags, added to the repository's (e.g. the KDE ones for Bitwarden).
+flatpak_overrides: {}
+#  com.spotify.Client:
+#    - --socket=wayland
