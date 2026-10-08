@@ -13,6 +13,6 @@ platforms:
 provisioner:
   options:
     extra-vars: '{"is_nvidia": false, "is_asus": true, "is_intel": true, "is_amd": true}'
-    # No systemd here: service roles are covered by the 'services' scenario. Setting skip-tags
-    # replaces Molecule's default, so its own tags are repeated.
-    skip-tags: molecule-notest,notest,clamav
+    # No systemd here: services are covered by the 'services' and 'asus' scenarios. Setting
+    # skip-tags replaces Molecule's default, so its own tags are repeated.
+    skip-tags: molecule-notest,notest,clamav,supergfxd

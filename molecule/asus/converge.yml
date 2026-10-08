@@ -1,0 +1,20 @@
+---
+- name: ASUS | Guard against running on the host
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: ASUS | Require ALPI_TARGET
+      ansible.builtin.assert:
+        that: lookup('env', 'ALPI_TARGET') | length > 0
+        fail_msg: ALPI_TARGET is not set; this scenario must target its containers. Set it in molecule.yml.
+        quiet: true
+
+- name: ASUS | env_setup + roles/asus
+  hosts: all
+  tasks:
+    - name: ASUS | Environment setup
+      ansible.builtin.import_tasks: ../../tasks/env_setup.yml
+
+    - name: ASUS | Role
+      ansible.builtin.import_role:
+        name: asus

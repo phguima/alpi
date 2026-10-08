@@ -1,0 +1,3 @@
+---
+# Feature on, two of its packages skipped: their steps must not run
+packages_skip: [supergfxctl, asusctl-rog-gui]

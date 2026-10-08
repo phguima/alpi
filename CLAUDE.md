@@ -23,7 +23,7 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - `site.yml`: `tasks/env_setup.yml` (support matrix assert → user/hardware/DE facts, ported from
   AFPI → `group_by` into `os_<distro>`, `os_<distro>_<major>` → machine-settings assert →
   `tasks/resolve.yml`), then the roles (`repos`,
-  `akmods_mok`, `virtualbox`, `packages`, `common`, `clamav`, `nvidia` so far).
+  `akmods_mok`, `virtualbox`, `packages`, `common`, `clamav`, `asus`, `nvidia` so far).
 - `tasks/resolve.yml` + `filter_plugins/alpi.py`: catalog lookup, merge of the package/feature
   layers, all validation (fails before anything changes). Keep logic in the filter plugin, not in
   long Jinja expressions.
@@ -63,6 +63,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - `roles/clamav` (after `packages`): enables `clamav-freshclam.service` only when the
   `clamav-freshclam` catalog id was resolved (feature on, not skipped). Gate service roles on the
   resolved ids, never on the feature flag alone.
+- `roles/asus` (after `packages`): `/etc/asusd` (`asusctl`), `supergfxd.service` (`supergfxctl`,
+  tagged `supergfxd`), ROG Control Center autostart (`asusctl-rog-gui`), each gated on its
+  resolved id (`asus_selected` in `vars/main.yml`).
 - Catalog values per distro may be `{native: …, repo: …}`: a repository only that distro needs
   (Oracle VirtualBox on EL).
 - `roles/nvidia` (after `packages`): `/etc/modprobe.d/nvidia.conf`; akmods rebuild + `dracut` only
@@ -138,10 +141,15 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     detected from a fake EFI variable mounted over `/sys/firmware`: Fedora with Secure Boot and
     NVIDIA vetoed, Fedora without, EL with; fake `mokutil` in `files/`, real `kmodgenca`/openssl),
     `services` (env_setup + service roles on `almalinux/10-init` with systemd; prepare installs
-    the packages: freshclam enabled and running, and skipped cleanly when its id is skipped).
+    the packages: freshclam enabled and running, and skipped cleanly when its id is skipped),
+    `asus` (env_setup + `roles/asus` on Fedora 44 with systemd, built from the scenario's
+    `Dockerfile.j2` since Fedora has no init image; stand-in supergfxd unit and launcher in
+    `prepare.yml`: everything selected, and supergfxctl + GUI skipped).
   - `fedora44-personal` and `el10-work` have no systemd: they skip service roles by tag
-    (`skip-tags: molecule-notest,notest,clamav`; setting skip-tags replaces Molecule's default,
-    so its own tags are repeated). Add each new service role's tag there.
+    (`skip-tags: molecule-notest,notest,clamav,supergfxd`; setting skip-tags replaces
+    Molecule's default, so its own tags are repeated). Add each new service task's tag there;
+    tag the service step alone when the rest of the role can run without systemd (as in
+    `roles/asus`), so the real packages still get checked there.
   - Hostname in a rootless container: the kernel (transient) hostname cannot be changed, and
     `CAP_SYS_ADMIN` breaks systemd (units fail with 243/CREDENTIALS). So `common` starts the
     container as `noir` with the image's empty `/etc/hostname` (`--no-hostname` in

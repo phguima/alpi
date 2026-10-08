@@ -1,0 +1,35 @@
+---
+- name: Prepare | Shared
+  ansible.builtin.import_playbook: ../shared/prepare.yml
+
+- name: Prepare | Stand-ins for the ASUS packages
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Prepare | supergfxd unit that only sleeps
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/supergfxd.service
+        content: |
+          [Unit]
+          Description=ALPI test stand-in for supergfxd
+
+          [Service]
+          ExecStart=/usr/bin/sleep infinity
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: "0644"
+
+    - name: Prepare | Reload systemd
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+
+    - name: Prepare | ROG Control Center launcher
+      ansible.builtin.copy:
+        dest: /usr/share/applications/rog-control-center.desktop
+        content: |
+          [Desktop Entry]
+          Type=Application
+          Name=ROG Control Center (ALPI test)
+          Exec=/usr/bin/true
+        mode: "0644"

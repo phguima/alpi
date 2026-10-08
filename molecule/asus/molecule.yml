@@ -1,0 +1,26 @@
+---
+# roles/asus alone (env_setup + the role) on Fedora 44 with systemd, ASUS hardware forced. The
+# real packages come from the ASUS COPR and supergfxd needs ASUS hardware, so prepare.yml puts
+# stand-ins in their place (a supergfxd unit that only sleeps, the ROG launcher); the real
+# packages and launcher are covered by fedora44-personal.
+#   alpi-asus-on:      everything selected: /etc/asusd, supergfxd enabled and running, autostart
+#   alpi-asus-partial: supergfxctl and asusctl-rog-gui skipped: only /etc/asusd
+platforms:
+  - name: alpi-asus-on
+    image: registry.fedoraproject.org/fedora:44
+    pre_build_image: false
+    command: /sbin/init
+    systemd: always
+    volumes: ["alpi-dnf-asus-on:/var/cache/libdnf5"]
+  - name: alpi-asus-partial
+    image: registry.fedoraproject.org/fedora:44
+    pre_build_image: false
+    command: /sbin/init
+    systemd: always
+    volumes: ["alpi-dnf-asus-partial:/var/cache/libdnf5"]
+provisioner:
+  options:
+    extra-vars: '{"is_nvidia": false, "is_asus": true, "is_intel": false, "is_amd": false}'
+  playbooks:
+    prepare: prepare.yml
+    converge: converge.yml

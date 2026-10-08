@@ -1,0 +1,40 @@
+---
+# ASUS ROG laptops (ported from AFPI's hardware role). The packages come from the catalog (feature
+# 'asus', ASUS COPR); each step runs only when the package it configures was selected.
+
+- name: ASUS | Ensure /etc/asusd exists
+  ansible.builtin.file:
+    path: /etc/asusd
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: "'asusctl' in asus_selected"
+
+# Its own tag: containers without systemd skip only this step.
+- name: ASUS | Enable and start supergfxd
+  ansible.builtin.systemd_service:
+    name: supergfxd.service
+    enabled: true
+    state: started
+  when: "'supergfxctl' in asus_selected"
+  tags: [supergfxd]
+
+# As the user, so the files are theirs (AFPI set owner/group by name, which assumed a group named
+# after the user).
+- name: ASUS | Ensure the autostart directory exists
+  ansible.builtin.file:
+    path: "{{ user_home }}/.config/autostart"
+    state: directory
+    mode: "0755"
+  become_user: "{{ user_name }}"
+  when: "'asusctl-rog-gui' in asus_selected"
+
+- name: ASUS | Start ROG Control Center at login
+  ansible.builtin.copy:
+    src: /usr/share/applications/rog-control-center.desktop
+    dest: "{{ user_home }}/.config/autostart/rog-control-center.desktop"
+    remote_src: true
+    mode: "0644"
+  become_user: "{{ user_name }}"
+  when: "'asusctl-rog-gui' in asus_selected"

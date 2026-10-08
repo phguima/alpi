@@ -18,6 +18,19 @@
           - "'com.slack.Slack' not in alpi_pkgs.flatpak"
         quiet: true
 
+    # The real ASUS packages (COPR): the files roles/asus manages (supergfxd is skipped here)
+    - name: Verify | Check the ASUS files
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop: [/etc/asusd, /root/.config/autostart/rog-control-center.desktop]
+      register: _asus
+
+    - name: Verify | /etc/asusd and the ROG Control Center autostart entry exist
+      ansible.builtin.assert:
+        that: _asus.results | map(attribute='stat.exists') | list == [true, true]
+        fail_msg: "{{ _asus.results | map(attribute='item') | list }}"
+        quiet: true
+
     - name: Verify | Read the Flatpak override files
       ansible.builtin.slurp:
         src: "/root/.local/share/flatpak/overrides/{{ item }}"

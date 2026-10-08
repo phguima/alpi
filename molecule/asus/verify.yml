@@ -1,0 +1,36 @@
+---
+- name: Verify | roles/asus
+  hosts: all
+  tasks:
+    - name: Verify | Query supergfxd and the files
+      ansible.builtin.command: "{{ item }}"
+      loop:
+        - systemctl is-enabled supergfxd.service
+        - systemctl is-active supergfxd.service
+        - test -d /etc/asusd
+        - test -f /root/.config/autostart/rog-control-center.desktop
+      register: _q
+      changed_when: false
+      failed_when: false
+
+    - name: Verify | Everything selected - all steps done
+      ansible.builtin.assert:
+        that:
+          - _q.results[0].stdout == 'enabled'
+          - _q.results[1].stdout == 'active'
+          - _q.results[2].rc == 0
+          - _q.results[3].rc == 0
+        fail_msg: "{{ _q.results | map(attribute='stdout') | list }} {{ _q.results | map(attribute='rc') | list }}"
+        quiet: true
+      when: inventory_hostname == 'alpi-asus-on'
+
+    - name: Verify | supergfxctl and the GUI skipped - only /etc/asusd
+      ansible.builtin.assert:
+        that:
+          - _q.results[0].stdout == 'disabled'
+          - _q.results[1].stdout != 'active'
+          - _q.results[2].rc == 0
+          - _q.results[3].rc != 0
+        fail_msg: "{{ _q.results | map(attribute='stdout') | list }} {{ _q.results | map(attribute='rc') | list }}"
+        quiet: true
+      when: inventory_hostname == 'alpi-asus-partial'

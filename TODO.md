@@ -18,9 +18,9 @@ scenarios / unit tests (see `CLAUDE.md`).
 - [x] Apply `system_hostname` and the git identity (`8d90381`).
 - [x] Replace the profiles with the package picker (`pick.py`, `selection.yml`), listing only
       what the running distro offers (`feat(picker): …`).
-- [ ] ASUS feature tasks beyond the packages (`/etc/asusd`, `supergfxd.service`, ROG GUI
-      autostart). Needs systemd in Molecule: `common` uses `almalinux/10-init`, but the ASUS
-      packages are Fedora only, so a Fedora image with systemd is still needed.
+- [x] ASUS feature tasks beyond the packages (`/etc/asusd`, `supergfxd.service`, ROG GUI
+      autostart), with a Fedora 44 + systemd image built by the `asus` scenario
+      (`feat(asus): …`).
 - [ ] Personal aliases (`open/close-thevoid`, LUKS UUID) to `host_vars`.
 - [x] Feature gates:
   - [x] VirtualBox: driven by the resolved set, no string match (`feat(virtualbox): …`).

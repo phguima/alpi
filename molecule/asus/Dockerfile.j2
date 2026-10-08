@@ -1,0 +1,4 @@
+# Fedora publishes no init image (AlmaLinux does: almalinux/10-init): add systemd to the base one.
+FROM {{ item.image }}
+RUN dnf -y install systemd python3 sudo && dnf clean all
+CMD ["/sbin/init"]

@@ -1,0 +1,8 @@
+---
+# ASUS ids that were selected and are available here (catalog ids, from feature_packages.asus):
+# empty when the asus feature is off (no ASUS hardware detected, or vetoed), the ids are skipped,
+# or the distro has no package for them (EL).
+asus_selected: >-
+  {{ (alpi_ids_base + alpi_ids_extra)
+     | reject('in', alpi_pkgs.unavailable + alpi_pkgs_extra.unavailable)
+     | select('in', ['asusctl', 'supergfxctl', 'asusctl-rog-gui']) | list }}
