@@ -182,7 +182,7 @@ class TestFeatures:
     def test_filters_are_registered(self):
         assert set(alpi.FilterModule().filters()) == {
             "alpi_resolve", "alpi_canonical", "alpi_features", "alpi_repos", "alpi_feature_ids",
-            "alpi_flatpak_overrides",
+            "alpi_flatpak_overrides", "alpi_luks_aliases", "alpi_invalid_luks",
         }
 
 
@@ -219,3 +219,33 @@ def test_flatpak_overrides_report_flags_without_dashes_even_when_skipped():
 @pytest.mark.parametrize("layers, filesystem", [(None, None), ([None, {}], {}), ([{BW: None}], {BW: []})])
 def test_flatpak_overrides_empty_inputs(layers, filesystem):
     assert alpi.alpi_flatpak_overrides(layers, filesystem, [BW]) == {"apply": [], "skipped": [], "invalid": []}
+
+
+# --- alpi_luks_aliases ---------------------------------------------------------------------------
+
+UUID = "ad99f7e6-cf3a-4581-9c46-de99119b00d4"
+
+
+def test_luks_aliases_by_uuid():
+    assert alpi.alpi_luks_aliases({"thevoid": UUID}).splitlines() == [
+        f'alias open-thevoid="udisksctl unlock -b /dev/disk/by-uuid/{UUID}; '
+        f'udisksctl mount -b /dev/mapper/luks-{UUID}"',
+        f'alias close-thevoid="udisksctl unmount -b /dev/mapper/luks-{UUID}; '
+        f'udisksctl lock -b /dev/disk/by-uuid/{UUID}"',
+    ]
+
+
+@pytest.mark.parametrize("volumes", [None, {}])
+def test_luks_aliases_empty(volumes):
+    assert alpi.alpi_luks_aliases(volumes) == ""
+
+
+@pytest.mark.parametrize("volumes, bad", [
+    ({"thevoid": UUID, "data_2": UUID.upper()}, []),
+    ({"the void": UUID}, [f"the void: {UUID}"]),
+    ({"x": "not-a-uuid", "y": UUID + "; rm"}, ["x: not-a-uuid", f"y: {UUID}; rm"]),
+    ({"nl": UUID + "\n"}, [f"nl: {UUID}\n"]),
+    (None, []),
+])
+def test_invalid_luks(volumes, bad):
+    assert alpi.alpi_invalid_luks(volumes) == bad

@@ -23,7 +23,7 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - `site.yml`: `tasks/env_setup.yml` (support matrix assert → user/hardware/DE facts, ported from
   AFPI → `group_by` into `os_<distro>`, `os_<distro>_<major>` → machine-settings assert →
   `tasks/resolve.yml`), then the roles (`repos`,
-  `akmods_mok`, `virtualbox`, `packages`, `common`, `clamav`, `asus`, `nvidia` so far).
+  `akmods_mok`, `virtualbox`, `packages`, `common`, `zsh`, `clamav`, `asus`, `nvidia` so far).
 - `tasks/resolve.yml` + `filter_plugins/alpi.py`: catalog lookup, merge of the package/feature
   layers, all validation (fails before anything changes). Keep logic in the filter plugin, not in
   long Jinja expressions.
@@ -63,6 +63,15 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - `roles/clamav` (after `packages`): enables `clamav-freshclam.service` only when the
   `clamav-freshclam` catalog id was resolved (feature on, not skipped). Gate service roles on the
   resolved ids, never on the feature flag alone.
+- `alpi_ids_selected` (`resolve.yml`): catalog ids that will be installed (base + extra, minus
+  unavailable). Roles gate their configuration on it (`clamav`, `asus`, `zsh`), never on a
+  feature flag alone.
+- `roles/zsh`: Oh My Zsh, theme (`files/kali-like-alt.zsh-theme`), plugins, login shell and the
+  managed aliases block for `zsh_users` (root + the user); only when `zsh` is selected. Alias
+  layers in `group_vars/all/zsh.yml` (common for root; user, `zsh_aliases_os` per distro,
+  `zsh_aliases_nvidia` when `nvidia-driver` is selected, and the machine's `luks_volumes` +
+  `zsh_aliases_custom` from `custom.yml` for the user). `luks_volumes` is validated in
+  `env_setup` (`alpi_invalid_luks`) and turned into aliases by `alpi_luks_aliases` (by-uuid).
 - `roles/asus` (after `packages`): `/etc/asusd` (`asusctl`), `supergfxd.service` (`supergfxctl`,
   tagged `supergfxd`), ROG Control Center autostart (`asusctl-rog-gui`), each gated on its
   resolved id (`asus_selected` in `vars/main.yml`).

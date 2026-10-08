@@ -6,6 +6,8 @@
 #                    the picker's additions, minus the picker's and the user's skips)
 #   alpi_pkgs_extra: the user's packages_add (installed in a separate step, after the base)
 #   alpi_pkgs_absent: the user's packages_absent (explicit uninstall)
+#   alpi_ids_selected: catalog ids that will be installed (base + extra, minus the unavailable):
+#                    what roles gate their configuration on
 #   alpi_repos_enabled: repository definitions to enable, in order (roles/repos)
 #   alpi_flatpak_overrides: [{app, flags}] for the selected Flatpak apps (roles/packages)
 
@@ -62,6 +64,12 @@
       - "{{ ('Unknown package ids (not in group_vars/all/catalog.yml; use pkg:<name> or flatpak:<app id> for names outside the catalog): ' ~ _unknown | join(', ') ~ '.') if _unknown else '' }}"
       - "{{ ('Catalog bug, no entry for this distro (keys ' ~ alpi_catalog_keys | join(', ') ~ '): ' ~ _missing | join(', ') ~ '.') if _missing else '' }}"
       - "{{ ('Both installed and in packages_absent: ' ~ _conflict | join(', ') ~ '.') if _conflict else '' }}"
+
+- name: Resolve | Set the selected ids
+  ansible.builtin.set_fact:
+    alpi_ids_selected: >-
+      {{ (alpi_ids_base + alpi_ids_extra)
+         | reject('in', alpi_pkgs.unavailable + alpi_pkgs_extra.unavailable) | list }}
 
 - name: Resolve | Check unavailable packages (strict mode)
   ansible.builtin.assert:

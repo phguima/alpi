@@ -2,3 +2,5 @@
 system_hostname: noir
 git_user_name: "O'Neil Test"
 git_user_email: oneil@example.com
+# zsh not selected: roles/zsh must leave the shell alone
+packages_skip: [zsh]

@@ -1,0 +1,36 @@
+---
+# Zsh + Oh My Zsh (roles/zsh, ported from AFPI/AAPI). Runs only when the 'zsh' catalog id is
+# selected. Aliases go in a managed block of each .zshrc; layers, each with its own key:
+#   zsh_aliases_common: every .zshrc (root included)
+#   zsh_aliases_user:   only the user who runs the playbook (workspace and tool shortcuts)
+#   zsh_aliases_os:     per distro, user only (group_vars/os_*)
+#   zsh_aliases_nvidia: user only, when the NVIDIA driver is selected
+#   luks_volumes, zsh_aliases_custom: the machine's own (host_vars/127.0.0.1/custom.yml)
+omz_install_script_url: "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
+omz_theme_name: "kali-like-alt"
+# zsh-autosuggestions and zsh-syntax-highlighting are handled by the kali-like-alt theme itself.
+omz_plugins:
+  - git
+
+# Antigravity IDE location (the alias below; the IDE itself comes with the AI tools port)
+antigravity_ide_dir: "{{ user_home }}/wks/tools/antigravity"
+
+zsh_aliases_common: |
+  alias zshconfig="nano ~/.zshrc"
+  alias ohmyzsh="nano ~/.oh-my-zsh"
+  alias lls="ls --color -lh --group-directories-first"
+  alias llsa="ls --color -lha --group-directories-first"
+  alias clean-cache="sudo sync; echo 3 | sudo tee /proc/sys/vm/drop_caches"
+
+zsh_aliases_user: |
+  alias claudecli="cd ~/wks; clear; claude"
+  alias agycli="cd ~/wks; clear; agy"
+  alias antigravity-ide='"{{ antigravity_ide_dir }}/antigravity"'
+
+zsh_aliases_nvidia: |
+  alias nvidia-run="__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0"
+
+# The machine's own (custom.yml). luks_volumes: name -> LUKS UUID (as in /dev/mapper/luks-<UUID>),
+# giving open-<name> / close-<name> aliases that unlock+mount / unmount+lock it with udisksctl.
+luks_volumes: {}
+zsh_aliases_custom: ""

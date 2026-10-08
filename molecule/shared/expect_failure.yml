@@ -14,6 +14,7 @@
     alpi_strict: "{{ _case.strict | default(false) }}"
     system_hostname: "{{ _case.system_hostname | default('') }}"
     git_user_email: "{{ _case.git_user_email | default('') }}"
+    luks_volumes: "{{ _case.luks_volumes | default({}) }}"
   block:
     - name: "Case | {{ _case.name }} | Run env_setup"
       ansible.builtin.include_tasks: ../../tasks/env_setup.yml

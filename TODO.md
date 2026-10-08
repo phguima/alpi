@@ -21,7 +21,9 @@ scenarios / unit tests (see `CLAUDE.md`).
 - [x] ASUS feature tasks beyond the packages (`/etc/asusd`, `supergfxd.service`, ROG GUI
       autostart), with a Fedora 44 + systemd image built by the `asus` scenario
       (`feat(asus): …`).
-- [ ] Personal aliases (`open/close-thevoid`, LUKS UUID) to `host_vars`.
+- [x] Personal aliases (`open/close-thevoid`, LUKS UUID) to `host_vars` (`luks_volumes`,
+      `zsh_aliases_custom` in `custom.yml`), with the zsh/Oh My Zsh setup they live in
+      (`roles/zsh`; API keys block still to port) (`feat(zsh): …`).
 - [x] Feature gates:
   - [x] VirtualBox: driven by the resolved set, no string match (`feat(virtualbox): …`).
   - [x] ClamAV: `roles/clamav` enables freshclam only when its package was resolved

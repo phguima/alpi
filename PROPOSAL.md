@@ -38,7 +38,9 @@ keeps the duplication, and every new distro would become a whole repository.
    (`nvidia: auto | false`).
 3. **Machine/user**: lives in `host_vars`, outside git: the hostname and git identity
    (`bootstrap.yml`), the package and feature choice (`selection.yml`, written by the picker) and
-   hand-written settings (`custom.yml`). The thevoid UUID leaves the repository and comes here.
+   hand-written settings (`custom.yml`). The thevoid UUID leaves the repository and comes here
+   (2026-10-08: `luks_volumes: {thevoid: <UUID>}` in `custom.yml` generates `open-thevoid` /
+   `close-thevoid`, addressing the partition by UUID instead of `/dev/nvme1n1p3`).
 
 There are no profiles (removed on 2026-10-08). What a profile used to decide is a choice made on
 the machine: the hostname is managed only when one is given, and packages and features are picked

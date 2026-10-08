@@ -1,0 +1,78 @@
+---
+# Zsh + Oh My Zsh for root and the user who runs the playbook (zsh_users, from env_setup), ported
+# from AFPI/AAPI's common role. zsh itself comes from the catalog; the whole role is skipped when
+# it was not selected.
+
+- name: ZSH | Setup
+  when: zsh_selected | bool
+  block:
+    # The Oh My Zsh installer needs git and curl; this role must not depend on the base list.
+    - name: ZSH | Ensure zsh, git and curl are installed
+      ansible.builtin.package:
+        name: [zsh, git, curl]
+        state: present
+
+    - name: ZSH | Install Oh My Zsh
+      ansible.builtin.shell:
+        cmd: "curl -fsSL {{ omz_install_script_url }} | sh -s -- --unattended --keep-zshrc"
+        creates: "{{ item.home }}/.oh-my-zsh"
+      environment:
+        HOME: "{{ item.home }}"
+      become_user: "{{ item.name }}"
+      loop: "{{ zsh_users }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: ZSH | Create .zshrc from the Oh My Zsh template when missing
+      ansible.builtin.copy:
+        src: "{{ item.home }}/.oh-my-zsh/templates/zshrc.zsh-template"
+        dest: "{{ item.home }}/.zshrc"
+        remote_src: true
+        force: false
+        mode: "0644"
+      become_user: "{{ item.name }}"
+      loop: "{{ zsh_users }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: ZSH | Make zsh the login shell
+      ansible.builtin.user:
+        name: "{{ item.name }}"
+        shell: /bin/zsh
+      loop: "{{ zsh_users }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: ZSH | Install the theme
+      ansible.builtin.copy:
+        src: "{{ omz_theme_name }}.zsh-theme"
+        dest: "{{ item.home }}/.oh-my-zsh/themes/{{ omz_theme_name }}.zsh-theme"
+        mode: "0644"
+      become_user: "{{ item.name }}"
+      loop: "{{ zsh_users }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: ZSH | Set the theme and plugins in .zshrc
+      ansible.builtin.lineinfile:
+        path: "{{ item.0.home }}/.zshrc"
+        regexp: "{{ item.1.regexp }}"
+        line: "{{ item.1.line }}"
+      become_user: "{{ item.0.name }}"
+      loop: "{{ zsh_users | product(_settings) | list }}"
+      loop_control:
+        label: "{{ item.0.name }}: {{ item.1.line }}"
+      vars:
+        _settings:
+          - { regexp: '^ZSH_THEME=', line: 'ZSH_THEME="{{ omz_theme_name }}"' }
+          - { regexp: '^plugins=\(', line: 'plugins=({{ omz_plugins | join(" ") }})' }
+
+    - name: ZSH | Write the managed aliases block
+      ansible.builtin.blockinfile:
+        path: "{{ item.home }}/.zshrc"
+        marker: "# {mark} ANSIBLE MANAGED ALIASES"
+        block: "{{ zsh_block_user if item.name == user_name else zsh_block_root }}"
+      become_user: "{{ item.name }}"
+      loop: "{{ zsh_users }}"
+      loop_control:
+        label: "{{ item.name }}"

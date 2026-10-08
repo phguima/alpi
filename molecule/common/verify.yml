@@ -12,6 +12,22 @@
       register: _out
       changed_when: false
 
+    - name: Verify | Check for Oh My Zsh and the login shell
+      ansible.builtin.command: "{{ item }}"
+      loop:
+        - test -e /root/.oh-my-zsh
+        - getent passwd root
+      register: _zsh
+      changed_when: false
+      failed_when: false
+
+    - name: Verify | zsh skipped - no Oh My Zsh, login shell unchanged
+      ansible.builtin.assert:
+        that:
+          - _zsh.results[0].rc != 0
+          - not _zsh.results[1].stdout.endswith('/zsh')
+        quiet: true
+
     - name: Verify | Static hostname written, identity and defaults set
       ansible.builtin.assert:
         that:

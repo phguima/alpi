@@ -26,6 +26,9 @@
       - name: unknown feature
         features: {steamm: true}
         expect: ["Unknown features: steamm"]
+      - name: invalid LUKS volume
+        luks_volumes: {thevoid: "not-a-uuid; rm -rf ~"}
+        expect: ["Invalid machine settings", "luks_volumes thevoid: not-a-uuid; rm -rf ~"]
       - name: invalid e-mail
         git_user_email: "no-at-sign"
         expect: ["Invalid machine settings", "git_user_email 'no-at-sign'"]

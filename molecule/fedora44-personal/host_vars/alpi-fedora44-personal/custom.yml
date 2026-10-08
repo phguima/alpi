@@ -13,6 +13,11 @@ flatpak_filesystem_overrides:
 flatpak_overrides:
   com.bitwarden.desktop: [--env=ALPI_TEST=1]
   us.zoom.Zoom: [--env=ALPI_TEST=1]
+# Machine's own aliases (AFPI's open/close-thevoid): generated from the LUKS UUID, plus free-form
+luks_volumes:
+  thevoid: ad99f7e6-cf3a-4581-9c46-de99119b00d4
+zsh_aliases_custom: |
+  alias alpi-test="echo custom"
 # No system_hostname: hostnamectl needs systemd (scenario 'common' covers it).
 git_user_name: Test User
 git_user_email: test@example.com

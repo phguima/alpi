@@ -54,6 +54,36 @@
       vars:
         _files: "{{ dict(_overrides.results | map(attribute='item') | zip(_overrides.results | map(attribute='content') | map('b64decode'))) }}"
 
+    - name: Verify | Read root's .zshrc and login shell
+      ansible.builtin.command: "{{ item }}"
+      loop:
+        - cat /root/.zshrc
+        - getent passwd root
+        - test -f /root/.oh-my-zsh/themes/kali-like-alt.zsh-theme
+      register: _zsh
+      changed_when: false
+
+    # root is the user here (no SUDO_USER), so its block has the user aliases too
+    - name: Verify | Zsh, theme, plugins and the aliases block (Fedora, LUKS, custom; no NVIDIA)
+      ansible.builtin.assert:
+        that:
+          - _zsh.results[1].stdout.endswith(':/bin/zsh')
+          - _zsh.results[2].rc == 0
+          - "'ZSH_THEME=\"kali-like-alt\"' in _rc"
+          - "'plugins=(git)' in _rc"
+          - "'alias lls=' in _rc"
+          - "'alias claudecli=' in _rc"
+          - "'dnf needs-restarting\"' in _rc"
+          - "'alias open-thevoid=\"udisksctl unlock -b /dev/disk/by-uuid/ad99f7e6-cf3a-4581-9c46-de99119b00d4; udisksctl mount -b /dev/mapper/luks-ad99f7e6-cf3a-4581-9c46-de99119b00d4\"' in _rc"
+          - "'alias close-thevoid=' in _rc"
+          - "'alias alpi-test=\"echo custom\"' in _rc"
+          - "'nvidia-run' not in _rc"
+          - _rc.count('# BEGIN ANSIBLE MANAGED ALIASES') == 1
+        fail_msg: "{{ _rc }}"
+        quiet: true
+      vars:
+        _rc: "{{ _zsh.results[0].stdout }}"
+
     - name: Verify | Read the git config
       ansible.builtin.command: git config --file /root/.gitconfig --list
       register: _git

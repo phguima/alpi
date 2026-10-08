@@ -1,5 +1,7 @@
 # ALPI filters: resolve logical package ids through the catalog (see PROPOSAL.md, "Customization").
 
+import re
+
 # Raw names bypass the catalog: "pkg:<native name>" or "flatpak:<app id>".
 RAW_PREFIXES = {"pkg": "native", "flatpak": "flatpak"}
 
@@ -137,6 +139,29 @@ def alpi_flatpak_overrides(layers, filesystem, selected):
     return result
 
 
+def alpi_luks_aliases(volumes):
+    """open-<name> / close-<name> zsh aliases for LUKS volumes ({name: LUKS UUID}).
+
+    The partition is found by its UUID (/dev/disk/by-uuid/<UUID>), so renumbered disks do not
+    matter; udisksctl names the unlocked device /dev/mapper/luks-<UUID>. Names and UUIDs are
+    validated in tasks/env_setup.yml before this runs.
+    """
+    lines = []
+    for name, uuid in (volumes or {}).items():
+        dev, mapper = f"/dev/disk/by-uuid/{uuid}", f"/dev/mapper/luks-{uuid}"
+        lines.append(f'alias open-{name}="udisksctl unlock -b {dev}; udisksctl mount -b {mapper}"')
+        lines.append(f'alias close-{name}="udisksctl unmount -b {mapper}; udisksctl lock -b {dev}"')
+    return "\n".join(lines)
+
+
+def alpi_invalid_luks(volumes):
+    """Entries of luks_volumes ({name: LUKS UUID}) that cannot make safe aliases, as "name: value"."""
+    name_re = re.compile(r"[A-Za-z0-9_-]+")
+    uuid_re = re.compile(r"[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}")
+    return [f"{name}: {uuid}" for name, uuid in (volumes or {}).items()
+            if not name_re.fullmatch(str(name)) or not uuid_re.fullmatch(str(uuid))]
+
+
 class FilterModule(object):
     def filters(self):
         return {
@@ -146,4 +171,6 @@ class FilterModule(object):
             "alpi_repos": alpi_repos,
             "alpi_feature_ids": alpi_feature_ids,
             "alpi_flatpak_overrides": alpi_flatpak_overrides,
+            "alpi_luks_aliases": alpi_luks_aliases,
+            "alpi_invalid_luks": alpi_invalid_luks,
         }

@@ -1,0 +1,13 @@
+---
+# The role runs only when zsh was selected (catalog id 'zsh': skipping it in the picker or in
+# custom.yml means no zsh setup at all).
+zsh_selected: "{{ 'zsh' in alpi_ids_selected }}"
+
+# Managed aliases block: root gets the common aliases; the user who runs the playbook also gets the
+# user, distro, NVIDIA (driver selected) and machine's own (custom.yml) ones.
+zsh_block_root: "{{ zsh_aliases_common | trim }}"
+zsh_block_user: >-
+  {{ [zsh_aliases_common, zsh_aliases_user, zsh_aliases_os | default(''),
+      zsh_aliases_nvidia if 'nvidia-driver' in alpi_ids_selected else '',
+      luks_volumes | alpi_luks_aliases, zsh_aliases_custom]
+     | map('trim') | select | join('\n') }}

@@ -2,6 +2,10 @@
 alpi_catalog_keys: [fedora, all]
 packages_os: [multimedia]
 
+# dnf5's needs-restarting says whether to reboot by default
+zsh_aliases_os: |
+  alias full-update="flatpak update -y; sudo npm update -g; sudo dnf upgrade --refresh -y; dnf needs-restarting"
+
 # DNF plugins (config-manager, copr, needs-restarting), installed first by roles/repos
 alpi_dnf_plugins: [dnf-plugins-core, dnf5-plugins]
 

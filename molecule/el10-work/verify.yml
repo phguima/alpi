@@ -45,6 +45,20 @@
           - "'nvidia-driver' in alpi_pkgs.unavailable"
         quiet: true
 
+    - name: Verify | Read root's .zshrc
+      ansible.builtin.command: cat /root/.zshrc
+      register: _zshrc
+      changed_when: false
+
+    - name: Verify | EL's full-update (dnf4 needs -r); no nvidia-run (driver unavailable on EL)
+      ansible.builtin.assert:
+        that:
+          - "'dnf needs-restarting -r\"' in _zshrc.stdout"
+          - "'nvidia-run' not in _zshrc.stdout"
+          - "'open-' not in _zshrc.stdout"
+        fail_msg: "{{ _zshrc.stdout }}"
+        quiet: true
+
     - name: Verify | Read the hostname and the git config
       ansible.builtin.command: "{{ item }}"
       loop:

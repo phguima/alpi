@@ -2,6 +2,10 @@
 alpi_catalog_keys: [el10, el, all]
 packages_os: []
 
+# dnf4: without -r, needs-restarting lists processes instead of saying whether to reboot
+zsh_aliases_os: |
+  alias full-update="flatpak update -y; sudo npm update -g; sudo dnf upgrade --refresh -y; dnf needs-restarting -r"
+
 # DNF plugins (config-manager, copr, needs-restarting), installed first by roles/repos
 alpi_dnf_plugins: [dnf-plugins-core]
 

@@ -9,7 +9,7 @@
         fail_msg: ALPI_TARGET is not set; this scenario must target its container. Set it in molecule.yml.
         quiet: true
 
-- name: Common | env_setup + roles/common
+- name: Common | env_setup + roles/common + roles/zsh (zsh skipped)
   hosts: all
   tasks:
     - name: Common | Environment setup
@@ -18,3 +18,7 @@
     - name: Common | Machine settings
       ansible.builtin.import_role:
         name: common
+
+    - name: Common | Zsh (not selected here)
+      ansible.builtin.import_role:
+        name: zsh
