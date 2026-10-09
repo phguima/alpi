@@ -1,0 +1,57 @@
+---
+- name: Prepare | Shared
+  ansible.builtin.import_playbook: ../shared/prepare.yml
+
+- name: Prepare | Scripted reboot signals and an outdated dnf.conf
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Prepare | Test settings directory
+      ansible.builtin.file:
+        path: /etc/alpi-test
+        state: directory
+        mode: "0755"
+
+    - name: Prepare | Test settings
+      ansible.builtin.copy:
+        dest: "/etc/alpi-test/{{ item.name }}"
+        content: "{{ item.value }}\n"
+        mode: "0644"
+      loop:
+        - { name: needs-restarting-rc, value: "{{ _test_needs_restarting_rc }}" }
+        - { name: kernel, value: "{{ _test_newest_kernel | default('') }}" }
+      loop_control:
+        label: "{{ item.name }}"
+
+    # Runs the real needs-restarting (it must exist and answer 0 or 1), then returns the scripted rc
+    - name: Prepare | dnf wrapper
+      ansible.builtin.copy:
+        dest: /usr/local/bin/dnf
+        content: |
+          #!/bin/sh
+          if [ "$1" = needs-restarting ]; then
+              /usr/bin/dnf "$@" >/dev/null 2>&1
+              rc=$?
+              [ "$rc" -le 1 ] || { echo "real needs-restarting returned $rc" >&2; exit 3; }
+              exit "$(cat /etc/alpi-test/needs-restarting-rc)"
+          fi
+          exec /usr/bin/dnf "$@"
+        mode: "0755"
+
+    - name: Prepare | rpm wrapper (kernel-core query only)
+      ansible.builtin.copy:
+        dest: /usr/local/bin/rpm
+        content: |
+          #!/bin/sh
+          case " $* " in
+              *" kernel-core "*)
+                  if [ -s /etc/alpi-test/kernel ]; then cat /etc/alpi-test/kernel; exit 0; fi ;;
+          esac
+          exec /usr/bin/rpm "$@"
+        mode: "0755"
+
+    # The role must replace an existing value, not add a second line (AFPI appended)
+    - name: Prepare | Outdated dnf setting
+      ansible.builtin.lineinfile:
+        path: /etc/dnf/dnf.conf
+        line: max_parallel_downloads=3

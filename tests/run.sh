@@ -13,7 +13,7 @@ set -u
 cd "$(dirname "$0")/.." || exit 1
 
 QUICK=(catalog failures services asus secureboot common unsupported)
-FULL=(catalog failures services asus secureboot common unsupported el10-work fedora44-personal bootstrap)
+FULL=(catalog failures services asus secureboot common unsupported update el10-work fedora44-personal bootstrap)
 
 case "${1:-quick}" in
     quick) scenarios=("${QUICK[@]}") ;;

@@ -13,6 +13,7 @@ platforms:
 provisioner:
   options:
     extra-vars: '{"is_nvidia": false, "is_asus": true, "is_intel": true, "is_amd": true}'
-    # No systemd here: services are covered by the 'services' and 'asus' scenarios. Setting
+    # No systemd here: services are covered by the 'services' and 'asus' scenarios; the upgrade
+    # and reboot gate by 'update' (needs-restarting is unreliable in a container). Setting
     # skip-tags replaces Molecule's default, so its own tags are repeated.
-    skip-tags: molecule-notest,notest,clamav,supergfxd
+    skip-tags: molecule-notest,notest,clamav,supergfxd,update

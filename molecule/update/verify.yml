@@ -1,0 +1,29 @@
+---
+- name: Verify | roles/update
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Verify | Read dnf.conf and look for the marker
+      ansible.builtin.command: "{{ item }}"
+      loop:
+        - cat /etc/dnf/dnf.conf
+        - test -f /etc/alpi-test/after-update
+      register: _q
+      changed_when: false
+      failed_when: false
+
+    - name: Verify | dnf tuned, the outdated value replaced
+      ansible.builtin.assert:
+        that:
+          - _conf | select('match', '^max_parallel_downloads') | list == ['max_parallel_downloads=15']
+          - "'fastestmirror=True' in _conf"
+        fail_msg: "{{ _conf }}"
+        quiet: true
+      vars:
+        _conf: "{{ _q.results[0].stdout_lines }}"
+
+    - name: Verify | The play went on only where no reboot was needed
+      ansible.builtin.assert:
+        that: (_q.results[1].rc == 0) == (inventory_hostname == 'alpi-upd-fedora44-ok')
+        fail_msg: "marker rc {{ _q.results[1].rc }} on {{ inventory_hostname }}"
+        quiet: true

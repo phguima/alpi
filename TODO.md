@@ -8,8 +8,8 @@ scenarios / unit tests (see `CLAUDE.md`).
 
 AAPI has the same roles (with dnf4 differences); port each for both distros.
 
-- [ ] System update (`update` role): dnf configuration, full upgrade, stop when a reboot is
-      needed.
+- [x] System update (`update` role): dnf configuration, full upgrade, stop when a reboot is
+      needed (`feat(update): …`).
 - [ ] Kernel maintenance (old and debug kernels, debug repositories) and GRUB settings.
 - [ ] Desktop: Konsole profile and colors (KDE), Ptyxis settings (GNOME), cedilla (`.XCompose`).
 - [ ] `~/wks` workspace directory.

@@ -1,0 +1,6 @@
+---
+# roles/update: dnf settings written to /etc/dnf/dnf.conf (key=value, replaced when present),
+# then a full upgrade and the reboot gate.
+dnf_config:
+  max_parallel_downloads: 15
+  fastestmirror: "True"

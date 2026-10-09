@@ -1,0 +1,31 @@
+---
+- name: Update | Guard against running on the host
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Update | Require ALPI_TARGET
+      ansible.builtin.assert:
+        that: lookup('env', 'ALPI_TARGET') | length > 0
+        fail_msg: ALPI_TARGET is not set; this scenario must target its containers. Set it in molecule.yml.
+        quiet: true
+
+- name: Update | env_setup + repos + update
+  hosts: all
+  tasks:
+    - name: Update | Environment setup
+      ansible.builtin.import_tasks: ../../tasks/env_setup.yml
+
+    - name: Update | Repositories (dnf plugins, as in a real run)
+      ansible.builtin.import_role:
+        name: repos
+
+    - name: Update | Role
+      ansible.builtin.import_role:
+        name: update
+
+    # Reached only when the reboot gate let the host through
+    - name: Update | Mark that the play went on
+      ansible.builtin.copy:
+        dest: /etc/alpi-test/after-update
+        content: "reached\n"
+        mode: "0644"

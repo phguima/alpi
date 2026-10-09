@@ -1,0 +1,59 @@
+---
+# System update (ported from AFPI/AAPI's update role). Runs after roles/repos (the dnf plugins,
+# CRB/EPEL and RPM Fusion, which AFPI/AAPI set up here) and before anything that builds kernel
+# modules or installs packages.
+
+- name: Update | Tune dnf
+  ansible.builtin.lineinfile:
+    path: /etc/dnf/dnf.conf
+    regexp: "^{{ item.key }}\\s*="
+    line: "{{ item.key }}={{ item.value }}"
+  loop: "{{ dnf_config | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+
+- name: Update | Upgrade all packages
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+    update_cache: true
+
+# --- Reboot gate ---
+# If the upgrade touched the kernel or core libraries, stop here: the rest must run on the new
+# kernel (the NVIDIA and VirtualBox modules build against the running kernel, and kernel cleanup
+# can only drop the old one once it is no longer running). 'needs-restarting -r' comes from
+# dnf5-plugins / dnf-plugins-core (alpi_dnf_plugins, roles/repos); rc 1 = reboot needed.
+- name: Update | Check whether a reboot is required
+  ansible.builtin.command: dnf needs-restarting -r
+  register: _reboot_hint
+  changed_when: false
+  failed_when: _reboot_hint.rc not in [0, 1]
+  check_mode: false
+
+# needs-restarting compares install times with the boot time, which is wrong when the RTC keeps
+# local time (dual boot with Windows): on noir it returned 0 right after a kernel upgrade.
+# Comparing the running kernel with the newest installed one needs no clock.
+- name: Update | Find the newest installed kernel
+  ansible.builtin.shell: set -o pipefail; rpm -qa kernel-core --qf '%{VERSION}-%{RELEASE}.%{ARCH}\n' | sort -V | tail -n 1
+  args:
+    executable: /bin/bash
+  register: _newest_kernel
+  changed_when: false
+  check_mode: false
+
+- name: Update | Stop until the system is rebooted
+  when: >-
+    _reboot_hint.rc == 1 or
+    (_newest_kernel.stdout | length > 0 and _newest_kernel.stdout != ansible_facts['kernel'])
+  block:
+    - name: Update | Ask for a reboot
+      ansible.builtin.debug:
+        msg:
+          - "=================================================================="
+          - "The system was updated and needs a REBOOT before continuing."
+          - "Reboot, then run the same ansible-playbook command again:"
+          - "the update step will pass and the rest of the setup will run."
+          - "=================================================================="
+
+    - name: Update | End the play for this host
+      ansible.builtin.meta: end_host

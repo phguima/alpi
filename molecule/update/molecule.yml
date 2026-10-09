@@ -1,0 +1,29 @@
+---
+# roles/repos + roles/update (dnf tuning, full upgrade, reboot gate). In a container
+# 'needs-restarting -r' compares install times with the host's boot time and the running kernel
+# is the host's, so prepare.yml scripts both signals per instance (wrappers in /usr/local/bin; the
+# dnf wrapper still runs the real needs-restarting and fails unless it returns 0 or 1):
+#   alpi-upd-fedora44-ok:      no reboot needed: the play goes on past the role
+#   alpi-upd-el10-reboot:      needs-restarting says reboot (dnf4): the play stops for the host
+#   alpi-upd-fedora44-kernel:  needs-restarting says no, but a newer kernel is installed (noir's
+#                              local-time RTC case): the play stops
+platforms:
+  - name: alpi-upd-fedora44-ok
+    image: registry.fedoraproject.org/fedora:44
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-upd-fedora44-ok:/var/cache/libdnf5"]
+  - name: alpi-upd-el10-reboot
+    image: docker.io/library/almalinux:10
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-upd-el10-reboot:/var/cache/dnf"]
+  - name: alpi-upd-fedora44-kernel
+    image: registry.fedoraproject.org/fedora:44
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-upd-fedora44-kernel:/var/cache/libdnf5"]
+provisioner:
+  playbooks:
+    prepare: prepare.yml
+    converge: converge.yml

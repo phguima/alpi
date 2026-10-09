@@ -22,7 +22,7 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 
 - `site.yml`: `tasks/env_setup.yml` (support matrix assert → user/hardware/DE facts, ported from
   AFPI → `group_by` into `os_<distro>`, `os_<distro>_<major>` → machine-settings assert →
-  `tasks/resolve.yml`), then the roles (`repos`,
+  `tasks/resolve.yml`), then the roles (`repos`, `update`,
   `akmods_mok`, `virtualbox`, `packages`, `common`, `zsh`, `clamav`, `asus`, `nvidia` so far).
 - `tasks/resolve.yml` + `filter_plugins/alpi.py`: catalog lookup, merge of the package/feature
   layers, all validation (fails before anything changes). Keep logic in the filter plugin, not in
@@ -54,6 +54,10 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   `alpi_flatpak_overrides` in `resolve.yml` into `alpi_flatpak_overrides`, only for apps in the
   resolved Flatpak sets; applied at the end of `roles/packages` with `flatpak override --user`
   (changed only when the override file differs). Removing an entry does not undo it.
+- `roles/update` (after `repos`, before anything that builds modules or installs packages):
+  `dnf_config` into `/etc/dnf/dnf.conf` (replaced, not appended), full upgrade, then the reboot
+  gate: `dnf needs-restarting -r` rc 1, or the newest installed `kernel-core` is not the running
+  kernel (noir's local-time RTC fools needs-restarting), ends the play for the host.
 - `roles/akmods_mok` (before `packages`): Secure Boot signing key + MOK enrollment request, only
   when Secure Boot is on and an `akmod-*` package was resolved (akmods signs at build time, so the
   key must exist first). `mok_password` in `group_vars/all/secureboot.yml`. `tasks/enroll.yml`
@@ -153,9 +157,12 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     the packages: freshclam enabled and running, and skipped cleanly when its id is skipped),
     `asus` (env_setup + `roles/asus` on Fedora 44 with systemd, built from the scenario's
     `Dockerfile.j2` since Fedora has no init image; stand-in supergfxd unit and launcher in
-    `prepare.yml`: everything selected, and supergfxctl + GUI skipped).
+    `prepare.yml`: everything selected, and supergfxctl + GUI skipped), `update` (repos +
+    `roles/update`; wrappers in `/usr/local/bin` script needs-restarting's answer and the newest
+    kernel per instance, the dnf one still running the real needs-restarting: no reboot, reboot
+    by needs-restarting (EL), reboot by a newer kernel).
   - `fedora44-personal` and `el10-work` have no systemd: they skip service roles by tag
-    (`skip-tags: molecule-notest,notest,clamav,supergfxd`; setting skip-tags replaces
+    (`skip-tags: molecule-notest,notest,clamav,supergfxd,update`; setting skip-tags replaces
     Molecule's default, so its own tags are repeated). Add each new service task's tag there;
     tag the service step alone when the rest of the role can run without systemd (as in
     `roles/asus`), so the real packages still get checked there.

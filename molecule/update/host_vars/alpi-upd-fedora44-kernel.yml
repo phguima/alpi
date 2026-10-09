@@ -1,0 +1,4 @@
+---
+_test_needs_restarting_rc: 0
+# Reported by the rpm wrapper as the newest kernel-core: never the running one
+_test_newest_kernel: 0.0.1-1.fc44.x86_64

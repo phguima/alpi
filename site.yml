@@ -14,6 +14,8 @@
 
   roles:
     - { role: repos, tags: [repos] }
+    # Upgrade + reboot gate: before anything builds kernel modules or installs packages
+    - { role: update, tags: [update] }
     # Before packages: module signing keys must exist before akmods/vboxdrv build anything
     - { role: akmods_mok, tags: [akmods_mok, secureboot] }
     - { role: virtualbox, tags: [virtualbox] }
