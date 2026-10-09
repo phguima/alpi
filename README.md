@@ -28,6 +28,23 @@ ansible-playbook site.yml -K --tags resolve      # preview: prints what would be
 ansible-playbook site.yml -K
 ```
 
+## 🔐 API keys (optional)
+
+ALPI needs no secrets and no vault. To have API keys exported in your `~/.zshrc` (never root's), keep them in an encrypted **Ansible Vault**, which is git-ignored and never committed:
+
+```bash
+ansible-vault create group_vars/all/secrets.yml
+```
+
+with content like:
+
+```yaml
+api_keys: |
+  export SERVICE_API_KEY="your_value_here"
+```
+
+Then add `--ask-vault-pass` to the `ansible-playbook` commands (`./bootstrap.sh` reminds you when the vault exists). Use `ansible-vault edit group_vars/all/secrets.yml` to change it later. While `api_keys` is unset or empty, the block is removed from `~/.zshrc`.
+
 ## 🧪 Tests
 
 Every change ships with tests. [Molecule](https://ansible.readthedocs.io/projects/molecule/) runs the playbook in podman containers (never on the host); pytest covers the filter plugin and the picker. `tests/run.sh` runs them one scenario at a time and prints a timed summary; package downloads are cached in podman volumes (`alpi-dnf-*`) and Ansible collections in `~/.cache/alpi-molecule`, so only the first run downloads everything.

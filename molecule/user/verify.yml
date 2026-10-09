@@ -1,5 +1,5 @@
 ---
-- name: Verify | roles/desktop
+- name: Verify | roles/zsh and roles/desktop, root vs the user
   hosts: all
   gather_facts: false
   tasks:
@@ -84,3 +84,33 @@
         fail_msg: "{{ _ptyxis.results | map(attribute='stdout') | list | to_json }}"
         quiet: true
       when: _desktop == 'GNOME'
+
+    - name: Verify | Read both .zshrc files
+      ansible.builtin.command: "cat {{ item }}"
+      loop: [/root/.zshrc, /home/alpi/.zshrc]
+      register: _zshrc
+      changed_when: false
+
+    - name: Verify | Root gets the common aliases only and no API keys
+      ansible.builtin.assert:
+        that:
+          - "'alias lls=' in _root"
+          - "'claudecli' not in _root and 'full-update' not in _root"
+          - "'API CONFIGURATION' not in _root and 'ALPI_ROOT_KEY' not in _root"
+          - "'NVIDIA AND API CONFIGURATION' not in _root"
+        fail_msg: "{{ _root }}"
+        quiet: true
+      vars:
+        _root: "{{ _zshrc.results[0].stdout }}"
+
+    - name: Verify | The user gets every alias and the API keys block, no legacy block
+      ansible.builtin.assert:
+        that:
+          - "'alias lls=' in _user and 'alias claudecli=' in _user and 'alias full-update=' in _user"
+          - _user.count('# BEGIN API CONFIGURATION') == 1
+          - "'export ALPI_TEST_KEY=\"secret\"' in _user"
+          - "'NVIDIA AND API CONFIGURATION' not in _user and 'ALPI_LEGACY_NVIDIA_BLOCK' not in _user"
+        fail_msg: "{{ _user }}"
+        quiet: true
+      vars:
+        _user: "{{ _zshrc.results[1].stdout }}"

@@ -11,6 +11,28 @@
         name: alpi
         uid: 1000
 
+    # .zshrc as AFPI left it: its old NVIDIA/API block in both, the current API block in root's
+    - name: Prepare | Legacy .zshrc blocks
+      ansible.builtin.copy:
+        dest: "{{ item.home }}/.zshrc"
+        owner: "{{ item.name }}"
+        mode: "0644"
+        content: |
+          # export MANPATH="/usr/local/man:$MANPATH"
+          # BEGIN NVIDIA AND API CONFIGURATION
+          export ALPI_LEGACY_NVIDIA_BLOCK=1
+          # END NVIDIA AND API CONFIGURATION
+          {% if item.name == 'root' %}
+          # BEGIN API CONFIGURATION
+          export ALPI_ROOT_KEY=1
+          # END API CONFIGURATION
+          {% endif %}
+      loop:
+        - { name: root, home: /root }
+        - { name: alpi, home: /home/alpi }
+      loop_control:
+        label: "{{ item.name }}"
+
     # The system Compose files (a desktop install has them)
     - name: Prepare | X11 compose files
       ansible.builtin.package:
@@ -19,7 +41,7 @@
 
 # The cedilla step reads the system locale: pt_BR here, none on the KDE container (fallback)
 - name: Prepare | System locale
-  hosts: alpi-desktop-gnome
+  hosts: alpi-user-gnome
   gather_facts: false
   tasks:
     - name: Prepare | /etc/locale.conf
@@ -30,7 +52,7 @@
         mode: "0644"
 
 - name: Prepare | GNOME session bus
-  hosts: alpi-desktop-gnome
+  hosts: alpi-user-gnome
   gather_facts: false
   tasks:
     - name: Prepare | Ptyxis, dconf and dbus-daemon

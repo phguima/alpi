@@ -80,7 +80,10 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   managed aliases block for `zsh_users` (root + the user); only when `zsh` is selected. Alias
   layers in `group_vars/all/zsh.yml` (common for root; user, `zsh_aliases_os` per distro,
   `zsh_aliases_nvidia` when `nvidia-driver` is selected, and the machine's `luks_volumes` +
-  `zsh_aliases_custom` from `custom.yml` for the user). `luks_volumes` is validated in
+  `zsh_aliases_custom` from `custom.yml` for the user). API keys block (`api_keys`, from the
+  optional vault `group_vars/all/secrets.yml`; never defaulted in `group_vars/all/zsh.yml`, which
+  loads after `secrets.yml` and would override it) in the user's `.zshrc` only, removed when
+  empty; AFPI's legacy `NVIDIA AND API CONFIGURATION` block removed. `luks_volumes` is validated in
   `env_setup` (`alpi_invalid_luks`) and turned into aliases by `alpi_luks_aliases` (by-uuid).
 - `roles/desktop` (after `zsh`; skipped when the user is root): `~/wks`, Konsole on KDE (profile
   and color scheme in `files/`, `konsolerc`), Ptyxis on GNOME (gsettings/dconf as the user, with
@@ -175,8 +178,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     kernel per instance, the dnf one still running the real needs-restarting: no reboot, reboot
     by needs-restarting (EL), reboot by a newer kernel), `boot` (`roles/boot` on Fedora + Alma;
     stand-in installonly packages and a debug kernel built with rpmbuild into a local repository
-    whose id has 'debug', `/etc/default/grub` and a logging `grub2-mkconfig`), `desktop`
-    (`roles/desktop` for a regular user `alpi`: the converge play sets `environment:` SUDO_USER
+    whose id has 'debug', `/etc/default/grub` and a logging `grub2-mkconfig`), `user`
+    (`roles/zsh` + `roles/desktop` for a regular user `alpi`, so root and the user differ: aliases
+    split, API keys block for alpi only, legacy `.zshrc` blocks removed from both; the converge play sets `environment:` SUDO_USER
     and XDG_CURRENT_DESKTOP, which fact gathering sees too, and becomes alpi through sudo; GNOME
     container with Ptyxis and a session bus started as alpi at `/run/user/1000/bus` and a pt_BR
     `/etc/locale.conf`; KDE container without one, for the fallback). That recipe is the way to

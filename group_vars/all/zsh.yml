@@ -30,6 +30,10 @@ zsh_aliases_user: |
 zsh_aliases_nvidia: |
   alias nvidia-run="__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0"
 
+# API key exports for the user's .zshrc come from api_keys in the optional vault
+# group_vars/all/secrets.yml (see README). Not defaulted here: files in group_vars/all load in
+# alphabetical order, so a default in this file would override secrets.yml.
+
 # The machine's own (custom.yml). luks_volumes: name -> LUKS UUID (as in /dev/mapper/luks-<UUID>),
 # giving open-<name> / close-<name> aliases that unlock+mount / unmount+lock it with udisksctl.
 luks_volumes: {}

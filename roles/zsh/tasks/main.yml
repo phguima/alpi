@@ -76,3 +76,33 @@
       loop: "{{ zsh_users }}"
       loop_control:
         label: "{{ item.name }}"
+
+    # AFPI's old block (NVIDIA comments + API keys, written to root's .zshrc too) and AAPI's
+    # current one are both replaced by the block below.
+    - name: ZSH | Remove the legacy NVIDIA and API block
+      ansible.builtin.blockinfile:
+        path: "{{ item.home }}/.zshrc"
+        marker: "# {mark} NVIDIA AND API CONFIGURATION"
+        state: absent
+      become_user: "{{ item.name }}"
+      loop: "{{ zsh_users }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    # API key exports (api_keys, from the optional vault group_vars/all/secrets.yml), only in the
+    # user's .zshrc: root has no use for them. Empty removes the block, also from root's .zshrc
+    # (older AFPI runs wrote it there). no_log: the block holds secrets.
+    - name: ZSH | API keys block
+      ansible.builtin.blockinfile:
+        path: "{{ item.home }}/.zshrc"
+        marker: "# {mark} API CONFIGURATION"
+        insertafter: '^# export MANPATH="/usr/local/man:\$MANPATH"'
+        block: |
+          # API KEYS Configuration
+          {{ api_keys | default('') }}
+        state: "{{ 'present' if item.name == user_name and api_keys | default('') | trim else 'absent' }}"
+      become_user: "{{ item.name }}"
+      loop: "{{ zsh_users }}"
+      loop_control:
+        label: "{{ item.name }}"
+      no_log: true

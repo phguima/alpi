@@ -10,7 +10,7 @@
         quiet: true
 
 # Play-level environment reaches fact gathering too: env_setup sees the sudo user and the desktop
-- name: Desktop | env_setup + roles/desktop as user alpi
+- name: User | env_setup + roles/zsh + roles/desktop as user alpi
   hosts: all
   become: true
   environment:
@@ -20,6 +20,10 @@
     - name: Desktop | Environment setup
       ansible.builtin.import_tasks: ../../tasks/env_setup.yml
 
-    - name: Desktop | Role
+    - name: User | Zsh
+      ansible.builtin.import_role:
+        name: zsh
+
+    - name: User | Desktop
       ansible.builtin.import_role:
         name: desktop
