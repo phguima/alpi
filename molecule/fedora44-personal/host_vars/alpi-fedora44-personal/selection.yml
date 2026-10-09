@@ -5,5 +5,5 @@ packages_selection_add: [flatseal]
 # The pipx apps are large (markitdown[all], notebooklm-py + Chromium): 'catalog' checks them on
 # PyPI; a small pipx app from custom.yml goes through roles/pipx instead.
 packages_selection_skip: [chromium, discord, drawy, displaycal, gpu-screen-recorder, markitdown,
-                          notebooklm-py, pdf2docx]
+                          notebooklm-py, pdf2docx, inkscape]
 features_selection: {}

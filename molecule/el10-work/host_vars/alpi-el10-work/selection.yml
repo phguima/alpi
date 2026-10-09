@@ -3,6 +3,6 @@
 # (unavailable); this is a selection made on Fedora and carried over.
 packages_selection_add: []
 packages_selection_skip: [chromium, discord, drawy, telegram, bitwarden, displaycal, gpu-screen-recorder,
-                          markitdown, notebooklm-py, pdf2docx]
+                          markitdown, notebooklm-py, pdf2docx, inkscape]
 features_selection:
   steam: false

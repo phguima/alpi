@@ -21,10 +21,12 @@ alpi_catalog:
   git:           {all: git}
   htop:          {all: htop}
   hwinfo:        {all: hwinfo}
+  imagemagick:   {all: ImageMagick}                 # EPEL on EL
   lm-sensors:    {all: lm_sensors}
   nodejs:        {all: nodejs}
   nvtop:         {all: nvtop}
   pipx:          {all: pipx}
+  potrace:       {all: potrace}                     # EPEL on EL
   python3-pip:   {all: python3-pip}
   shellcheck:    {all: ShellCheck}
   testdisk:      {all: testdisk}
@@ -51,6 +53,7 @@ alpi_catalog:
   discord:       {all: discord}                   # RPM Fusion nonfree
   drawy:         {fedora: drawy, el: {flatpak: org.kde.drawy}}
   gh:            {all: gh, repo: gh-cli}
+  inkscape:      {fedora: inkscape, el: {flatpak: org.inkscape.Inkscape}}
   steam:         {fedora: steam, el: ~}
   telegram:      {fedora: telegram-desktop, el: {flatpak: org.telegram.desktop}}
   vscode:        {all: code, repo: vscode}
@@ -85,6 +88,7 @@ alpi_catalog:
 
   # --- KDE ---
   kde-gtk-config:      {all: kde-gtk-config}
+  kpat:                {fedora: kpat, el: {flatpak: org.kde.kpat}}   # Fedora KDE ships it already
   ktorrent:            {all: ktorrent}
   media-downloader:    {all: {flatpak: com.markopejic.downloader}}
   plasma-sdk:          {all: plasma-sdk}

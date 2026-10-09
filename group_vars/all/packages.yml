@@ -14,10 +14,12 @@ packages_base:
   - git
   - htop
   - hwinfo
+  - imagemagick
   - lm-sensors
   - nodejs
   - nvtop
   - pipx
+  - potrace
   - python3-pip
   - shellcheck
   - testdisk
@@ -49,6 +51,7 @@ packages_base:
   - discord
   - drawy
   - gh
+  - inkscape
   - telegram
   - vscode
   # Python apps (pipx, for the user)
@@ -67,6 +70,7 @@ packages_base:
 
 packages_kde:
   - kde-gtk-config
+  - kpat
   - ktorrent
   - media-downloader
   - plasma-sdk
