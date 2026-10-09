@@ -136,6 +136,11 @@ aliases:  {p7zip: 7zip}                  # renamed ids still resolve
   `{native: […], repo: virtualbox-oracle}` adds Oracle's repository only there. `roles/virtualbox`
   (before `roles/packages`) creates the Oracle signing key with Secure Boot and the groups.
 
+- (2026-10-09) Python apps installed with pipx are a third kind of catalog value,
+  `{pipx: "<PyPI spec>"}` (extras included, "markitdown[all]"), next to native names and
+  `{flatpak: …}`; `pipx:<spec>` is the raw prefix. They are installed for the user by
+  `roles/pipx`, checked on PyPI with the other name checks, and picked like any package.
+
 ### User file (outside git)
 
 ```yaml

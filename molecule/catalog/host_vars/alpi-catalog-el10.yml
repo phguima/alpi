@@ -17,6 +17,7 @@ _golden:
   unavailable: [google-roboto-fonts, gstreamer1-plugins-bad-free-extras, chkrootkit, unhide, argyllcms, steam, asusctl,
     supergfxctl, asusctl-rog-gui, mesa-va-drivers-freeworld, libva-utils, vdpauinfo, nvidia-driver, nvidia-build,
     nvidia-vulkan, nvidia-vaapi]
+  pipx: ["markitdown[all]", "notebooklm-py[browser]", pdf2docx]
   extra: []
   absent: []
   # KDE forced: the repository's KDE overrides, both apps selected

@@ -2,8 +2,8 @@
 
 import re
 
-# Raw names bypass the catalog: "pkg:<native name>" or "flatpak:<app id>".
-RAW_PREFIXES = {"pkg": "native", "flatpak": "flatpak"}
+# Raw names bypass the catalog: "pkg:<native name>", "flatpak:<app id>" or "pipx:<PyPI spec>".
+RAW_PREFIXES = {"pkg": "native", "flatpak": "flatpak", "pipx": "pipx"}
 
 
 def alpi_resolve(ids, catalog, keys, aliases=None):
@@ -11,7 +11,8 @@ def alpi_resolve(ids, catalog, keys, aliases=None):
 
     keys: catalog keys to try, most specific first (e.g. ["el10", "el", "all"]).
     Returns a dict:
-      native / flatpak: names to install with the package manager / Flatpak;
+      native / flatpak / pipx: names to install with the package manager / Flatpak / pipx (pipx
+                   values are PyPI specs, extras included: "markitdown[all]");
       unknown:     ids missing from the catalog (user or repo error);
       missing:     ids in the catalog with no entry for any of the keys (catalog bug);
       unavailable: ids marked ~ (null) for this distro (skipped with a warning);
@@ -24,7 +25,8 @@ def alpi_resolve(ids, catalog, keys, aliases=None):
                    They are in 'native' too, so name checks and verification cover them.
     """
     aliases = aliases or {}
-    out = {"native": [], "flatpak": [], "unknown": [], "missing": [], "unavailable": [], "repos": [], "swap": []}
+    out = {"native": [], "flatpak": [], "pipx": [], "unknown": [], "missing": [], "unavailable": [],
+           "repos": [], "swap": []}
 
     def add(kind, names):
         for name in names:
@@ -51,6 +53,8 @@ def alpi_resolve(ids, catalog, keys, aliases=None):
             add("unavailable", [pid])
         elif isinstance(value, dict) and "flatpak" in value:
             add("flatpak", [value["flatpak"]])
+        elif isinstance(value, dict) and "pipx" in value:
+            add("pipx", [value["pipx"]])
         else:
             repo = entry.get("repo") or []
             if isinstance(value, dict):
@@ -162,6 +166,11 @@ def alpi_invalid_luks(volumes):
             if not name_re.fullmatch(str(name)) or not uuid_re.fullmatch(str(uuid))]
 
 
+def alpi_pipx_name(spec):
+    """The package name of a pipx/PyPI spec: "notebooklm-py[browser]" -> "notebooklm-py"."""
+    return re.split(r"[\[<>=!~;@ ]", str(spec).strip(), maxsplit=1)[0]
+
+
 class FilterModule(object):
     def filters(self):
         return {
@@ -173,4 +182,5 @@ class FilterModule(object):
             "alpi_flatpak_overrides": alpi_flatpak_overrides,
             "alpi_luks_aliases": alpi_luks_aliases,
             "alpi_invalid_luks": alpi_invalid_luks,
+            "alpi_pipx_name": alpi_pipx_name,
         }

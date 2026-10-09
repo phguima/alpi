@@ -29,6 +29,7 @@
         _golden:
           native: "{{ alpi_pkgs.native }}"
           flatpak: "{{ alpi_pkgs.flatpak }}"
+          pipx: "{{ alpi_pkgs.pipx }}"
           features: "{{ alpi_feature }}"
           repos: "{{ alpi_repos_enabled | map(attribute='id') | list }}"
 

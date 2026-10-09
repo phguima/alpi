@@ -19,6 +19,7 @@ _golden:
   features: {amd: true, asus: true, clamav: true, intel: true, nvidia: true, steam: true, virtualbox: true}
   repos: [rpmfusion-free, rpmfusion-nonfree, brave, gh-cli, vscode, asus-linux]
   unavailable: []
+  pipx: ["markitdown[all]", "notebooklm-py[browser]", pdf2docx]
   extra: []
   absent: []
   # KDE forced: the repository's KDE overrides, both apps selected

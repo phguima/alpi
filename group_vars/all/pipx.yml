@@ -1,0 +1,11 @@
+---
+# roles/pipx: Python apps installed for the user with pipx (catalog values {pipx: <PyPI spec>},
+# or "pipx:<spec>" in custom.yml).
+
+# Extra packages injected into an app's venv once it is installed (app name -> packages)
+pipx_inject:
+  notebooklm-py: [playwright]
+
+# Browsers Playwright downloads for an app (app name -> browser), notebooklm-py's browser login
+pipx_playwright_browsers:
+  notebooklm-py: chromium

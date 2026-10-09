@@ -1,0 +1,61 @@
+---
+# Python apps for the user who runs the playbook (ported from AFPI/AAPI's ai_tools role), in
+# ~/.local/share/pipx with their commands in ~/.local/bin. AFPI installed the bare packages and
+# injected the extras afterwards; the catalog specs carry the extras ("markitdown[all]").
+
+- name: pipx | Apps
+  when: (pipx_specs + pipx_absent) | length > 0
+  block:
+    # pipx is a catalog id too; installed here so an app does not depend on it being selected
+    - name: pipx | Ensure pipx is installed
+      ansible.builtin.package:
+        name: pipx
+        state: present
+
+    # Only "Success! Added" means a shell file was changed. Later runs say "is already in PATH"
+    # or, when the current PATH (sudo's) lacks it, "has been added to PATH, but you need to open
+    # a new terminal" (AFPI keyed on the first and reported a change under sudo every time).
+    - name: pipx | Put ~/.local/bin on the user's PATH
+      ansible.builtin.command: pipx ensurepath
+      become_user: "{{ user_name }}"
+      register: _ensurepath
+      changed_when: "'Success! Added' in _ensurepath.stdout"
+
+    - name: pipx | Install apps
+      community.general.pipx:
+        name: "{{ item | alpi_pipx_name }}"
+        source: "{{ item }}"
+        state: install
+      become_user: "{{ user_name }}"
+      loop: "{{ pipx_specs }}"
+
+    - name: pipx | Inject extra packages
+      community.general.pipx:
+        name: "{{ item.key }}"
+        state: inject
+        inject_packages: "{{ item.value }}"
+      become_user: "{{ user_name }}"
+      loop: "{{ pipx_inject | dict2items | selectattr('key', 'in', pipx_names) | list }}"
+      loop_control:
+        label: "{{ item.key }}"
+
+    # Playwright downloads into ~/.cache/ms-playwright only what is missing or outdated
+    - name: pipx | Playwright browsers
+      ansible.builtin.command:
+        argv:
+          - "{{ user_home }}/.local/share/pipx/venvs/{{ item.key }}/bin/playwright"
+          - install
+          - "{{ item.value }}"
+      become_user: "{{ user_name }}"
+      loop: "{{ pipx_playwright_browsers | dict2items | selectattr('key', 'in', pipx_names) | list }}"
+      loop_control:
+        label: "{{ item.key }}: {{ item.value }}"
+      register: _playwright
+      changed_when: "'downloaded to' in _playwright.stdout"
+
+    - name: pipx | Remove apps listed in packages_absent
+      community.general.pipx:
+        name: "{{ item }}"
+        state: absent
+      become_user: "{{ user_name }}"
+      loop: "{{ pipx_absent }}"

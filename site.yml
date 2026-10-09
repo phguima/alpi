@@ -25,6 +25,8 @@
     - { role: common, tags: [common] }
     - { role: zsh, tags: [zsh] }
     - { role: desktop, tags: [desktop] }
+    # After zsh: 'pipx ensurepath' finds the user's .zshrc
+    - { role: pipx, tags: [pipx] }
     - { role: clamav, tags: [clamav] }
     - { role: asus, tags: [asus] }
     - { role: nvidia, tags: [nvidia] }

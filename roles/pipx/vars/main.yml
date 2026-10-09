@@ -1,0 +1,5 @@
+---
+# Specs to install and app names, from the resolved sets (base + the user's extras)
+pipx_specs: "{{ (alpi_pkgs.pipx + alpi_pkgs_extra.pipx) | unique }}"
+pipx_names: "{{ pipx_specs | map('alpi_pipx_name') | list }}"
+pipx_absent: "{{ alpi_pkgs_absent.pipx | map('alpi_pipx_name') | unique }}"

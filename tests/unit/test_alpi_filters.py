@@ -90,7 +90,8 @@ class TestResolve:
 
     def test_empty_input(self):
         assert resolve(None, FEDORA) == {
-            "native": [], "flatpak": [], "unknown": [], "missing": [], "unavailable": [], "repos": [], "swap": []
+            "native": [], "flatpak": [], "pipx": [], "unknown": [], "missing": [], "unavailable": [],
+            "repos": [], "swap": []
         }
 
     def test_repo_of_a_resolved_package(self):
@@ -182,7 +183,7 @@ class TestFeatures:
     def test_filters_are_registered(self):
         assert set(alpi.FilterModule().filters()) == {
             "alpi_resolve", "alpi_canonical", "alpi_features", "alpi_repos", "alpi_feature_ids",
-            "alpi_flatpak_overrides", "alpi_luks_aliases", "alpi_invalid_luks",
+            "alpi_flatpak_overrides", "alpi_luks_aliases", "alpi_invalid_luks", "alpi_pipx_name",
         }
 
 
@@ -249,3 +250,27 @@ def test_luks_aliases_empty(volumes):
 ])
 def test_invalid_luks(volumes, bad):
     assert alpi.alpi_invalid_luks(volumes) == bad
+
+
+# --- pipx --------------------------------------------------------------------------------------
+
+PIPX_CATALOG = {
+    "markitdown": {"all": {"pipx": "markitdown[all]"}},
+    "tool_el": {"fedora": {"pipx": "tool"}, "el": None},
+}
+
+
+def test_resolve_pipx_entries_and_raw_prefix():
+    res = alpi.alpi_resolve(["markitdown", "pipx:cowsay==6.1", "tool_el"], PIPX_CATALOG, EL10)
+    assert res["pipx"] == ["markitdown[all]", "cowsay==6.1"]
+    assert res["native"] == [] and res["flatpak"] == [] and res["repos"] == []
+    assert res["unavailable"] == ["tool_el"]
+
+
+@pytest.mark.parametrize("spec, name", [
+    ("markitdown[all]", "markitdown"), ("notebooklm-py[browser]", "notebooklm-py"),
+    ("pdf2docx", "pdf2docx"), ("cowsay==6.1", "cowsay"), ("x>=1; python_version>'3'", "x"),
+    (" spaced ", "spaced"),
+])
+def test_pipx_name(spec, name):
+    assert alpi.alpi_pipx_name(spec) == name

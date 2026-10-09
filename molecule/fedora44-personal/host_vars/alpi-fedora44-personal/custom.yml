@@ -4,7 +4,7 @@
 # Brave, VS Code, GitHub CLI, the ASUS COPR (is_asus forced in molecule.yml), ClamAV, Flatseal
 # (added by the selection) and two Flatpaks.
 packages_skip: [slack, spotify, zoom, zotero]
-packages_add: ["pkg:tree"]
+packages_add: ["pkg:tree", "pipx:cowsay"]
 packages_absent: ["pkg:nano"]
 # Flatpak overrides (no desktop here, so none from the repository's KDE layer): ZapZap and
 # Bitwarden are installed and get theirs; Zoom is skipped above, so its override must not apply.

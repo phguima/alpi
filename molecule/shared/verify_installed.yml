@@ -39,6 +39,26 @@
   changed_when: false
   failed_when: false
 
+- name: Verify | List the user's pipx apps
+  ansible.builtin.command: pipx list --short
+  become: true
+  become_user: "{{ user_name }}"
+  register: _pipx_list
+  changed_when: false
+  failed_when: false
+
+- name: Verify | pipx apps installed, absent ones removed
+  ansible.builtin.assert:
+    that:
+      - _wanted | difference(_have) | length == 0
+      - _gone | intersect(_have) | length == 0
+    fail_msg: "pipx list: {{ _have }}; wanted {{ _wanted }}, absent {{ _gone }}"
+    quiet: true
+  vars:
+    _have: "{{ _pipx_list.stdout_lines | map('split') | map('first') | list }}"
+    _wanted: "{{ (alpi_pkgs.pipx + alpi_pkgs_extra.pipx) | map('alpi_pipx_name') | list }}"
+    _gone: "{{ alpi_pkgs_absent.pipx | map('alpi_pipx_name') | list }}"
+
 - name: Verify | Selected packages installed, absent ones removed
   ansible.builtin.assert:
     that:

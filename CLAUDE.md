@@ -95,6 +95,12 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - `roles/asus` (after `packages`): `/etc/asusd` (`asusctl`), `supergfxd.service` (`supergfxctl`,
   tagged `supergfxd`), ROG Control Center autostart (`asusctl-rog-gui`), each gated on its
   resolved id (`asus_selected` in `vars/main.yml`).
+- `roles/pipx` (after `desktop`, so `pipx ensurepath` finds the user's `.zshrc`): Python apps
+  for the user from catalog values `{pipx: <PyPI spec>}` (extras allowed) or `pipx:<spec>` in
+  `custom.yml`; `pipx_inject` and `pipx_playwright_browsers` (`group_vars/all/pipx.yml`) apply
+  only to installed apps; `packages_absent` removes pipx apps too. Names are checked on PyPI in
+  `roles/packages/tasks/check.yml` (`alpi_pipx_name` strips extras/specifiers). The test
+  scenarios skip the three large apps (`catalog` checks them on PyPI) and install `pipx:cowsay`.
 - Catalog values per distro may be `{native: …, repo: …}`: a repository only that distro needs
   (Oracle VirtualBox on EL).
 - `roles/nvidia` (after `packages`): `/etc/modprobe.d/nvidia.conf`; akmods rebuild + `dracut` only

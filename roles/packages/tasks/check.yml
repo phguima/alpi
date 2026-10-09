@@ -27,14 +27,26 @@
   failed_when: false
   check_mode: false
 
+# pipx apps (roles/pipx) are looked up on PyPI by name, extras and version specifiers aside
+- name: Packages | Look up pipx apps on PyPI
+  ansible.builtin.uri:
+    url: "https://pypi.org/pypi/{{ item | alpi_pipx_name | urlencode }}/json"
+    method: HEAD
+    status_code: [200, 404]
+  loop: "{{ (alpi_pkgs.pipx + alpi_pkgs_extra.pipx) | unique }}"
+  register: _pypi_info
+  check_mode: false
+
 - name: Packages | Fail on unknown names
   ansible.builtin.assert:
-    that: (alpi_missing_native + _missing_flatpak) | length == 0
+    that: (alpi_missing_native + _missing_flatpak + _missing_pipx) | length == 0
     fail_msg: >-
       Not found, none of the listed packages was installed. Native packages (not in any enabled repository):
       {{ alpi_missing_native | join(', ') or 'none' }}. Flatpaks (not on Flathub):
-      {{ _missing_flatpak | join(', ') or 'none' }}. Fix the pkg:/flatpak: names in
+      {{ _missing_flatpak | join(', ') or 'none' }}. pipx apps (not on PyPI):
+      {{ _missing_pipx | join(', ') or 'none' }}. Fix the pkg:/flatpak:/pipx: names in
       host_vars/127.0.0.1/custom.yml, or the entry in group_vars/all/catalog.yml.
     quiet: true
   vars:
     _missing_flatpak: "{{ _flatpak_info.results | default([]) | rejectattr('rc', 'equalto', 0) | map(attribute='item') | list }}"
+    _missing_pipx: "{{ _pypi_info.results | default([]) | rejectattr('status', 'equalto', 200) | map(attribute='item') | list }}"

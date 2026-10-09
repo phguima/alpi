@@ -51,6 +51,10 @@ packages_base:
   - gh
   - telegram
   - vscode
+  # Python apps (pipx, for the user)
+  - markitdown
+  - notebooklm-py
+  - pdf2docx
   # Flatpaks
   - bitwarden
   - displaycal

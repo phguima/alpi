@@ -41,10 +41,12 @@
                   chkrootkit, unhide, argyllcms, steam", "alpi_strict is on"]
       - name: names not found
         # Like a real run, repos first: every real name resolves, only the bad ones are reported
-        packages_add: ["pkg:nope-xyz", "flatpak:org.nope.App"]
+        packages_add: ["pkg:nope-xyz", "flatpak:org.nope.App", "pipx:alpi-nope-not-on-pypi-xyz"]
         packages_role: true
         expect: ["Native packages (not in any enabled repository): nope-xyz.",
-                 "Flatpaks (not on Flathub): org.nope.App.", "none of the listed packages was installed"]
+                 "Flatpaks (not on Flathub): org.nope.App.",
+                 "pipx apps (not on PyPI): alpi-nope-not-on-pypi-xyz.",
+                 "none of the listed packages was installed"]
       - name: unreadable repository
         packages_role: true
         broken_repo: true

@@ -2,7 +2,8 @@
 # Copy to host_vars/127.0.0.1/custom.yml (git-ignored) and edit. Applied last: it wins over the
 # repository defaults and the picker's selection.yml (./pick.py, which covers catalog packages and
 # features; this file is for the rest). Ids come from group_vars/all/catalog.yml; names outside the
-# catalog use a prefix: "pkg:<native package>" or "flatpak:<app id>".
+# catalog use a prefix: "pkg:<native package>", "flatpak:<app id>" or "pipx:<PyPI spec>" (a Python
+# app installed for you with pipx).
 
 # Features to switch (see group_vars/all/features.yml). Hardware ones accept only false (veto):
 # the picker does not list them.
@@ -13,6 +14,7 @@ features: {}
 packages_add: []
 #  - "pkg:sqlitebrowser"
 #  - "flatpak:org.gimp.GIMP"
+#  - "pipx:httpie"
 
 # Defaults not to install (never uninstalls anything)
 packages_skip: []

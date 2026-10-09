@@ -2,8 +2,9 @@
 # Package catalog: logical id -> what to install on each distro.
 # Keys are tried in the order of alpi_catalog_keys (group_vars/os_*), most specific first:
 #   Fedora: fedora, all        AlmaLinux 10: el10, el, all
-# Values: a native package name, a list of names, {flatpak: <app id>}, or ~ (unavailable: the id
-# is skipped with a warning). 'repo:' names the repository (group_vars/all/repos.yml) the native
+# Values: a native package name, a list of names, {flatpak: <app id>}, {pipx: <PyPI spec>} (a
+# Python app installed for the user by roles/pipx; extras allowed: "markitdown[all]"), or ~
+# (unavailable: the id is skipped with a warning). 'repo:' names the repository (group_vars/all/repos.yml) the native
 # packages come from when it is not always on; roles/repos enables it only when needed.
 # 'swap: true' marks a package that replaces a conflicting one (ffmpeg-free -> ffmpeg): roles/packages
 # installs it first, with allowerasing. Native names may be dnf groups ('@multimedia').
@@ -59,6 +60,11 @@ alpi_catalog:
   # installed kernel (containers) dnf picks kernel-debug-devel, which roles/boot then removes.
   virtualbox:    {fedora: [VirtualBox, akmod-VirtualBox, kernel-devel],
                   el: {native: [VirtualBox-7.2, kernel-devel, gcc, make, elfutils-libelf-devel], repo: virtualbox-oracle}}
+
+  # --- Python apps (pipx, for the user; roles/pipx) ---
+  markitdown:          {all: {pipx: "markitdown[all]"}}         # documents to Markdown
+  notebooklm-py:       {all: {pipx: "notebooklm-py[browser]"}}  # + Playwright and Chromium (roles/pipx)
+  pdf2docx:            {all: {pipx: pdf2docx}}
 
   # --- Flatpaks ---
   bitwarden:           {all: {flatpak: com.bitwarden.desktop}}
