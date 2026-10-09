@@ -1,0 +1,68 @@
+---
+# gsettings/dconf talk to the user's session bus (XDG_RUNTIME_DIR/bus). Set explicitly from the
+# user's uid instead of relying on sudo's PAM session (pam_systemd) to provide it.
+# Each value is read before and after the write, so a task only reports "changed" when it really
+# changed; comparing the read-back values also avoids formatting GVariants by hand ("uint32 120").
+- name: Ptyxis | Find the user's uid
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ user_name }}"
+
+- name: Ptyxis | Settings
+  vars:
+    _session_env:
+      XDG_RUNTIME_DIR: "/run/user/{{ ansible_facts.getent_passwd[user_name][1] }}"
+      DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ ansible_facts.getent_passwd[user_name][1] }}/bus"
+  block:
+    - name: Ptyxis | Window size and behavior (gsettings)
+      ansible.builtin.shell: |
+        set -e
+        before=$(gsettings get org.gnome.Ptyxis {{ item.key | quote }})
+        gsettings set org.gnome.Ptyxis {{ item.key | quote }} {{ item.value | string | quote }}
+        [ "$before" = "$(gsettings get org.gnome.Ptyxis {{ item.key | quote }})" ] || echo ALPI_CHANGED
+      environment: "{{ _session_env }}"
+      become_user: "{{ user_name }}"
+      loop: "{{ ptyxis_gsettings | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+      register: _gsettings
+      changed_when: "'ALPI_CHANGED' in _gsettings.stdout"
+
+    - name: Ptyxis | Cursor and font (dconf)
+      ansible.builtin.shell: |
+        set -e
+        key=/org/gnome/Ptyxis/{{ item.key | quote }}
+        before=$(dconf read "$key")
+        dconf write "$key" {{ item.value | string | quote }}
+        [ "$before" = "$(dconf read "$key")" ] || echo ALPI_CHANGED
+      environment: "{{ _session_env }}"
+      become_user: "{{ user_name }}"
+      loop: "{{ ptyxis_dconf | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+      register: _dconf
+      changed_when: "'ALPI_CHANGED' in _dconf.stdout"
+
+    - name: Ptyxis | Default profile
+      ansible.builtin.command: dconf read /org/gnome/Ptyxis/default-profile-uuid
+      environment: "{{ _session_env }}"
+      become_user: "{{ user_name }}"
+      register: _profile
+      changed_when: false
+      check_mode: false
+
+    # Ptyxis creates its default profile on first launch; before that there is nothing to set.
+    - name: Ptyxis | Default profile's opacity
+      ansible.builtin.shell: |
+        set -e
+        key=/org/gnome/Ptyxis/Profiles/{{ _uuid | quote }}/opacity
+        before=$(dconf read "$key")
+        dconf write "$key" {{ ptyxis_opacity | string | quote }}
+        [ "$before" = "$(dconf read "$key")" ] || echo ALPI_CHANGED
+      environment: "{{ _session_env }}"
+      become_user: "{{ user_name }}"
+      vars:
+        _uuid: "{{ _profile.stdout | trim | replace(\"'\", '') }}"
+      register: _opacity
+      changed_when: "'ALPI_CHANGED' in _opacity.stdout"
+      when: _uuid | length > 0

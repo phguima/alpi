@@ -1,0 +1,28 @@
+---
+- name: Konsole | Profile directory
+  ansible.builtin.file:
+    path: "{{ user_home }}/.local/share/konsole"
+    state: directory
+    mode: "0755"
+  become_user: "{{ user_name }}"
+
+- name: Konsole | Profile and color scheme
+  ansible.builtin.copy:
+    src: "{{ konsole_profile }}.{{ item }}"
+    dest: "{{ user_home }}/.local/share/konsole/{{ konsole_profile }}.{{ item }}"
+    mode: "0644"
+  become_user: "{{ user_name }}"
+  loop: [profile, colorscheme]
+
+- name: Konsole | Settings
+  community.general.ini_file:
+    path: "{{ user_home }}/.config/konsolerc"
+    section: "{{ item.section }}"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    no_extra_spaces: true
+    mode: "0644"
+  become_user: "{{ user_name }}"
+  loop: "{{ konsole_settings }}"
+  loop_control:
+    label: "{{ item.section }}/{{ item.option }}"

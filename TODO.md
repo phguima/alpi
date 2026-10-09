@@ -14,8 +14,9 @@ AAPI has the same roles (with dnf4 differences); port each for both distros.
       (`feat(boot): …`).
 - [ ] GRUB: AFPI's `GRUB_GFXPAYLOAD=keep` (ported as is) is probably a no-op, since
       grub2-mkconfig reads `GRUB_GFXPAYLOAD_LINUX`. Check on the VM, then rename or drop it.
-- [ ] Desktop: Konsole profile and colors (KDE), Ptyxis settings (GNOME), cedilla (`.XCompose`).
-- [ ] `~/wks` workspace directory.
+- [x] Desktop: Konsole profile and colors (KDE), Ptyxis settings (GNOME), cedilla (`.XCompose`)
+      (`feat(desktop): …`).
+- [x] `~/wks` workspace directory (`feat(desktop): …`).
 - [ ] AI tools: Claude Code, pipx tools (Playwright), Antigravity CLI and IDE (AppImage, menu
       entry), and the API keys block in `.zshrc` (goes with section 3's legacy block cleanup).
 - [ ] Steam shortcut that runs on the NVIDIA GPU.
@@ -25,6 +26,8 @@ AAPI has the same roles (with dnf4 differences); port each for both distros.
 - [ ] `group_vars/os_AlmaLinux_10` + `tasks/RedHat.yml` (dnf4, CRB/EPEL). Oracle VirtualBox is
       done (`feat(virtualbox): …`).
 - [ ] Cleanup of both legacy `.zshrc` blocks.
+- [ ] Roboto from upstream on EL (AAPI's desktop role: latest GitHub release into
+      `roboto_font_dir`, replaced when the version changes); the catalog has it as `~` on EL.
 
 ## 4. Parity
 

@@ -1,0 +1,25 @@
+---
+- name: Desktop | Guard against running on the host
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Desktop | Require ALPI_TARGET
+      ansible.builtin.assert:
+        that: lookup('env', 'ALPI_TARGET') | length > 0
+        fail_msg: ALPI_TARGET is not set; this scenario must target its containers. Set it in molecule.yml.
+        quiet: true
+
+# Play-level environment reaches fact gathering too: env_setup sees the sudo user and the desktop
+- name: Desktop | env_setup + roles/desktop as user alpi
+  hosts: all
+  become: true
+  environment:
+    SUDO_USER: alpi
+    XDG_CURRENT_DESKTOP: "{{ _desktop }}"
+  tasks:
+    - name: Desktop | Environment setup
+      ansible.builtin.import_tasks: ../../tasks/env_setup.yml
+
+    - name: Desktop | Role
+      ansible.builtin.import_role:
+        name: desktop

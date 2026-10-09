@@ -1,0 +1,86 @@
+---
+- name: Verify | roles/desktop
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Verify | Files and their owners
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /home/alpi/wks
+        - /home/alpi/.XCompose
+        - /home/alpi/.local/share/konsole/kali-like-alt.profile
+        - /home/alpi/.local/share/konsole/kali-like-alt.colorscheme
+        - /home/alpi/.config/konsolerc
+      register: _files
+
+    - name: Verify | Read .XCompose and konsolerc
+      ansible.builtin.command: "cat {{ item }}"
+      loop: [/home/alpi/.XCompose, /home/alpi/.config/konsolerc]
+      register: _content
+      changed_when: false
+      failed_when: false
+
+    # The copied system Compose file, with the mapping applied, must be the expected locale's
+    - name: Verify | Compose file of the expected locale
+      ansible.builtin.shell: >-
+        [ "$(sed 's/ć/ç/g; s/Ć/Ç/g; s/U0107/ccedilla/g; s/U0106/Ccedilla/g'
+        /usr/share/X11/locale/{{ _expected }}/Compose)" = "$(cat /home/alpi/.XCompose)" ]
+      vars:
+        _expected: "{{ 'pt_BR.UTF-8' if _desktop == 'GNOME' else 'en_US.UTF-8' }}"
+      changed_when: false
+
+    - name: Verify | Workspace and cedilla for the user
+      ansible.builtin.assert:
+        that:
+          - _files.results[0].stat.isdir and _files.results[0].stat.pw_name == 'alpi'
+          - _files.results[1].stat.exists and _files.results[1].stat.pw_name == 'alpi'
+          - "'ç' in _xcompose and 'ccedilla' in _xcompose"
+          - "'ć' not in _xcompose and 'U0107' not in _xcompose"
+        quiet: true
+      vars:
+        _xcompose: "{{ _content.results[0].stdout }}"
+
+    - name: Verify | Konsole set up on KDE only
+      ansible.builtin.assert:
+        that: _konsole == ([true, true, true] if _desktop == 'KDE' else [false, false, false])
+        fail_msg: "{{ _konsole | to_json }}"
+        quiet: true
+      vars:
+        _konsole: "{{ _files.results[2:] | map(attribute='stat.exists') | list }}"
+
+    - name: Verify | konsolerc settings (KDE)
+      ansible.builtin.assert:
+        that:
+          - "'RememberWindowSize=false' in _rc"
+          - "'DefaultProfile=kali-like-alt.profile' in _rc"
+          - "'ExpandTabWidth=true' in _rc"
+          - _files.results[4].stat.pw_name == 'alpi'
+        fail_msg: "{{ _rc | to_json }}"
+        quiet: true
+      vars:
+        _rc: "{{ _content.results[1].stdout_lines }}"
+      when: _desktop == 'KDE'
+
+    - name: Verify | Read the Ptyxis settings as alpi (GNOME)
+      ansible.builtin.command: "{{ item }}"
+      loop:
+        - gsettings get org.gnome.Ptyxis default-columns
+        - gsettings get org.gnome.Ptyxis restore-window-size
+        - dconf read /org/gnome/Ptyxis/cursor-shape
+        - dconf read /org/gnome/Ptyxis/font-name
+      become: true
+      become_user: alpi
+      environment:
+        XDG_RUNTIME_DIR: /run/user/1000
+        DBUS_SESSION_BUS_ADDRESS: unix:path=/run/user/1000/bus
+      register: _ptyxis
+      changed_when: false
+      when: _desktop == 'GNOME'
+
+    - name: Verify | Ptyxis settings (GNOME)
+      ansible.builtin.assert:
+        that: _ptyxis.results | map(attribute='stdout') | list == ['uint32 120', 'false', "'underline'", "'Fira Code 10'"]
+        fail_msg: "{{ _ptyxis.results | map(attribute='stdout') | list | to_json }}"
+        quiet: true
+      when: _desktop == 'GNOME'

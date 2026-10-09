@@ -1,0 +1,25 @@
+---
+# roles/desktop: the user's workspace, terminal settings and the cedilla fix (ported from
+# AFPI/AAPI's desktop role). Konsole on KDE, Ptyxis on GNOME.
+
+workspace_dir: "{{ user_home }}/wks"
+
+# Konsole (KDE): profile and color scheme from roles/desktop/files, settings in ~/.config/konsolerc
+konsole_profile: kali-like-alt
+konsole_settings:
+  - { section: KonsoleWindow, option: RememberWindowSize, value: "false" }
+  - { section: Desktop Entry, option: DefaultProfile, value: "kali-like-alt.profile" }
+  - { section: TabBar, option: ExpandTabWidth, value: "true" }
+
+# Ptyxis (GNOME): gsettings keys, and dconf keys (values in GVariant syntax)
+ptyxis_gsettings:
+  restore-window-size: "false"
+  default-columns: 120
+  default-rows: 35
+ptyxis_dconf:
+  cursor-shape: "'underline'"
+  cursor-blink-mode: "'on'"
+  use-system-font: "false"
+  font-name: "'Fira Code 10'"
+# Default profile's opacity (only once Ptyxis has created its default profile)
+ptyxis_opacity: 0.95

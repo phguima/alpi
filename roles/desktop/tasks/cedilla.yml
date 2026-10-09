@@ -1,0 +1,50 @@
+---
+# Dead-key accents on a US-international layout give "ć" for ' + c; Brazilian Portuguese wants
+# "ç". The user's ~/.XCompose (a copy of the locale's system Compose file) gets the mapping fixed.
+# The system locale (/etc/locale.conf, what the user's session uses): Ansible runs modules with
+# LANG=C.utf8, so the environment does not tell. Falls back to en_US.UTF-8 when it is missing or
+# has no Compose file. compose.dir lists "<file>:<tabs><locale>" (plus an older form without the
+# colon): exact match on the locale, no regex.
+- name: Cedilla | Find the locale's Compose file
+  ansible.builtin.shell: |
+    lang=$(sed -n 's/^LANG=["]\{0,1\}\([^"]*\)["]\{0,1\}$/\1/p' /etc/locale.conf 2>/dev/null)
+    for l in "$lang" en_US.UTF-8; do
+        [ -n "$l" ] || continue
+        f=$(awk -F ':[ \t]*' -v l="$l" 'NF == 2 && $2 == l {print $1; exit}' /usr/share/X11/locale/compose.dir)
+        if [ -n "$f" ]; then echo "$f"; exit 0; fi
+    done
+  register: _compose
+  changed_when: false
+  check_mode: false
+
+- name: Cedilla | Fix ~/.XCompose
+  when: _compose.stdout | length > 0
+  block:
+    - name: Cedilla | Create ~/.XCompose from the system file when missing
+      ansible.builtin.copy:
+        src: "/usr/share/X11/locale/{{ _compose.stdout }}"
+        dest: "{{ user_home }}/.XCompose"
+        remote_src: true
+        force: false
+        mode: "0644"
+      become_user: "{{ user_name }}"
+
+    # The keysyms too (U0107/U0106): apps that read the keysym instead of the string (e.g.
+    # Chromium on Wayland) would otherwise still get "ć".
+    - name: Cedilla | Map ć/Ć to ç/Ç
+      ansible.builtin.replace:
+        path: "{{ user_home }}/.XCompose"
+        regexp: "{{ item.regexp }}"
+        replace: "{{ item.replace }}"
+      become_user: "{{ user_name }}"
+      loop:
+        - { regexp: 'ć', replace: 'ç' }
+        - { regexp: 'Ć', replace: 'Ç' }
+        - { regexp: 'U0107', replace: 'ccedilla' }
+        - { regexp: 'U0106', replace: 'Ccedilla' }
+      register: _cedilla
+
+    - name: Cedilla | Ask for a new login
+      ansible.builtin.debug:
+        msg: "Cedilla fixed in {{ user_home }}/.XCompose: log out and back in for it to take effect."
+      when: _cedilla is changed

@@ -7,7 +7,7 @@ ALPI is a single Ansible post-install for Linux workstations. It detects the run
 
 ## 📊 Project Status
 
-*   **Stage:** porting. Ported from AFPI so far: repositories, the package catalog and picker, codecs, NVIDIA and VirtualBox (with Secure Boot signing), ClamAV, ASUS, Flatpak overrides, hostname, git, zsh, the system update with its reboot gate, kernel maintenance and GRUB settings. Still to port: desktop and terminal settings, AI tools, then AAPI's AlmaLinux 10 differences and parity checks on a VM. Validated in Fedora 44 and AlmaLinux 10 containers. The architecture is described in [`PROPOSAL.md`](PROPOSAL.md) and the work plan is in [`TODO.md`](TODO.md).
+*   **Stage:** porting. Ported from AFPI so far: repositories, the package catalog and picker, codecs, NVIDIA and VirtualBox (with Secure Boot signing), ClamAV, ASUS, Flatpak overrides, hostname, git, zsh, the system update with its reboot gate, kernel maintenance and GRUB settings, the workspace, terminal settings (Konsole, Ptyxis) and the cedilla fix. Still to port: AI tools, then AAPI's AlmaLinux 10 differences and parity checks on a VM. Validated in Fedora 44 and AlmaLinux 10 containers. The architecture is described in [`PROPOSAL.md`](PROPOSAL.md) and the work plan is in [`TODO.md`](TODO.md).
 *   **Until parity is reached, use AFPI (Fedora) or AAPI (AlmaLinux 10).**
 
 ## 🧭 Design in short

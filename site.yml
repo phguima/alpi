@@ -24,6 +24,7 @@
     - { role: packages, tags: [packages] }
     - { role: common, tags: [common] }
     - { role: zsh, tags: [zsh] }
+    - { role: desktop, tags: [desktop] }
     - { role: clamav, tags: [clamav] }
     - { role: asus, tags: [asus] }
     - { role: nvidia, tags: [nvidia] }

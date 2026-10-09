@@ -1,0 +1,29 @@
+---
+# The user's desktop settings (ported from AFPI/AAPI's desktop role, plus the workspace
+# directory from their common role). Skipped when the playbook runs as root without sudo: there is
+# no user session to configure.
+
+- name: Desktop | User settings
+  when: user_name != 'root'
+  block:
+    - name: Desktop | Workspace directory
+      ansible.builtin.file:
+        path: "{{ workspace_dir }}"
+        state: directory
+        mode: "0755"
+      become_user: "{{ user_name }}"
+      tags: [workspace]
+
+    - name: Desktop | Konsole (KDE)
+      ansible.builtin.import_tasks: konsole.yml
+      when: is_kde
+      tags: [konsole]
+
+    - name: Desktop | Ptyxis (GNOME)
+      ansible.builtin.import_tasks: ptyxis.yml
+      when: is_gnome
+      tags: [ptyxis]
+
+    - name: Desktop | Cedilla
+      ansible.builtin.import_tasks: cedilla.yml
+      tags: [cedilla]

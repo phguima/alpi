@@ -1,0 +1,58 @@
+---
+- name: Prepare | Shared
+  ansible.builtin.import_playbook: ../shared/prepare.yml
+
+- name: Prepare | A regular user and their desktop pieces
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Prepare | User alpi (uid 1000)
+      ansible.builtin.user:
+        name: alpi
+        uid: 1000
+
+    # The system Compose files (a desktop install has them)
+    - name: Prepare | X11 compose files
+      ansible.builtin.package:
+        name: libX11-common
+        state: present
+
+# The cedilla step reads the system locale: pt_BR here, none on the KDE container (fallback)
+- name: Prepare | System locale
+  hosts: alpi-desktop-gnome
+  gather_facts: false
+  tasks:
+    - name: Prepare | /etc/locale.conf
+      ansible.builtin.copy:
+        dest: /etc/locale.conf
+        content: |
+          LANG="pt_BR.UTF-8"
+        mode: "0644"
+
+- name: Prepare | GNOME session bus
+  hosts: alpi-desktop-gnome
+  gather_facts: false
+  tasks:
+    - name: Prepare | Ptyxis, dconf and dbus-daemon
+      ansible.builtin.package:
+        name: [ptyxis, dconf, dbus-daemon]
+        state: present
+
+    # What pam_systemd creates at login
+    - name: Prepare | Runtime directory
+      ansible.builtin.file:
+        path: /run/user/1000
+        state: directory
+        owner: alpi
+        group: alpi
+        mode: "0700"
+
+    # Forked daemon: stdin/stdout detached or the exec never returns
+    - name: Prepare | Session bus for alpi
+      ansible.builtin.shell:
+        cmd: >-
+          dbus-daemon --session --address=unix:path=/run/user/1000/bus
+          --fork </dev/null >/dev/null 2>&1
+        creates: /run/user/1000/bus
+      become: true
+      become_user: alpi

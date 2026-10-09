@@ -82,6 +82,13 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   `zsh_aliases_nvidia` when `nvidia-driver` is selected, and the machine's `luks_volumes` +
   `zsh_aliases_custom` from `custom.yml` for the user). `luks_volumes` is validated in
   `env_setup` (`alpi_invalid_luks`) and turned into aliases by `alpi_luks_aliases` (by-uuid).
+- `roles/desktop` (after `zsh`; skipped when the user is root): `~/wks`, Konsole on KDE (profile
+  and color scheme in `files/`, `konsolerc`), Ptyxis on GNOME (gsettings/dconf as the user, with
+  `XDG_RUNTIME_DIR`/`DBUS_SESSION_BUS_ADDRESS` set from the user's uid; changed only when the
+  read-back value differs), cedilla (`~/.XCompose` from the Compose file of the locale in
+  `/etc/locale.conf`, fallback `en_US.UTF-8`). Ansible runs modules with `LANG=C.utf8`, so
+  `ansible_facts['env']['LANG']` never shows the session's locale (AFPI/AAPI's lookup found
+  nothing because of that).
 - `roles/asus` (after `packages`): `/etc/asusd` (`asusctl`), `supergfxd.service` (`supergfxctl`,
   tagged `supergfxd`), ROG Control Center autostart (`asusctl-rog-gui`), each gated on its
   resolved id (`asus_selected` in `vars/main.yml`).
@@ -168,7 +175,12 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     kernel per instance, the dnf one still running the real needs-restarting: no reboot, reboot
     by needs-restarting (EL), reboot by a newer kernel), `boot` (`roles/boot` on Fedora + Alma;
     stand-in installonly packages and a debug kernel built with rpmbuild into a local repository
-    whose id has 'debug', `/etc/default/grub` and a logging `grub2-mkconfig`).
+    whose id has 'debug', `/etc/default/grub` and a logging `grub2-mkconfig`), `desktop`
+    (`roles/desktop` for a regular user `alpi`: the converge play sets `environment:` SUDO_USER
+    and XDG_CURRENT_DESKTOP, which fact gathering sees too, and becomes alpi through sudo; GNOME
+    container with Ptyxis and a session bus started as alpi at `/run/user/1000/bus` and a pt_BR
+    `/etc/locale.conf`; KDE container without one, for the fallback). That recipe is the way to
+    test any user-specific step (root and the user differ there).
   - `fedora44-personal` and `el10-work` have no systemd: they skip service roles by tag
     (`skip-tags: molecule-notest,notest,clamav,supergfxd,update`; setting skip-tags replaces
     Molecule's default, so its own tags are repeated). Add each new service task's tag there;

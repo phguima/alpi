@@ -1,0 +1,23 @@
+---
+# roles/desktop for a regular user, as on a real machine: the playbook runs as root with
+# SUDO_USER=alpi (play-level environment, so env_setup's facts see it) and switches to alpi
+# through sudo. Fedora 44, one container per desktop:
+#   alpi-desktop-gnome: Ptyxis settings through a real session bus (dbus-daemon at
+#                       /run/user/1000/bus, the role finds it from the uid); no Konsole files
+#   alpi-desktop-kde:   Konsole profile, color scheme and konsolerc; no Ptyxis settings
+# Both: ~/wks and the cedilla fix in ~/.XCompose, owned by the user.
+platforms:
+  - name: alpi-desktop-gnome
+    image: registry.fedoraproject.org/fedora:44
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-desktop-gnome:/var/cache/libdnf5"]
+  - name: alpi-desktop-kde
+    image: registry.fedoraproject.org/fedora:44
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-desktop-kde:/var/cache/libdnf5"]
+provisioner:
+  playbooks:
+    prepare: prepare.yml
+    converge: converge.yml
