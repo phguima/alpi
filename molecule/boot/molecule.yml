@@ -1,0 +1,23 @@
+---
+# roles/boot alone (env_setup + the role) on Fedora 44 (dnf5) and AlmaLinux 10 (dnf4). Containers
+# have no kernels, so prepare.yml builds stand-ins in a local repository whose id contains
+# 'debug' (enabled): two versions of an installonly package (alpi-test-kernel, added to
+# installonlypkgs) and a debug kernel (kernel-alpi-debug). The role must remove the older
+# alpi-test-kernel and the debug kernel, and disable the repository. A /etc/default/grub and a
+# grub2-mkconfig that only logs its calls stand in for GRUB: the settings are written and the
+# config regenerated once (not again on the idempotence run).
+platforms:
+  - name: alpi-boot-fedora44
+    image: registry.fedoraproject.org/fedora:44
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-boot-fedora44:/var/cache/libdnf5"]
+  - name: alpi-boot-el10
+    image: docker.io/library/almalinux:10
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-boot-el10:/var/cache/dnf"]
+provisioner:
+  playbooks:
+    prepare: prepare.yml
+    converge: converge.yml

@@ -10,7 +10,10 @@ AAPI has the same roles (with dnf4 differences); port each for both distros.
 
 - [x] System update (`update` role): dnf configuration, full upgrade, stop when a reboot is
       needed (`feat(update): …`).
-- [ ] Kernel maintenance (old and debug kernels, debug repositories) and GRUB settings.
+- [x] Kernel maintenance (old and debug kernels, debug repositories) and GRUB settings
+      (`feat(boot): …`).
+- [ ] GRUB: AFPI's `GRUB_GFXPAYLOAD=keep` (ported as is) is probably a no-op, since
+      grub2-mkconfig reads `GRUB_GFXPAYLOAD_LINUX`. Check on the VM, then rename or drop it.
 - [ ] Desktop: Konsole profile and colors (KDE), Ptyxis settings (GNOME), cedilla (`.XCompose`).
 - [ ] `~/wks` workspace directory.
 - [ ] AI tools: Claude Code, pipx tools (Playwright), Antigravity CLI and IDE (AppImage, menu

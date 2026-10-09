@@ -1,0 +1,15 @@
+---
+# 'repolist -q' still prints the header line
+- name: Kernel | List enabled repositories (dnf4)
+  ansible.builtin.command: dnf -q repolist --enabled
+  register: _repos
+  changed_when: false
+  check_mode: false
+
+- name: Kernel | Disable enabled debug repositories (dnf4)
+  community.general.dnf_config_manager:
+    name: "{{ _debug }}"
+    state: disabled
+  vars:
+    _debug: "{{ _repos.stdout_lines[1:] | map('split') | map('first') | select('search', 'debug') | list }}"
+  when: _debug | length > 0

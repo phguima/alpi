@@ -1,0 +1,16 @@
+---
+- name: GRUB | Look for /etc/default/grub
+  ansible.builtin.stat:
+    path: /etc/default/grub
+  register: _grub_defaults
+
+- name: GRUB | Apply settings
+  ansible.builtin.lineinfile:
+    path: /etc/default/grub
+    regexp: "^{{ item.key }}="
+    line: '{{ item.key }}="{{ item.value }}"'
+  loop: "{{ grub_settings | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  when: _grub_defaults.stat.exists
+  notify: Regenerate GRUB

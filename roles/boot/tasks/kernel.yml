@@ -1,0 +1,46 @@
+---
+- name: Kernel | Refuse to run on a debug kernel
+  ansible.builtin.fail:
+    msg: >-
+      The running kernel is a DEBUG kernel ({{ ansible_facts['kernel'] }}), and this step removes
+      debug kernels. Boot into a normal kernel and run again.
+  when: "'debug' in ansible_facts['kernel']"
+
+- name: Kernel | List installed debug kernels
+  ansible.builtin.command: dnf -q repoquery --installed "kernel*debug*"
+  register: _debug_kernels
+  changed_when: false
+  check_mode: false
+
+- name: Kernel | Remove debug kernels
+  ansible.builtin.dnf:
+    name: "{{ _debug_kernels.stdout_lines }}"
+    state: absent
+  when: _debug_kernels.stdout_lines | length > 0
+
+# Only the debug repositories that are enabled, so "changed" is real. dnf5 and dnf4 list and
+# disable repositories differently (community.general.dnf_config_manager speaks dnf4 only).
+- name: Kernel | Disable debug repositories
+  ansible.builtin.include_tasks:
+    file: "debug_repos_{{ 'dnf5' if ansible_facts['pkg_mgr'] == 'dnf5' else 'dnf4' }}.yml"
+
+# Every installonly package (kernels) but the newest version of each, minus the running kernel.
+- name: Kernel | List old kernels
+  ansible.builtin.command: dnf -q repoquery --installonly --latest-limit=-1
+  register: _old_kernels
+  changed_when: false
+  check_mode: false
+
+# allowerasing also removes what is bound to those exact kernels: the kmod-<name>-<kernel> packages
+# akmods built for them (VirtualBox, NVIDIA). Without it dnf refuses with a depsolve error, since
+# each kmod requires its own kernel-uname-r.
+- name: Kernel | Remove old kernels
+  ansible.builtin.dnf:
+    name: "{{ _remove }}"
+    state: absent
+    allowerasing: true
+  vars:
+    _remove: "{{ _old_kernels.stdout_lines | reject('search', ansible_facts['kernel'] | regex_escape) | list }}"
+  when:
+    - _remove | length > 0
+    - not ansible_check_mode

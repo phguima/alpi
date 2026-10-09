@@ -1,0 +1,38 @@
+---
+- name: Verify | roles/boot
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Verify | Query packages, the repository, GRUB and the mkconfig log
+      ansible.builtin.command: "{{ item }}"
+      loop:
+        - rpm -q alpi-test-kernel --qf '%{VERSION}\n'
+        - rpm -q kernel-alpi-debug
+        # dnf5's config-manager writes an override file, not the .repo: ask dnf
+        - dnf -q repolist --disabled
+        - cat /etc/default/grub
+        - cat /etc/alpi-test/grub2-mkconfig.log
+      register: _q
+      changed_when: false
+      failed_when: false
+
+    - name: Verify | Old kernel and debug kernel removed, debug repository disabled
+      ansible.builtin.assert:
+        that:
+          - _q.results[0].stdout_lines == ['2.0']
+          - _q.results[1].rc != 0
+          - _q.results[2].stdout_lines | select('match', 'alpi-test-debug\\s') | list | length == 1
+        fail_msg: "{{ _q.results[:3] | map(attribute='stdout') | list }}"
+        quiet: true
+
+    - name: Verify | GRUB settings written once each, config regenerated once
+      ansible.builtin.assert:
+        that:
+          - _grub | select('match', '^GRUB_TIMEOUT=') | list == ['GRUB_TIMEOUT="5"']
+          - "'GRUB_TERMINAL_OUTPUT=\"gfxterm\"' in _grub"
+          - "'GRUB_GFXMODE=\"1920x1080x32,1280x720x32,auto\"' in _grub"
+          - _q.results[4].stdout_lines == ['-o /boot/grub2/grub.cfg']
+        fail_msg: "{{ _grub }} / mkconfig calls: {{ _q.results[4].stdout_lines }}"
+        quiet: true
+      vars:
+        _grub: "{{ _q.results[3].stdout_lines }}"

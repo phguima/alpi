@@ -22,7 +22,7 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 
 - `site.yml`: `tasks/env_setup.yml` (support matrix assert → user/hardware/DE facts, ported from
   AFPI → `group_by` into `os_<distro>`, `os_<distro>_<major>` → machine-settings assert →
-  `tasks/resolve.yml`), then the roles (`repos`, `update`,
+  `tasks/resolve.yml`), then the roles (`repos`, `update`, `boot`,
   `akmods_mok`, `virtualbox`, `packages`, `common`, `zsh`, `clamav`, `asus`, `nvidia` so far).
 - `tasks/resolve.yml` + `filter_plugins/alpi.py`: catalog lookup, merge of the package/feature
   layers, all validation (fails before anything changes). Keep logic in the filter plugin, not in
@@ -58,6 +58,12 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   `dnf_config` into `/etc/dnf/dnf.conf` (replaced, not appended), full upgrade, then the reboot
   gate: `dnf needs-restarting -r` rc 1, or the newest installed `kernel-core` is not the running
   kernel (noir's local-time RTC fools needs-restarting), ends the play for the host.
+- `roles/boot` (after `update`): kernel maintenance (refuses to run on a debug kernel; removes
+  debug kernels, disables enabled debug repositories (`debug_repos_dnf5.yml` / `_dnf4.yml` by
+  `pkg_mgr`: dnf5's `config-manager setopt` writes `/etc/dnf/repos.override.d/`, not the .repo),
+  removes installonly packages older than the newest, never the running kernel, with
+  `allowerasing` for the akmods' kmods) and `grub_settings` into `/etc/default/grub` (skipped
+  when it does not exist), handler `grub2-mkconfig -o /boot/grub2/grub.cfg`.
 - `roles/akmods_mok` (before `packages`): Secure Boot signing key + MOK enrollment request, only
   when Secure Boot is on and an `akmod-*` package was resolved (akmods signs at build time, so the
   key must exist first). `mok_password` in `group_vars/all/secureboot.yml`. `tasks/enroll.yml`
@@ -160,7 +166,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `prepare.yml`: everything selected, and supergfxctl + GUI skipped), `update` (repos +
     `roles/update`; wrappers in `/usr/local/bin` script needs-restarting's answer and the newest
     kernel per instance, the dnf one still running the real needs-restarting: no reboot, reboot
-    by needs-restarting (EL), reboot by a newer kernel).
+    by needs-restarting (EL), reboot by a newer kernel), `boot` (`roles/boot` on Fedora + Alma;
+    stand-in installonly packages and a debug kernel built with rpmbuild into a local repository
+    whose id has 'debug', `/etc/default/grub` and a logging `grub2-mkconfig`).
   - `fedora44-personal` and `el10-work` have no systemd: they skip service roles by tag
     (`skip-tags: molecule-notest,notest,clamav,supergfxd,update`; setting skip-tags replaces
     Molecule's default, so its own tags are repeated). Add each new service task's tag there;

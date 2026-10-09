@@ -55,7 +55,9 @@ alpi_catalog:
   vscode:        {all: code, repo: vscode}
   # Fixed source per distro (PROPOSAL decision 5): RPM Fusion's akmod on Fedora (named, so
   # roles/akmods_mok sees it), Oracle's repository on EL with the module build tools it needs.
-  virtualbox:    {fedora: [VirtualBox, akmod-VirtualBox],
+  # kernel-devel is named on Fedora: akmods needs a kernel-devel-uname-r provider, and without an
+  # installed kernel (containers) dnf picks kernel-debug-devel, which roles/boot then removes.
+  virtualbox:    {fedora: [VirtualBox, akmod-VirtualBox, kernel-devel],
                   el: {native: [VirtualBox-7.2, kernel-devel, gcc, make, elfutils-libelf-devel], repo: virtualbox-oracle}}
 
   # --- Flatpaks ---

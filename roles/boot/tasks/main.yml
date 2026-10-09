@@ -1,0 +1,10 @@
+---
+# Kernel maintenance and GRUB. Runs after roles/update: its reboot gate guarantees the newest
+# kernel is the running one, so only older kernels are removed.
+- name: Boot | Kernel maintenance
+  ansible.builtin.import_tasks: kernel.yml
+  tags: [kernel]
+
+- name: Boot | GRUB settings
+  ansible.builtin.import_tasks: grub.yml
+  tags: [grub]

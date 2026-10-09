@@ -16,6 +16,8 @@
     - { role: repos, tags: [repos] }
     # Upgrade + reboot gate: before anything builds kernel modules or installs packages
     - { role: update, tags: [update] }
+    # After the reboot gate: the running kernel is the newest, older ones can go
+    - { role: boot, tags: [boot] }
     # Before packages: module signing keys must exist before akmods/vboxdrv build anything
     - { role: akmods_mok, tags: [akmods_mok, secureboot] }
     - { role: virtualbox, tags: [virtualbox] }

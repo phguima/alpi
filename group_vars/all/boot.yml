@@ -1,0 +1,10 @@
+---
+# roles/boot: kernel maintenance and GRUB settings (ported from AFPI/AAPI's common role).
+# Written to /etc/default/grub as KEY="value" (replaced when present); the GRUB config is then
+# regenerated. Skipped when /etc/default/grub does not exist (systemd-boot, containers).
+# GRUB_GFXPAYLOAD is AFPI's key as it was; grub2-mkconfig reads GRUB_GFXPAYLOAD_LINUX (TODO.md).
+grub_settings:
+  GRUB_TIMEOUT: 5
+  GRUB_TERMINAL_OUTPUT: gfxterm
+  GRUB_GFXPAYLOAD: keep
+  GRUB_GFXMODE: "1920x1080x32,1280x720x32,auto"

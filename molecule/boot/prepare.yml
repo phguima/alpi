@@ -1,0 +1,96 @@
+---
+- name: Prepare | Shared
+  ansible.builtin.import_playbook: ../shared/prepare.yml
+
+- name: Prepare | Stand-in kernels, debug repository and GRUB
+  hosts: all
+  vars:
+    _rpms:
+      - { name: alpi-test-kernel, version: "1.0" }
+      - { name: alpi-test-kernel, version: "2.0" }
+      - { name: kernel-alpi-debug, version: "1.0" }
+  tasks:
+    # The dnf plugins come from roles/repos in a real run (config-manager)
+    - name: Prepare | Build tools and dnf plugins
+      ansible.builtin.package:
+        name: "{{ ['rpm-build', 'createrepo_c'] + alpi_dnf_plugins }}"
+        state: present
+      vars:
+        alpi_dnf_plugins: "{{ ['dnf-plugins-core', 'dnf5-plugins'] if ansible_facts['pkg_mgr'] == 'dnf5' else ['dnf-plugins-core'] }}"
+
+    - name: Prepare | Directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop: [/opt/alpi-test/specs, /opt/alpi-test/repo, /etc/alpi-test]
+
+    - name: Prepare | Spec files
+      ansible.builtin.copy:
+        dest: "/opt/alpi-test/specs/{{ item.name }}-{{ item.version }}.spec"
+        content: |
+          Name: {{ item.name }}
+          Version: {{ item.version }}
+          Release: 1
+          Summary: ALPI test stand-in
+          License: GPL-3.0-or-later
+          BuildArch: noarch
+          %description
+          ALPI test stand-in for a kernel package.
+          %files
+        mode: "0644"
+      loop: "{{ _rpms }}"
+      loop_control:
+        label: "{{ item.name }}-{{ item.version }}"
+
+    - name: Prepare | Build the packages
+      ansible.builtin.command:
+        cmd: "rpmbuild -bb --define '_rpmdir /opt/alpi-test/repo' /opt/alpi-test/specs/{{ item.name }}-{{ item.version }}.spec"
+        creates: "/opt/alpi-test/repo/noarch/{{ item.name }}-{{ item.version }}-1.noarch.rpm"
+      loop: "{{ _rpms }}"
+      loop_control:
+        label: "{{ item.name }}-{{ item.version }}"
+
+    - name: Prepare | Repository metadata
+      ansible.builtin.command:
+        cmd: createrepo_c /opt/alpi-test/repo
+        creates: /opt/alpi-test/repo/repodata/repomd.xml
+
+    - name: Prepare | Local repository with 'debug' in its id
+      ansible.builtin.copy:
+        dest: /etc/yum.repos.d/alpi-test-debug.repo
+        content: |
+          [alpi-test-debug]
+          name=ALPI test stand-ins (debug)
+          baseurl=file:///opt/alpi-test/repo
+          enabled=1
+          gpgcheck=0
+        mode: "0644"
+
+    - name: Prepare | alpi-test-kernel is installonly, like kernels
+      ansible.builtin.lineinfile:
+        path: /etc/dnf/dnf.conf
+        line: installonlypkgs=alpi-test-kernel
+
+    # Both versions side by side (installonly), and the debug kernel
+    - name: Prepare | Install the stand-ins
+      ansible.builtin.command:
+        cmd: dnf -y install alpi-test-kernel-1.0 alpi-test-kernel-2.0 kernel-alpi-debug
+      register: _install
+      changed_when: "'Nothing to do' not in _install.stdout"
+
+    - name: Prepare | /etc/default/grub with an outdated value
+      ansible.builtin.copy:
+        dest: /etc/default/grub
+        content: |
+          GRUB_TIMEOUT=1
+          GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+        mode: "0644"
+
+    - name: Prepare | grub2-mkconfig that only logs its calls
+      ansible.builtin.copy:
+        dest: /usr/local/bin/grub2-mkconfig
+        content: |
+          #!/bin/sh
+          echo "$*" >> /etc/alpi-test/grub2-mkconfig.log
+        mode: "0755"

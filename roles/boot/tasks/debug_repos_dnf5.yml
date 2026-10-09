@@ -1,0 +1,13 @@
+---
+- name: Kernel | List enabled repositories (dnf5)
+  ansible.builtin.command: dnf repo list --enabled --json
+  register: _repos
+  changed_when: false
+  check_mode: false
+
+- name: Kernel | Disable enabled debug repositories (dnf5)
+  ansible.builtin.command:
+    argv: "{{ ['dnf', 'config-manager', 'setopt'] + (_debug | map('regex_replace', '$', '.enabled=0') | list) }}"
+  vars:
+    _debug: "{{ _repos.stdout | from_json | map(attribute='id') | select('search', 'debug') | list }}"
+  when: _debug | length > 0

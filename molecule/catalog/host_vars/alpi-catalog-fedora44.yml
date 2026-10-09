@@ -8,9 +8,9 @@ _golden:
     gstreamer1-plugins-ugly, gstreamer1-plugin-libav, chkrootkit, lynis, rkhunter,
     unhide, argyllcms, brave-browser, brave-origin, chromium, discord, drawy, gh, telegram-desktop, code,
     "@multimedia", kde-gtk-config, ktorrent, plasma-sdk, flatseal, gnome-tweaks, steam, clamav, clamav-update,
-    VirtualBox, akmod-VirtualBox, asusctl, supergfxctl, asusctl-rog-gui, libva-intel-driver, intel-media-driver, mesa-va-drivers-freeworld,
+    VirtualBox, akmod-VirtualBox, kernel-devel, asusctl, supergfxctl, asusctl-rog-gui, libva-intel-driver, intel-media-driver, mesa-va-drivers-freeworld,
     libva-utils, vdpauinfo, akmod-nvidia, xorg-x11-drv-nvidia, xorg-x11-drv-nvidia-cuda, xorg-x11-drv-nvidia-libs,
-    xorg-x11-drv-nvidia-libs.i686, akmods, kmodtool, gcc, kernel-devel, kernel-headers, vulkan,
+    xorg-x11-drv-nvidia-libs.i686, akmods, kmodtool, gcc, kernel-headers, vulkan,
     xorg-x11-drv-nvidia-cuda-libs, libva-nvidia-driver]
   swap: [ffmpeg, mesa-va-drivers-freeworld]
   flatpak: [com.bitwarden.desktop, net.displaycal.DisplayCAL, com.dec05eba.gpu_screen_recorder, com.slack.Slack,
