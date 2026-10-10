@@ -8,7 +8,7 @@ scenarios / unit tests (see `CLAUDE.md`).
 
 - [ ] Golden test: resolved sets per (distro, DE) compared with AFPI and AAPI.
 - [ ] `fedora:44` and `almalinux:10` containers, twice (idempotency).
-- [ ] VM with EFI + Secure Boot (also: the transient hostname, which containers cannot change; the
+- [ ] VM with EFI + Secure Boot, steps in `tests/vm-checklist.md` (also: the transient hostname, which containers cannot change; the
       NVIDIA akmod build, `dracut` and MOK enrollment, which containers only fake; `e` on a GRUB
       entry shows `set gfxpayload=keep` without `GRUB_GFXPAYLOAD`).
 - [ ] On noir: does Steam run on the NVIDIA GPU from its own launcher (`PrefersNonDefaultGPU`,
