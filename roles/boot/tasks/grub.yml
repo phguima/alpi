@@ -14,3 +14,12 @@
     label: "{{ item.key }}"
   when: _grub_defaults.stat.exists
   notify: Regenerate GRUB
+
+- name: GRUB | Remove obsolete settings
+  ansible.builtin.lineinfile:
+    path: /etc/default/grub
+    regexp: "^{{ item }}="
+    state: absent
+  loop: "{{ grub_settings_absent }}"
+  when: _grub_defaults.stat.exists
+  notify: Regenerate GRUB

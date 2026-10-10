@@ -2,9 +2,13 @@
 # roles/boot: kernel maintenance and GRUB settings (ported from AFPI/AAPI's common role).
 # Written to /etc/default/grub as KEY="value" (replaced when present); the GRUB config is then
 # regenerated. Skipped when /etc/default/grub does not exist (systemd-boot, containers).
-# GRUB_GFXPAYLOAD is AFPI's key as it was; grub2-mkconfig reads GRUB_GFXPAYLOAD_LINUX (TODO.md).
 grub_settings:
   GRUB_TIMEOUT: 5
   GRUB_TERMINAL_OUTPUT: gfxterm
-  GRUB_GFXPAYLOAD: keep
   GRUB_GFXMODE: "1920x1080x32,1280x720x32,auto"
+
+# Keys removed from /etc/default/grub. GRUB_GFXPAYLOAD (AFPI/AAPI wrote it as "keep") is read by
+# nothing: grub2-mkconfig only knows GRUB_GFXPAYLOAD_LINUX, and only for non-BLS entries. On
+# Fedora and EL (BLS) the blscfg module sets gfxpayload=keep in every kernel entry by itself
+# (checked in grub2 2.12 on Fedora 44 and AlmaLinux 10, 2026-10-10).
+grub_settings_absent: [GRUB_GFXPAYLOAD]

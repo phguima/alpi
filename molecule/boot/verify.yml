@@ -31,6 +31,8 @@
           - _grub | select('match', '^GRUB_TIMEOUT=') | list == ['GRUB_TIMEOUT="5"']
           - "'GRUB_TERMINAL_OUTPUT=\"gfxterm\"' in _grub"
           - "'GRUB_GFXMODE=\"1920x1080x32,1280x720x32,auto\"' in _grub"
+          - _grub | select('match', '^GRUB_GFXPAYLOAD=') | list == []
+          - "'GRUB_GFXPAYLOAD_LINUX=\"text\"' in _grub"
           - _q.results[4].stdout_lines == ['-o /boot/grub2/grub.cfg']
         fail_msg: "{{ _grub }} / mkconfig calls: {{ _q.results[4].stdout_lines }}"
         quiet: true

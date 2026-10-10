@@ -63,7 +63,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   `pkg_mgr`: dnf5's `config-manager setopt` writes `/etc/dnf/repos.override.d/`, not the .repo),
   removes installonly packages older than the newest, never the running kernel, with
   `allowerasing` for the akmods' kmods) and `grub_settings` into `/etc/default/grub` (skipped
-  when it does not exist), handler `grub2-mkconfig -o /boot/grub2/grub.cfg`.
+  when it does not exist; `grub_settings_absent` removes dead keys, AFPI's `GRUB_GFXPAYLOAD`),
+  handler `grub2-mkconfig -o /boot/grub2/grub.cfg`. On BLS (Fedora, EL) `10_linux` only emits
+  `blscfg`: settings read by `linux_entry` (`GRUB_GFXPAYLOAD_LINUX`) do nothing there.
 - `roles/akmods_mok` (before `packages`): Secure Boot signing key + MOK enrollment request, only
   when Secure Boot is on and an `akmod-*` package was resolved (akmods signs at build time, so the
   key must exist first). `mok_password` in `group_vars/all/secureboot.yml`. `tasks/enroll.yml`

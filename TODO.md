@@ -12,8 +12,8 @@ AAPI has the same roles (with dnf4 differences); port each for both distros.
       needed (`feat(update): …`).
 - [x] Kernel maintenance (old and debug kernels, debug repositories) and GRUB settings
       (`feat(boot): …`).
-- [ ] GRUB: AFPI's `GRUB_GFXPAYLOAD=keep` (ported as is) is probably a no-op, since
-      grub2-mkconfig reads `GRUB_GFXPAYLOAD_LINUX`. Check on the VM, then rename or drop it.
+- [x] GRUB: AFPI's `GRUB_GFXPAYLOAD=keep` (ported as is) is a no-op: dropped, and removed from
+      `/etc/default/grub` (`fix(boot): …`). On BLS the `blscfg` module sets `gfxpayload=keep` itself.
 - [x] Desktop: Konsole profile and colors (KDE), Ptyxis settings (GNOME), cedilla (`.XCompose`)
       (`feat(desktop): …`).
 - [x] `~/wks` workspace directory (`feat(desktop): …`).
@@ -37,7 +37,8 @@ AAPI has the same roles (with dnf4 differences); port each for both distros.
 - [ ] Golden test: resolved sets per (distro, DE) compared with AFPI and AAPI.
 - [ ] `fedora:44` and `almalinux:10` containers, twice (idempotency).
 - [ ] VM with EFI + Secure Boot (also: the transient hostname, which containers cannot change; the
-      NVIDIA akmod build, `dracut` and MOK enrollment, which containers only fake).
+      NVIDIA akmod build, `dracut` and MOK enrollment, which containers only fake; `e` on a GRUB
+      entry shows `set gfxpayload=keep` without `GRUB_GFXPAYLOAD`).
 - [ ] Freeze AAPI and AFPI with a README pointing to ALPI.
 
 ## 5. New distros (after parity, only with a test VM)

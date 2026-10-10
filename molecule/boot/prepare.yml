@@ -79,12 +79,16 @@
       register: _install
       changed_when: "'Nothing to do' not in _install.stdout"
 
-    - name: Prepare | /etc/default/grub with an outdated value
+    # AFPI's dead GRUB_GFXPAYLOAD line must go; GRUB_GFXPAYLOAD_LINUX (the real key, set by
+    # hand) must stay
+    - name: Prepare | /etc/default/grub with an outdated value and AFPI's obsolete key
       ansible.builtin.copy:
         dest: /etc/default/grub
         content: |
           GRUB_TIMEOUT=1
           GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+          GRUB_GFXPAYLOAD="keep"
+          GRUB_GFXPAYLOAD_LINUX="text"
         mode: "0644"
 
     - name: Prepare | grub2-mkconfig that only logs its calls
