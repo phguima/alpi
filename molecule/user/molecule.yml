@@ -1,14 +1,19 @@
 ---
-# The user-specific roles (zsh, desktop) for a regular user, as on a real machine: the playbook
-# runs as root with SUDO_USER=alpi (play-level environment, so env_setup's facts see it) and
-# switches to alpi through sudo, so root and the user differ. Fedora 44, one container per
-# desktop:
+# The user-specific roles (zsh, desktop, ai_tools) for a regular user, as on a real machine: the
+# playbook runs as root with SUDO_USER=alpi (play-level environment, so env_setup's facts see it)
+# and switches to alpi through sudo, so root and the user differ. Fedora 44, one container per
+# desktop, and AlmaLinux 10:
 #   alpi-user-gnome: Ptyxis settings through a real session bus (dbus-daemon at
-#                       /run/user/1000/bus, the role finds it from the uid); no Konsole files
+#                    /run/user/1000/bus, the role finds it from the uid); no Konsole files
 #   alpi-user-kde:   Konsole profile, color scheme and konsolerc; no Ptyxis settings
-# Both: ~/wks and the cedilla fix in ~/.XCompose, owned by the user. zsh: root gets the common
+#   alpi-user-el10:  no desktop (C.utf8 locale: the cedilla falls back to en_US.UTF-8); the AI
+#                    tools' own packages under EL names
+# All: ~/wks and the cedilla fix in ~/.XCompose, owned by the user. zsh: root gets the common
 # aliases only, alpi everything; the API keys block (api_keys in host_vars, a vault in real use)
 # goes to alpi only; the legacy blocks pre-seeded by prepare.yml are removed from both.
+# AI tools (roles/ai_tools) from local stand-ins (prepare.yml): installed for alpi only, once;
+# the IDE's AppImage checked against the manifest, its icon and menu entry, the URL handler in
+# mimeinfo.cache. GNOME and EL: every tool; KDE: the Antigravity CLI only (features in host_vars).
 platforms:
   - name: alpi-user-gnome
     image: registry.fedoraproject.org/fedora:44
@@ -20,6 +25,11 @@ platforms:
     pre_build_image: true
     command: sleep infinity
     volumes: ["alpi-dnf-user-kde:/var/cache/libdnf5"]
+  - name: alpi-user-el10
+    image: docker.io/library/almalinux:10
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-user-el10:/var/cache/dnf"]
 provisioner:
   playbooks:
     prepare: prepare.yml

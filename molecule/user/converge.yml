@@ -10,12 +10,17 @@
         quiet: true
 
 # Play-level environment reaches fact gathering too: env_setup sees the sudo user and the desktop
-- name: User | env_setup + roles/zsh + roles/desktop as user alpi
+- name: User | env_setup + roles/zsh + roles/desktop + roles/ai_tools as user alpi
   hosts: all
   become: true
   environment:
     SUDO_USER: alpi
     XDG_CURRENT_DESKTOP: "{{ _desktop }}"
+  # The AI tools' upstream: prepare.yml's local stand-ins
+  vars:
+    claude_install_script_url: http://127.0.0.1:8765/claude-install.sh
+    antigravity_install_script_url: http://127.0.0.1:8765/agy-install.sh
+    antigravity_ide_manifest_url: http://127.0.0.1:8765/manifest/latest-x64-linux.yml
   tasks:
     - name: Desktop | Environment setup
       ansible.builtin.import_tasks: ../../tasks/env_setup.yml
@@ -27,3 +32,8 @@
     - name: User | Desktop
       ansible.builtin.import_role:
         name: desktop
+
+    # After zsh, as in site.yml: the Antigravity CLI's shell setup edits .zshrc
+    - name: User | AI tools
+      ansible.builtin.import_role:
+        name: ai_tools

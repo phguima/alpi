@@ -16,7 +16,8 @@ _golden:
   flatpak: [com.bitwarden.desktop, net.displaycal.DisplayCAL, com.dec05eba.gpu_screen_recorder, com.slack.Slack,
     com.spotify.Client, com.rtosta.zapzap, us.zoom.Zoom, org.zotero.Zotero, com.markopejic.downloader,
     com.mattjakeman.ExtensionManager, de.haeckerfelix.Fragments, com.github.unrud.VideoDownloader]
-  features: {amd: true, asus: true, clamav: true, intel: true, nvidia: true, steam: true, virtualbox: true}
+  features: {amd: true, antigravity_cli: true, antigravity_ide: true, asus: true, claude_code: true, clamav: true,
+    intel: true, nvidia: true, steam: true, virtualbox: true}
   repos: [rpmfusion-free, rpmfusion-nonfree, brave, gh-cli, vscode, asus-linux]
   unavailable: []
   pipx: ["markitdown[all]", "notebooklm-py[browser]", pdf2docx]

@@ -11,7 +11,8 @@
         name: alpi
         uid: 1000
 
-    # .zshrc as AFPI left it: its old NVIDIA/API block in both, the current API block in root's
+    # .zshrc as AFPI left it: its old NVIDIA/API block in both, the current API block in root's,
+    # and an 'alias antigravity=' line for the Antigravity CLI stand-in to delete (alpi's only)
     - name: Prepare | Legacy .zshrc blocks
       ansible.builtin.copy:
         dest: "{{ item.home }}/.zshrc"
@@ -22,6 +23,7 @@
           # BEGIN NVIDIA AND API CONFIGURATION
           export ALPI_LEGACY_NVIDIA_BLOCK=1
           # END NVIDIA AND API CONFIGURATION
+          alias antigravity="old alias, deleted by the Antigravity CLI's shell setup"
           {% if item.name == 'root' %}
           # BEGIN API CONFIGURATION
           export ALPI_ROOT_KEY=1
@@ -78,3 +80,68 @@
         creates: /run/user/1000/bus
       become: true
       become_user: alpi
+
+# The AI tools' upstream, served locally on each container (converge.yml points the URLs here):
+# the installer stand-ins, a stand-in AppImage and an update manifest in the real format (a .deb
+# listed first, sha512 in base64 of the AppImage actually served)
+- name: Prepare | Local stand-in for the AI tools' downloads
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Prepare | Stand-in installers and AppImage
+      ansible.builtin.copy:
+        src: files/ai/
+        dest: /srv/alpi-ai/
+        mode: preserve
+
+    - name: Prepare | Update manifest
+      ansible.builtin.shell:
+        cmd: |
+          python3 - <<'PY'
+          import base64, hashlib, pathlib
+          root = pathlib.Path("/srv/alpi-ai")
+          sha = base64.b64encode(hashlib.sha512((root / "Antigravity.AppImage").read_bytes()).digest()).decode()
+          (root / "manifest").mkdir(exist_ok=True)
+          (root / "manifest" / "latest-x64-linux.yml").write_text(
+              "version: 9.9.9\nfiles:\n"
+              f"  - url: http://127.0.0.1:8765/Antigravity.deb\n    sha512: {sha}\n"
+              f"  - url: http://127.0.0.1:8765/Antigravity.AppImage\n    sha512: {sha}\n"
+              f"path: Antigravity.AppImage\nsha512: {sha}\n")
+          PY
+        creates: /srv/alpi-ai/manifest/latest-x64-linux.yml
+
+    # Detached like the session bus above, or the exec never returns
+    - name: Prepare | HTTP server on 127.0.0.1:8765
+      ansible.builtin.shell:
+        cmd: >-
+          setsid python3 -m http.server 8765 --bind 127.0.0.1 --directory /srv/alpi-ai
+          </dev/null >/dev/null 2>&1 &
+      changed_when: true
+
+    - name: Prepare | Wait for the server
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 8765
+        timeout: 30
+
+# Something run as root with alpi's HOME left the icon tree owned by root (seen on noir): the
+# role must give it back to alpi
+- name: Prepare | Root-owned icon directory
+  hosts: alpi-user-gnome
+  gather_facts: false
+  tasks:
+    - name: Prepare | ~/.local/share/icons, alpi's
+      ansible.builtin.file:
+        path: /home/alpi/.local/share/icons
+        state: directory
+        mode: "0755"
+      become: true
+      become_user: alpi
+
+    - name: Prepare | ~/.local/share/icons/hicolor owned by root
+      ansible.builtin.file:
+        path: /home/alpi/.local/share/icons/hicolor
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"

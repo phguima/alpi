@@ -140,6 +140,13 @@ aliases:  {p7zip: 7zip}                  # renamed ids still resolve
   `{pipx: "<PyPI spec>"}` (extras included, "markitdown[all]"), next to native names and
   `{flatpak: …}`; `pipx:<spec>` is the raw prefix. They are installed for the user by
   `roles/pipx`, checked on PyPI with the other name checks, and picked like any package.
+- (2026-10-10) AI tools are features without catalog packages: `claude_code`, `antigravity_cli`
+  and `antigravity_ide` (on by default, as AFPI/AAPI install all three). Their vendors ship
+  installers and self-updating binaries, not packages, so `roles/ai_tools` runs each installer
+  once (only when the binary is missing) and lets the tool update itself; the IDE's AppImage comes
+  from the manifest the app polls, checked against its sha512. AFPI's `antigravity_ide_install`
+  flag is replaced by the feature. A feature without packages is the one case where a role gates
+  on the flag itself; the picker labels it from `feature_descriptions`.
 
 ### User file (outside git)
 

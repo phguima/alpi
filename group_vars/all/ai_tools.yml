@@ -1,0 +1,18 @@
+---
+# roles/ai_tools: AI tools for the user who runs the playbook, from their vendors' own installers
+# (ported from AFPI/AAPI's ai_tools role and the Antigravity parts of their common and apps
+# roles). Each is a feature (group_vars/all/features.yml: claude_code, antigravity_cli,
+# antigravity_ide). Installed only when missing: afterwards each tool updates itself, so the
+# playbook never fights it.
+
+# Claude Code: native installer (binary in ~/.local/share/claude, launcher ~/.local/bin/claude)
+claude_install_script_url: "https://claude.ai/install.sh"
+
+# Antigravity CLI: native installer (~/.local/bin/agy), which then runs 'agy install' for the
+# shell setup
+antigravity_install_script_url: "https://antigravity.google/cli/install.sh"
+
+# Antigravity IDE: the official AppImage, from the update manifest the app itself polls
+# (electron-updater, channel latest-x64 on Linux). The app replaces its own AppImage on updates.
+antigravity_ide_dir: "{{ user_home }}/wks/tools/antigravity"
+antigravity_ide_manifest_url: "https://antigravity-hub-auto-updater-974169037036.us-central1.run.app/manifest/latest-x64-linux.yml"

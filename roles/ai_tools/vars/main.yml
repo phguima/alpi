@@ -1,0 +1,7 @@
+---
+# Packages the selected tools need, installed by this role so they do not depend on the base
+# list: curl for the installer scripts; FUSE 2 to run the AppImage and desktop-file-utils for the
+# menu entry's URL handler (the IDE's login callback, antigravity://).
+ai_tools_deps: >-
+  {{ (['curl'] if alpi_feature.claude_code or alpi_feature.antigravity_cli else [])
+     + (['fuse-libs', 'desktop-file-utils'] if alpi_feature.antigravity_ide else []) }}

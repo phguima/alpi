@@ -1,0 +1,38 @@
+---
+# AI tools for the user who runs the playbook (group_vars/all/ai_tools.yml), each switched by its
+# feature. Skipped when the playbook runs as root without sudo, as in AFPI/AAPI: the tools live in
+# the user's home. Runs after roles/zsh: the Antigravity CLI's shell setup edits ~/.zshrc, which
+# must already come from the Oh My Zsh template (that copy never replaces an existing file).
+
+- name: AI tools | For the user
+  when: user_name != 'root' and ai_tools_deps | length > 0
+  block:
+    - name: AI tools | Ensure what the installers need is installed
+      ansible.builtin.package:
+        name: "{{ ai_tools_deps }}"
+        state: present
+
+    # Each installer downloads a checksummed binary into the user's home; pipefail so a failed
+    # download fails the task instead of feeding bash an empty script. Claude's installer refuses
+    # to run as root under sudo, hence the user and HOME.
+    - name: AI tools | Install with the vendor's installer
+      ansible.builtin.shell:
+        cmd: "set -o pipefail; curl -fsSL {{ item.url | quote }} | bash"
+        executable: /bin/bash
+        chdir: "{{ user_home }}"
+        creates: "{{ user_home }}/.local/bin/{{ item.bin }}"
+      environment:
+        HOME: "{{ user_home }}"
+      become_user: "{{ user_name }}"
+      loop:
+        - { feature: claude_code, url: "{{ claude_install_script_url }}", bin: claude }
+        - { feature: antigravity_cli, url: "{{ antigravity_install_script_url }}", bin: agy }
+      loop_control:
+        label: "{{ item.feature }}"
+      when: alpi_feature[item.feature]
+      tags: [claude, antigravity]
+
+    - name: AI tools | Antigravity IDE
+      ansible.builtin.import_tasks: antigravity_ide.yml
+      when: alpi_feature.antigravity_ide
+      tags: [antigravity]

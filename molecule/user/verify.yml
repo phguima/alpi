@@ -114,3 +114,116 @@
         quiet: true
       vars:
         _user: "{{ _zshrc.results[1].stdout }}"
+
+- name: Verify | roles/ai_tools, for alpi only
+  hosts: all
+  gather_facts: false
+  vars:
+    # The features under test: defaults (all on), then the instance's host_vars
+    _on: "{{ {'claude_code': true, 'antigravity_cli': true, 'antigravity_ide': true} | combine(features | default({})) }}"
+    _apps: /home/alpi/.local/share/applications
+    _icon_dir: /home/alpi/.local/share/icons/hicolor/512x512/apps
+  tasks:
+    - name: Verify | AI tools files
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /home/alpi/.local/bin/claude
+        - /home/alpi/.local/bin/agy
+        - /home/alpi/wks/tools/antigravity/antigravity
+        - "{{ _icon_dir }}/antigravity.png"
+        - "{{ _apps }}/antigravity.desktop"
+        - /root/.local/bin/claude
+        - /root/.local/bin/agy
+      register: _ai
+
+    - name: Verify | Each tool installed for alpi exactly when its feature is on, never for root
+      ansible.builtin.assert:
+        that:
+          - _exists == [_on.claude_code, _on.antigravity_cli] + [_on.antigravity_ide] * 3 + [false, false]
+          - _ai.results[:5] | selectattr('stat.exists') | map(attribute='stat.pw_name') | unique | list
+            in [['alpi'], []]
+        fail_msg: "{{ _ai.results | map(attribute='stat.pw_name', default='-') | zip(_exists) | list | to_json }}"
+        quiet: true
+      vars:
+        _exists: "{{ _ai.results | map(attribute='stat.exists') | list }}"
+
+    # Each stand-in logs its runs: 'creates' keeps a second run away (idempotence checks the
+    # task, this checks the installer itself ran only once over converge + idempotence)
+    - name: Verify | Installer runs
+      ansible.builtin.slurp:
+        src: "/home/alpi/.alpi-installs-{{ item }}"
+      loop: "{{ (['claude'] if _on.claude_code else []) + (['agy'] if _on.antigravity_cli else []) }}"
+      register: _runs
+
+    - name: Verify | Each installer ran once
+      ansible.builtin.assert:
+        that: _runs.results | map(attribute='content') | map('b64decode') | unique | list == ['run\n']
+        quiet: true
+      when: _runs.results | length > 0
+
+    - name: Verify | Read alpi's and root's .zshrc
+      ansible.builtin.slurp:
+        src: "{{ item }}"
+      loop: [/home/alpi/.zshrc, /root/.zshrc]
+      register: _rc
+
+    # The CLI's shell setup ran for alpi (stand-in: deletes 'alias antigravity='), after the
+    # managed block, which keeps alias antigravity-ide; root's .zshrc is left alone
+    - name: Verify | The Antigravity CLI's shell setup kept the managed aliases
+      ansible.builtin.assert:
+        that:
+          - ('alias antigravity="' in _user) != _on.antigravity_cli
+          - "'alias antigravity-ide=' in _user and 'alias agycli=' in _user"
+          - "'alias antigravity=\"' in _root"
+        fail_msg: "{{ _user }}"
+        quiet: true
+      vars:
+        _user: "{{ _rc.results[0].content | b64decode }}"
+        _root: "{{ _rc.results[1].content | b64decode }}"
+
+    - name: Verify | Antigravity IDE
+      when: _on.antigravity_ide
+      block:
+        - name: Verify | IDE directories and the served AppImage
+          ansible.builtin.stat:
+            path: "{{ item }}"
+            checksum_algorithm: sha512
+          loop:
+            - /home/alpi/wks/tools/antigravity/antigravity
+            - /srv/alpi-ai/Antigravity.AppImage
+            - "{{ _apps }}"
+            - /home/alpi/.local/share/icons/hicolor
+            - /home/alpi/.local/share/icons/hicolor/512x512
+            - "{{ _icon_dir }}"
+          register: _ide
+
+        - name: Verify | AppImage as served, executable; every icon level belongs to alpi
+          ansible.builtin.assert:
+            that:
+              - _ide.results[0].stat.checksum == _ide.results[1].stat.checksum
+              - _ide.results[0].stat.mode == '0755'
+              - _ide.results[2:] | map(attribute='stat.pw_name') | unique | list == ['alpi']
+            quiet: true
+
+        - name: Verify | Read the icon, menu entry and mimeinfo.cache
+          ansible.builtin.slurp:
+            src: "{{ item }}"
+          loop:
+            - "{{ _icon_dir }}/antigravity.png"
+            - "{{ _apps }}/antigravity.desktop"
+            - "{{ _apps }}/mimeinfo.cache"
+          register: _ide_files
+
+        - name: Verify | Icon extracted, menu entry, URL handler registered
+          ansible.builtin.assert:
+            that:
+              - _ide_text[0] == 'PNG stand-in\n'
+              - "'Exec=/home/alpi/wks/tools/antigravity/antigravity %U' in _ide_text[1]"
+              - "'Icon=' ~ _icon_dir ~ '/antigravity.png' in _ide_text[1]"
+              - "'MimeType=x-scheme-handler/antigravity;' in _ide_text[1]"
+              - "'x-scheme-handler/antigravity=antigravity.desktop;' in _ide_text[2]"
+            fail_msg: "{{ _ide_text | to_json }}"
+            quiet: true
+          vars:
+            _ide_text: "{{ _ide_files.results | map(attribute='content') | map('b64decode') | list }}"

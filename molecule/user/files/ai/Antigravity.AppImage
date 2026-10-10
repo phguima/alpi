@@ -1,0 +1,10 @@
+#!/bin/sh
+# Stand-in AppImage (served by prepare.yml): '--appimage-extract <path>' writes
+# squashfs-root/<path> in the current directory, as the real AppImage runtime does.
+if [ "$1" = --appimage-extract ]; then
+    mkdir -p "squashfs-root/$(dirname "$2")"
+    printf 'PNG stand-in\n' > "squashfs-root/$2"
+    echo "squashfs-root/$2"
+    exit 0
+fi
+echo "Antigravity stand-in"

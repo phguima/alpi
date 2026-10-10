@@ -27,6 +27,8 @@
     - { role: desktop, tags: [desktop] }
     # After zsh: 'pipx ensurepath' finds the user's .zshrc
     - { role: pipx, tags: [pipx] }
+    # After zsh: the Antigravity CLI's shell setup edits the user's .zshrc
+    - { role: ai_tools, tags: [ai_tools] }
     - { role: clamav, tags: [clamav] }
     - { role: asus, tags: [asus] }
     - { role: nvidia, tags: [nvidia] }

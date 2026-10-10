@@ -1,5 +1,7 @@
 # ALPI filters: resolve logical package ids through the catalog (see PROPOSAL.md, "Customization").
 
+import base64
+import binascii
 import re
 
 # Raw names bypass the catalog: "pkg:<native name>", "flatpak:<app id>" or "pipx:<PyPI spec>".
@@ -171,6 +173,26 @@ def alpi_pipx_name(spec):
     return re.split(r"[\[<>=!~;@ ]", str(spec).strip(), maxsplit=1)[0]
 
 
+def alpi_appimage_release(manifest):
+    """The AppImage in an electron-updater manifest (latest-linux.yml, already parsed).
+
+    Returns {"version", "url", "sha512"} with the checksum in hex (the manifest has it in base64,
+    get_url wants hex), or {"error": <message>} when there is no usable AppImage entry.
+    """
+    files = (manifest or {}).get("files") if isinstance(manifest, dict) else None
+    entry = next((f for f in files or [] if isinstance(f, dict)
+                  and str(f.get("url", "")).endswith(".AppImage")), None)
+    if entry is None:
+        return {"error": "no AppImage in the manifest's files"}
+    try:
+        digest = base64.b64decode(str(entry.get("sha512", "")), validate=True)
+    except (binascii.Error, ValueError):
+        digest = b""
+    if len(digest) != 64:
+        return {"error": f"no valid sha512 for {entry['url']}"}
+    return {"version": str(manifest.get("version", "")), "url": str(entry["url"]), "sha512": digest.hex()}
+
+
 class FilterModule(object):
     def filters(self):
         return {
@@ -183,4 +205,5 @@ class FilterModule(object):
             "alpi_luks_aliases": alpi_luks_aliases,
             "alpi_invalid_luks": alpi_invalid_luks,
             "alpi_pipx_name": alpi_pipx_name,
+            "alpi_appimage_release": alpi_appimage_release,
         }

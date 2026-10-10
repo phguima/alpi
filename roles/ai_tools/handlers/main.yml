@@ -1,0 +1,7 @@
+---
+# mimeinfo.cache maps antigravity:// to the IDE's menu entry, so the browser can hand the login
+# callback back to the app
+- name: AI tools | Update the desktop database
+  ansible.builtin.command: "update-desktop-database {{ user_home }}/.local/share/applications"
+  become_user: "{{ user_name }}"
+  changed_when: true

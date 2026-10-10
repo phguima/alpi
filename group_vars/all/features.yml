@@ -14,6 +14,10 @@ features_default:
   steam: true
   clamav: true
   virtualbox: true
+  # AI tools (roles/ai_tools): vendor installers for the user, no catalog packages
+  claude_code: true
+  antigravity_cli: true
+  antigravity_ide: true
 
 # Package ids (catalog) each feature adds to the base set while it is on.
 feature_packages:
@@ -24,3 +28,9 @@ feature_packages:
   intel: [libva-intel-driver, intel-media-driver]
   amd: [mesa-va-drivers-freeworld, libva-utils, vdpauinfo]
   nvidia: [nvidia-driver, nvidia-build, nvidia-vulkan, nvidia-vaapi]
+
+# What the picker shows for features that install no catalog packages (the others list theirs)
+feature_descriptions:
+  claude_code: Claude Code CLI (native installer, ~/.local/bin/claude)
+  antigravity_cli: Antigravity CLI (native installer, ~/.local/bin/agy)
+  antigravity_ide: Antigravity IDE (AppImage in ~/wks/tools/antigravity, menu entry)

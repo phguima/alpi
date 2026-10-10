@@ -9,6 +9,7 @@
 # the picker does not list them.
 features: {}
 #  nvidia: false
+#  antigravity_ide: false
 
 # Extra packages, installed after the base set
 packages_add: []

@@ -12,9 +12,6 @@ omz_theme_name: "kali-like-alt"
 omz_plugins:
   - git
 
-# Antigravity IDE location (the alias below; the IDE itself comes with the AI tools port)
-antigravity_ide_dir: "{{ user_home }}/wks/tools/antigravity"
-
 zsh_aliases_common: |
   alias zshconfig="nano ~/.zshrc"
   alias ohmyzsh="nano ~/.oh-my-zsh"
@@ -22,6 +19,8 @@ zsh_aliases_common: |
   alias llsa="ls --color -lha --group-directories-first"
   alias clean-cache="sudo sync; echo 3 | sudo tee /proc/sys/vm/drop_caches"
 
+# antigravity-ide, not antigravity: the Antigravity CLI's shell setup deletes any
+# 'alias antigravity=' line (antigravity_ide_dir is in group_vars/all/ai_tools.yml)
 zsh_aliases_user: |
   alias claudecli="cd ~/wks; clear; claude"
   alias agycli="cd ~/wks; clear; agy"

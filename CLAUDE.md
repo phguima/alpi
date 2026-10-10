@@ -22,8 +22,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 
 - `site.yml`: `tasks/env_setup.yml` (support matrix assert → user/hardware/DE facts, ported from
   AFPI → `group_by` into `os_<distro>`, `os_<distro>_<major>` → machine-settings assert →
-  `tasks/resolve.yml`), then the roles (`repos`, `update`, `boot`,
-  `akmods_mok`, `virtualbox`, `packages`, `common`, `zsh`, `clamav`, `asus`, `nvidia` so far).
+  `tasks/resolve.yml`), then the roles (`repos`, `update`, `boot`, `akmods_mok`, `virtualbox`,
+  `packages`, `common`, `zsh`, `desktop`, `pipx`, `ai_tools`, `clamav`, `asus`, `nvidia` so far).
 - `tasks/resolve.yml` + `filter_plugins/alpi.py`: catalog lookup, merge of the package/feature
   layers, all validation (fails before anything changes). Keep logic in the filter plugin, not in
   long Jinja expressions.
@@ -101,6 +101,17 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   only to installed apps; `packages_absent` removes pipx apps too. Names are checked on PyPI in
   `roles/packages/tasks/check.yml` (`alpi_pipx_name` strips extras/specifiers). The test
   scenarios skip the three large apps (`catalog` checks them on PyPI) and install `pipx:cowsay`.
+- `roles/ai_tools` (after `zsh`: the Antigravity CLI's shell setup edits `.zshrc`, which must
+  already come from the Oh My Zsh template; skipped when the user is root): features without
+  catalog packages, so gated on `alpi_feature` itself (no ids to gate on), `claude_code`, `antigravity_cli` (vendor installers piped to bash as the user
+  with `HOME` set, `creates` the binary in `~/.local/bin`; the tools update themselves) and
+  `antigravity_ide` (AppImage into `antigravity_ide_dir` only when missing, from the update
+  manifest via `alpi_appimage_release`: base64 sha512 to hex; icon extracted with
+  `--appimage-extract`, menu entry, handler `update-desktop-database` for `antigravity://`).
+  Installs its own deps (`curl`, `fuse-libs`, `desktop-file-utils`). URLs in
+  `group_vars/all/ai_tools.yml`; the picker labels features without packages from
+  `feature_descriptions`. `tasks/check.yml` (run by `catalog`) checks the upstream URLs without
+  downloading. The alias is `antigravity-ide` because `agy install` deletes `alias antigravity=`.
 - Catalog values per distro may be `{native: …, repo: …}`: a repository only that distro needs
   (Oracle VirtualBox on EL).
 - `roles/nvidia` (after `packages`): `/etc/modprobe.d/nvidia.conf`; akmods rebuild + `dracut` only
@@ -125,7 +136,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   updates to the existing ones (and pytest unit tests for Python code such as filter plugins).
   When behavior changes, update the scenarios that cover it. A change without tests is not done.
 - Driver: podman (`molecule-plugins[podman]`), installed with pipx on the host:
-  `pipx install molecule && pipx inject molecule 'molecule-plugins[podman]' ansible-core`.
+  `pipx install molecule && pipx inject molecule 'molecule-plugins[podman]' ansible-core pytest`
+  (pytest: `tests/run.sh` runs the unit tests with the venv's Python).
   The Molecule controller runs on the host, but every playbook run targets the scenario's
   container, never the host: plays get their hosts from Molecule's inventory, not `localhost`.
 - Layout: `molecule/<scenario>/` (`molecule.yml`, `converge.yml`, `verify.yml`), one scenario per
@@ -152,9 +164,11 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `ansible-core` (a Molecule dependency, 2.21 on 2026-10-08) first, so both machines test with
     the same controller; the system one is 2.20 on the Fedora personal machine and 2.16 on the
     AlmaLinux 10 work machine, whose dnf5 module cannot install by URL. Plain `molecule test`
-    uses the system one. It needs `containers.podman` in
-    `~/.ansible/collections` (`ansible-galaxy collection install containers.podman -p
-    ~/.ansible/collections --force`; the copy in Fedora's `ansible` package is not searched).
+    uses the system one. It needs `containers.podman` and `community.general` in
+    `~/.ansible/collections` (`ansible-galaxy collection install containers.podman
+    community.general -p ~/.ansible/collections --force`; the copies in Fedora's `ansible`
+    package are not searched by the venv's ansible-core: without `community.general` every
+    scenario fails at its syntax step).
   - `.config/molecule/config.yml` is the base config: podman driver, `ALPI_TARGET=all` (site.yml
     targets localhost without it; `molecule/shared/converge.yml` refuses to run if it is unset),
     filter/role paths, links to the repo's `group_vars/` and the scenario's `host_vars/` (links
@@ -163,7 +177,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   - Scenarios: `catalog` (Fedora + Alma: repos + every name checked, nothing installed; the full
     resolved sets compared with reviewed golden values in its `host_vars/`, via
     `shared/verify_resolution.yml`. Update those when the catalog or package lists change, after
-    reviewing the diff), `fedora44-personal`, `el10-work` (real installs, heaviest apps skipped;
+    reviewing the diff; also the AI tools' upstream URLs, `roles/ai_tools/tasks/check.yml`),
+    `fedora44-personal`, `el10-work` (real installs, heaviest apps skipped;
     `shared/verify_installed.yml` checks everything resolved is installed; `el10-work` also
     resolves with EL10's own ansible-core 2.16 inside the container,
     `shared/verify_native_controller.yml`; both keep their settings in a host_vars directory,
@@ -185,12 +200,16 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     by needs-restarting (EL), reboot by a newer kernel), `boot` (`roles/boot` on Fedora + Alma;
     stand-in installonly packages and a debug kernel built with rpmbuild into a local repository
     whose id has 'debug', `/etc/default/grub` and a logging `grub2-mkconfig`), `user`
-    (`roles/zsh` + `roles/desktop` for a regular user `alpi`, so root and the user differ: aliases
+    (`roles/zsh` + `roles/desktop` + `roles/ai_tools` for a regular user `alpi`, so root and the user differ: aliases
     split, API keys block for alpi only, legacy `.zshrc` blocks removed from both; the converge play sets `environment:` SUDO_USER
     and XDG_CURRENT_DESKTOP, which fact gathering sees too, and becomes alpi through sudo; GNOME
     container with Ptyxis and a session bus started as alpi at `/run/user/1000/bus` and a pt_BR
-    `/etc/locale.conf`; KDE container without one, for the fallback). That recipe is the way to
-    test any user-specific step (root and the user differ there).
+    `/etc/locale.conf`; KDE container without one, for the fallback; AlmaLinux 10 container
+    without a desktop. `roles/ai_tools` against stand-ins in `files/ai/` served by
+    `python3 -m http.server` on 127.0.0.1:8765 in each container (prepare writes the manifest with
+    the stand-in AppImage's real sha512; converge's play vars point the URLs there): every tool on
+    GNOME and EL, only the CLI on KDE; each stand-in refuses root and logs its runs). That recipe
+    is the way to test any user-specific step (root and the user differ there).
   - `fedora44-personal` and `el10-work` have no systemd: they skip service roles by tag
     (`skip-tags: molecule-notest,notest,clamav,supergfxd,update`; setting skip-tags replaces
     Molecule's default, so its own tags are repeated). Add each new service task's tag there;

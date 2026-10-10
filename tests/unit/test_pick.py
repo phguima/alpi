@@ -34,11 +34,23 @@ def ids(items):
 
 def test_fedora_lists_everything_but_hardware_and_feature_packages():
     data, (features, packages) = real_choices("Fedora", "44")
-    assert ids(features) == ["steam", "clamav", "virtualbox"]
+    assert ids(features) == ["steam", "clamav", "virtualbox", "claude_code", "antigravity_cli",
+                             "antigravity_ide"]
     assert all(c.default for c in features)
     owned = {i for v in data["feature_packages"].values() for i in v}
     assert not owned & set(ids(packages))
     assert {"vim", "chkrootkit", "multimedia", "telegram"} <= set(ids(packages))
+
+
+def test_features_without_packages_are_listed_with_their_description():
+    # The AI tools install no catalog packages: listed everywhere, labelled from
+    # feature_descriptions; features with packages keep listing them
+    for distro, major in (("Fedora", "44"), ("AlmaLinux", "10")):
+        data, (features, _) = real_choices(distro, major)
+        labels = {c.id: c.label for c in features}
+        for name in ("claude_code", "antigravity_cli", "antigravity_ide"):
+            assert labels[name] == data["feature_descriptions"][name]
+        assert "clamav" in labels["clamav"]
 
 
 def test_el10_hides_unavailable_ids_and_empty_features():

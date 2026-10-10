@@ -109,6 +109,7 @@ def choices(data, des, filters):
                                                data.get("alpi_catalog_aliases"))
     feature_packages = data.get("feature_packages") or {}
     hardware = set(data.get("alpi_hardware_features") or [])
+    descriptions = data.get("feature_descriptions") or {}
 
     features = []
     for name, value in (data.get("features_default") or {}).items():
@@ -117,7 +118,7 @@ def choices(data, des, filters):
         res = resolve(feature_packages.get(name) or [])
         if feature_packages.get(name) and not (res["native"] or res["flatpak"] or res.get("pipx")):
             continue  # nothing to install here (Steam on EL)
-        features.append(Choice(name, _names(res), bool(value)))
+        features.append(Choice(name, descriptions.get(name) or _names(res), bool(value)))
 
     desktop_lists = {"kde": data.get("packages_kde") or [], "gnome": data.get("packages_gnome") or []}
     defaults = list(data.get("packages_base") or []) + list(data.get("packages_os") or [])

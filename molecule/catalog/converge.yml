@@ -11,3 +11,8 @@
       ansible.builtin.include_role:
         name: packages
         tasks_from: check.yml
+
+    - name: Catalog | Check the AI tools' upstream URLs
+      ansible.builtin.include_role:
+        name: ai_tools
+        tasks_from: check.yml

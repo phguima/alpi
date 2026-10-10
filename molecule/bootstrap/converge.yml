@@ -7,6 +7,10 @@
       PATH: "/opt/shim:{{ ansible_facts['env']['PATH'] }}"
       # bootstrap.sh installs whiptail; the scripted answers need the picker's text prompts
       ALPI_PICKER: text
+      # The copy of filter_plugins/ below brings the host's __pycache__; pick.py writing its own
+      # alpi.cpython-3XX.pyc there (same name when host and container share a Python version)
+      # would make that copy change on every run and fail idempotence
+      PYTHONDONTWRITEBYTECODE: "1"
   tasks:
     - name: Bootstrap | Install script(1)
       ansible.builtin.package:

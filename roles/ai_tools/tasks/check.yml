@@ -1,0 +1,42 @@
+---
+# Upstream checks for the selected AI tools, without installing anything (the 'catalog' Molecule
+# scenario): the installer scripts are served, and the IDE's update manifest has an AppImage
+# whose download URL answers. Catches a vendor moving a URL before a real run meets it.
+
+- name: AI tools check | Installer scripts
+  ansible.builtin.uri:
+    url: "{{ item.url }}"
+    return_content: true
+  register: _scripts
+  failed_when: _scripts.status != 200 or not _scripts.content.startswith('#!')
+  loop:
+    - { feature: claude_code, url: "{{ claude_install_script_url }}" }
+    - { feature: antigravity_cli, url: "{{ antigravity_install_script_url }}" }
+  loop_control:
+    label: "{{ item.feature }}: {{ item.url }}"
+  when: alpi_feature[item.feature]
+  check_mode: false
+
+- name: AI tools check | Antigravity IDE release
+  when: alpi_feature.antigravity_ide
+  block:
+    - name: AI tools check | Read the IDE's update manifest
+      ansible.builtin.uri:
+        url: "{{ antigravity_ide_manifest_url }}"
+        return_content: true
+      register: _ide_manifest
+      check_mode: false
+
+    - name: AI tools check | The manifest has an AppImage
+      ansible.builtin.assert:
+        that: _ide_release.error is not defined
+        fail_msg: "Antigravity IDE: {{ _ide_release.error | default('') }} ({{ antigravity_ide_manifest_url }})."
+        quiet: true
+      vars:
+        _ide_release: "{{ _ide_manifest.content | from_yaml | alpi_appimage_release }}"
+
+    - name: AI tools check | The AppImage answers (HEAD, nothing downloaded)
+      ansible.builtin.uri:
+        url: "{{ (_ide_manifest.content | from_yaml | alpi_appimage_release).url }}"
+        method: HEAD
+      check_mode: false

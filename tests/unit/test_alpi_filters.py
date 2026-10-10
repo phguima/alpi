@@ -1,5 +1,6 @@
 """Unit tests for filter_plugins/alpi.py (pure functions, no Ansible needed)."""
 
+import base64
 import importlib.util
 from pathlib import Path
 
@@ -184,6 +185,7 @@ class TestFeatures:
         assert set(alpi.FilterModule().filters()) == {
             "alpi_resolve", "alpi_canonical", "alpi_features", "alpi_repos", "alpi_feature_ids",
             "alpi_flatpak_overrides", "alpi_luks_aliases", "alpi_invalid_luks", "alpi_pipx_name",
+            "alpi_appimage_release",
         }
 
 
@@ -274,3 +276,31 @@ def test_resolve_pipx_entries_and_raw_prefix():
 ])
 def test_pipx_name(spec, name):
     assert alpi.alpi_pipx_name(spec) == name
+
+
+# The real manifest's shape (2.22.0, 2026-10-10): a .deb next to the AppImage, sha512 in base64
+SHA = bytes(range(64))
+MANIFEST = {
+    "version": "2.22.0",
+    "files": [
+        {"url": "https://example.org/2.22.0/Antigravity.deb", "sha512": base64.b64encode(b"x" * 64).decode()},
+        {"url": "https://example.org/2.22.0/Antigravity.AppImage", "sha512": base64.b64encode(SHA).decode()},
+    ],
+    "path": "Antigravity.AppImage",
+}
+
+
+def test_appimage_release_picks_the_appimage_with_a_hex_checksum():
+    assert alpi.alpi_appimage_release(MANIFEST) == {
+        "version": "2.22.0", "url": "https://example.org/2.22.0/Antigravity.AppImage", "sha512": SHA.hex()}
+
+
+@pytest.mark.parametrize("manifest, error", [
+    (None, "no AppImage"), ("not a mapping", "no AppImage"), ({"files": []}, "no AppImage"),
+    ({"files": [MANIFEST["files"][0]]}, "no AppImage"),
+    ({"files": [{"url": "a/x.AppImage"}]}, "no valid sha512"),
+    ({"files": [{"url": "a/x.AppImage", "sha512": "not base64!"}]}, "no valid sha512"),
+    ({"files": [{"url": "a/x.AppImage", "sha512": base64.b64encode(b"short").decode()}]}, "no valid sha512"),
+])
+def test_appimage_release_errors(manifest, error):
+    assert error in alpi.alpi_appimage_release(manifest)["error"]

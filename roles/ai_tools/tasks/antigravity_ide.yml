@@ -1,0 +1,99 @@
+---
+# Antigravity IDE: the official AppImage, downloaded only when missing (the app replaces its own
+# AppImage on updates), plus its icon and menu entry, which an AppImage put there by hand gets too.
+
+- name: Antigravity IDE | Check for the AppImage
+  ansible.builtin.stat:
+    path: "{{ antigravity_ide_dir }}/antigravity"
+  register: _ide_bin
+
+- name: Antigravity IDE | Download the latest release
+  when: not _ide_bin.stat.exists
+  block:
+    - name: Antigravity IDE | Read the update manifest
+      ansible.builtin.uri:
+        url: "{{ antigravity_ide_manifest_url }}"
+        return_content: true
+      register: _ide_manifest
+      check_mode: false
+
+    - name: Antigravity IDE | Pick the AppImage from the manifest
+      ansible.builtin.set_fact:
+        _ide_release: "{{ _ide_manifest.content | from_yaml | alpi_appimage_release }}"
+
+    - name: Antigravity IDE | Check the release
+      ansible.builtin.assert:
+        that: _ide_release.error is not defined
+        fail_msg: "Antigravity IDE: {{ _ide_release.error | default('') }} ({{ antigravity_ide_manifest_url }})."
+        quiet: true
+
+    - name: Antigravity IDE | Install directory
+      ansible.builtin.file:
+        path: "{{ antigravity_ide_dir }}"
+        state: directory
+        mode: "0755"
+      become_user: "{{ user_name }}"
+      register: _ide_dir
+
+    # In --check the directory above is only reported, not created, and get_url would fail on it
+    - name: Antigravity IDE | Download the AppImage
+      ansible.builtin.get_url:
+        url: "{{ _ide_release.url }}"
+        dest: "{{ antigravity_ide_dir }}/antigravity"
+        checksum: "sha512:{{ _ide_release.sha512 }}"
+        mode: "0755"
+      become_user: "{{ user_name }}"
+      register: _ide_download
+      when: not (ansible_check_mode and _ide_dir is changed)
+
+- name: Antigravity IDE | Menu entry
+  when: _ide_bin.stat.exists or _ide_download | default({}) is changed
+  block:
+    # Every level belongs to the user: something run as root with the user's HOME can leave
+    # ~/.local/share/icons/hicolor owned by root, and the icon is extracted as the user (AFPI).
+    - name: Antigravity IDE | Directories for the icon and the menu entry
+      ansible.builtin.file:
+        path: "{{ user_home }}/.local/share/{{ item }}"
+        state: directory
+        owner: "{{ user_name }}"
+        group: "{{ user_name }}"
+        mode: "0755"
+      loop: [applications, icons/hicolor, icons/hicolor/512x512, icons/hicolor/512x512/apps]
+
+    # From inside the AppImage (--appimage-extract needs no FUSE). The antigravity.png at its root
+    # is only a symlink, so the real file is extracted.
+    - name: Antigravity IDE | Extract the icon
+      ansible.builtin.shell:
+        cmd: |
+          set -e
+          tmp=$(mktemp -d)
+          trap 'rm -rf "$tmp"' EXIT
+          cd "$tmp"
+          {{ (antigravity_ide_dir ~ '/antigravity') | quote }} --appimage-extract {{ _icon_in_appimage }} >/dev/null
+          install -D -m 0644 squashfs-root/{{ _icon_in_appimage }} {{ _icon | quote }}
+        creates: "{{ _icon }}"
+      become_user: "{{ user_name }}"
+      vars:
+        _icon_in_appimage: usr/share/icons/hicolor/512x512/apps/antigravity.png
+
+    # Named antigravity.desktop so the dock matches the window (Wayland app_id 'antigravity') to
+    # it; the MimeType lets the browser hand the login callback (antigravity://) back to the app.
+    - name: Antigravity IDE | Desktop entry
+      ansible.builtin.copy:
+        dest: "{{ user_home }}/.local/share/applications/antigravity.desktop"
+        content: |
+          [Desktop Entry]
+          Type=Application
+          Name=Antigravity
+          Comment=Agentic development platform
+          Exec={{ antigravity_ide_dir }}/antigravity %U
+          Icon={{ _icon }}
+          Terminal=false
+          Categories=Development;IDE;
+          MimeType=x-scheme-handler/antigravity;
+          StartupWMClass=antigravity
+        mode: "0644"
+      become_user: "{{ user_name }}"
+      notify: AI tools | Update the desktop database
+  vars:
+    _icon: "{{ user_home }}/.local/share/icons/hicolor/512x512/apps/antigravity.png"

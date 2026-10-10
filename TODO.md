@@ -20,7 +20,8 @@ AAPI has the same roles (with dnf4 differences); port each for both distros.
 - [x] API keys block in `.zshrc` (user only, from the optional vault) (`feat(zsh): …`).
 - [x] AI tools: pipx tools (markitdown, notebooklm-py with Playwright, pdf2docx) as catalog
       entries (`feat(pipx): …`).
-- [ ] AI tools: Claude Code, Antigravity CLI and IDE (AppImage, menu entry) as features.
+- [x] AI tools: Claude Code, Antigravity CLI and IDE (AppImage, menu entry) as features
+      (`feat(ai_tools): …`).
 - [ ] Steam shortcut that runs on the NVIDIA GPU.
 
 ## 3. Bring in AAPI (AlmaLinux 10, work machine)

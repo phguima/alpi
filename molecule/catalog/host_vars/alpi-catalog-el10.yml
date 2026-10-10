@@ -12,7 +12,8 @@ _golden:
   flatpak: [org.kde.drawy, org.inkscape.Inkscape, org.telegram.desktop, com.bitwarden.desktop, net.displaycal.DisplayCAL, com.dec05eba.gpu_screen_recorder,
     com.slack.Slack, com.spotify.Client, com.rtosta.zapzap, us.zoom.Zoom, org.zotero.Zotero, org.kde.kpat, com.markopejic.downloader,
     com.mattjakeman.ExtensionManager, de.haeckerfelix.Fragments, com.github.unrud.VideoDownloader]
-  features: {amd: true, asus: true, clamav: true, intel: true, nvidia: true, steam: true, virtualbox: true}
+  features: {amd: true, antigravity_cli: true, antigravity_ide: true, asus: true, claude_code: true, clamav: true,
+    intel: true, nvidia: true, steam: true, virtualbox: true}
   repos: [crb, epel, rpmfusion-free, rpmfusion-nonfree, brave, gh-cli, vscode, virtualbox-oracle]
   unavailable: [google-roboto-fonts, gstreamer1-plugins-bad-free-extras, chkrootkit, unhide, argyllcms, steam, asusctl,
     supergfxctl, asusctl-rog-gui, mesa-va-drivers-freeworld, libva-utils, vdpauinfo, nvidia-driver, nvidia-build,
