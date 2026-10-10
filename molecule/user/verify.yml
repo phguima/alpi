@@ -107,6 +107,9 @@
       ansible.builtin.assert:
         that:
           - "'alias lls=' in _user and 'alias claudecli=' in _user and 'alias full-update=' in _user"
+          # each layer's aliases start their own line (a folded join once wrote a literal
+          # backslash-n between layers, putting them on the previous layer's last line)
+          - _user.splitlines() | select('match', '^alias (lls|claudecli|full-update)=') | list | length == 3
           - _user.count('# BEGIN API CONFIGURATION') == 1
           - "'export ALPI_TEST_KEY=\"secret\"' in _user"
           - "'NVIDIA AND API CONFIGURATION' not in _user and 'ALPI_LEGACY_NVIDIA_BLOCK' not in _user"

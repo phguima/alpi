@@ -82,7 +82,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   managed aliases block for `zsh_users` (root + the user); only when `zsh` is selected. Alias
   layers in `group_vars/all/zsh.yml` (common for root; user, `zsh_aliases_os` per distro,
   `zsh_aliases_nvidia` when `nvidia-driver` is selected, and the machine's `luks_volumes` +
-  `zsh_aliases_custom` from `custom.yml` for the user). API keys block (`api_keys`, from the
+  `zsh_aliases_custom` from `custom.yml` for the user), joined in a double-quoted scalar: in a
+  folded one (`>-`) `join('\n')` gets a literal backslash-n. API keys block (`api_keys`, from the
   optional vault `group_vars/all/secrets.yml`; never defaulted in `group_vars/all/zsh.yml`, which
   loads after `secrets.yml` and would override it) in the user's `.zshrc` only, removed when
   empty; AFPI's legacy `NVIDIA AND API CONFIGURATION` block removed. `luks_volumes` is validated in
