@@ -1,0 +1,4 @@
+---
+# Steam's launcher runs on the NVIDIA GPU when both Steam and the NVIDIA driver are selected
+# (NVIDIA detected, not vetoed; Fedora only, as Steam is)
+steam_on_nvidia: "{{ 'steam' in alpi_ids_selected and 'nvidia-driver' in alpi_ids_selected }}"

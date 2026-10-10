@@ -1,0 +1,47 @@
+---
+# A user copy of Steam's launcher with every Exec (the main one and the menu actions) prefixed by
+# the PRIME offload variables (ported from AFPI's apps role). Rebuilt from the system file on
+# every run, so Steam updates (new actions, translations) reach it; AFPI copied it once and only
+# rewrote the main Exec. Steam's own PrefersNonDefaultGPU/X-KDE-RunOnDiscreteGpu stay in place.
+
+- name: Steam | Read the system launcher
+  ansible.builtin.slurp:
+    src: /usr/share/applications/steam.desktop
+  register: _steam_system
+  failed_when: false
+  when: steam_on_nvidia
+
+- name: Steam | Launcher on the NVIDIA GPU
+  when: steam_on_nvidia and _steam_system.content is defined
+  block:
+    - name: Steam | Applications directory
+      ansible.builtin.file:
+        path: "{{ user_home }}/.local/share/applications"
+        state: directory
+        mode: "0755"
+      become_user: "{{ user_name }}"
+
+    - name: Steam | Write the user's launcher
+      ansible.builtin.copy:
+        dest: "{{ user_home }}/.local/share/applications/steam.desktop"
+        content: "{{ _steam_system.content | b64decode | regex_replace('(?m)^Exec=', 'Exec=env ' ~ nvidia_prime_env ~ ' ') }}"
+        mode: "0644"
+      become_user: "{{ user_name }}"
+
+# Without the NVIDIA driver, __GLX_VENDOR_LIBRARY_NAME=nvidia breaks Steam's OpenGL, and a stale
+# copy shadows Steam's updates: a user launcher that carries the offload (this role's, or AFPI's)
+# goes when Steam or the driver is no longer selected. Any other steam.desktop is the user's own.
+- name: Steam | Remove the NVIDIA launcher when it no longer applies
+  when: not steam_on_nvidia
+  block:
+    - name: Steam | Read the user's launcher
+      ansible.builtin.slurp:
+        src: "{{ user_home }}/.local/share/applications/steam.desktop"
+      register: _steam_user
+      failed_when: false
+
+    - name: Steam | Remove it
+      ansible.builtin.file:
+        path: "{{ user_home }}/.local/share/applications/steam.desktop"
+        state: absent
+      when: "'Exec=env __NV_PRIME_RENDER_OFFLOAD=1 ' in (_steam_user.content | default('') | b64decode)"

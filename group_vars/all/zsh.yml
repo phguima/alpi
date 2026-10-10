@@ -27,7 +27,7 @@ zsh_aliases_user: |
   alias antigravity-ide='"{{ antigravity_ide_dir }}/antigravity"'
 
 zsh_aliases_nvidia: |
-  alias nvidia-run="__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0"
+  alias nvidia-run="{{ nvidia_prime_env }}"
 
 # API key exports for the user's .zshrc come from api_keys in the optional vault
 # group_vars/all/secrets.yml (see README). Not defaulted here: files in group_vars/all load in

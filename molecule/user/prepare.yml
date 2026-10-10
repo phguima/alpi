@@ -145,3 +145,44 @@
         owner: root
         group: root
         mode: "0755"
+
+# Steam's launcher where Steam is installed (Fedora); on KDE, the copy AFPI left behind (only the
+# main Exec rewritten); on EL, a launcher the user made, without the offload
+- name: Prepare | Steam launchers
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Prepare | System launcher (Fedora)
+      ansible.builtin.copy:
+        src: files/steam.desktop
+        dest: /usr/share/applications/steam.desktop
+        mode: "0644"
+      when: inventory_hostname != 'alpi-user-el10'
+
+    - name: Prepare | The user's applications directory
+      ansible.builtin.file:
+        path: /home/alpi/.local/share/applications
+        state: directory
+        mode: "0755"
+      become: true
+      become_user: alpi
+      when: inventory_hostname != 'alpi-user-gnome'
+
+    - name: Prepare | User launcher
+      ansible.builtin.copy:
+        dest: /home/alpi/.local/share/applications/steam.desktop
+        content: "{{ _content[inventory_hostname] }}"
+        mode: "0644"
+      become: true
+      become_user: alpi
+      vars:
+        _content:
+          alpi-user-kde: |
+            [Desktop Entry]
+            Name=Steam
+            Exec=env __NV_PRIME_RENDER_OFFLOAD=1 __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0 __GLX_VENDOR_LIBRARY_NAME=nvidia /usr/bin/steam %U
+          alpi-user-el10: |
+            [Desktop Entry]
+            Name=My Steam
+            Exec=/opt/steam/steam
+      when: inventory_hostname != 'alpi-user-gnome'

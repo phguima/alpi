@@ -4,26 +4,6 @@ Work plan. Done items are ticked (with the commit); a section is removed once al
 ticked. Architecture, rationale and decisions in `PROPOSAL.md`. Every item ships with its Molecule
 scenarios / unit tests (see `CLAUDE.md`).
 
-## 2. Bring in the rest of AFPI (not listed in the first pass)
-
-AAPI has the same roles (with dnf4 differences); port each for both distros.
-
-- [x] System update (`update` role): dnf configuration, full upgrade, stop when a reboot is
-      needed (`feat(update): …`).
-- [x] Kernel maintenance (old and debug kernels, debug repositories) and GRUB settings
-      (`feat(boot): …`).
-- [x] GRUB: AFPI's `GRUB_GFXPAYLOAD=keep` (ported as is) is a no-op: dropped, and removed from
-      `/etc/default/grub` (`fix(boot): …`). On BLS the `blscfg` module sets `gfxpayload=keep` itself.
-- [x] Desktop: Konsole profile and colors (KDE), Ptyxis settings (GNOME), cedilla (`.XCompose`)
-      (`feat(desktop): …`).
-- [x] `~/wks` workspace directory (`feat(desktop): …`).
-- [x] API keys block in `.zshrc` (user only, from the optional vault) (`feat(zsh): …`).
-- [x] AI tools: pipx tools (markitdown, notebooklm-py with Playwright, pdf2docx) as catalog
-      entries (`feat(pipx): …`).
-- [x] AI tools: Claude Code, Antigravity CLI and IDE (AppImage, menu entry) as features
-      (`feat(ai_tools): …`).
-- [ ] Steam shortcut that runs on the NVIDIA GPU.
-
 ## 3. Bring in AAPI (AlmaLinux 10, work machine)
 
 - [ ] `group_vars/os_AlmaLinux_10` + `tasks/RedHat.yml` (dnf4, CRB/EPEL). Oracle VirtualBox is
@@ -39,6 +19,9 @@ AAPI has the same roles (with dnf4 differences); port each for both distros.
 - [ ] VM with EFI + Secure Boot (also: the transient hostname, which containers cannot change; the
       NVIDIA akmod build, `dracut` and MOK enrollment, which containers only fake; `e` on a GRUB
       entry shows `set gfxpayload=keep` without `GRUB_GFXPAYLOAD`).
+- [ ] On noir: does Steam run on the NVIDIA GPU from its own launcher (`PrefersNonDefaultGPU`,
+      `X-KDE-RunOnDiscreteGpu`, via switcheroo-control) without ALPI's user launcher
+      (`feat(desktop): …`)? If so, drop the override.
 - [ ] Freeze AAPI and AFPI with a README pointing to ALPI.
 
 ## 5. New distros (after parity, only with a test VM)

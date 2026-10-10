@@ -27,3 +27,7 @@
     - name: Desktop | Cedilla
       ansible.builtin.import_tasks: cedilla.yml
       tags: [cedilla]
+
+    - name: Desktop | Steam on the NVIDIA GPU
+      ansible.builtin.import_tasks: steam.yml
+      tags: [steam]

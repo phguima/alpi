@@ -230,3 +230,53 @@
             quiet: true
           vars:
             _ide_text: "{{ _ide_files.results | map(attribute='content') | map('b64decode') | list }}"
+
+- name: Verify | Steam on the NVIDIA GPU (roles/desktop)
+  hosts: all
+  gather_facts: false
+  vars:
+    _steam_launcher: /home/alpi/.local/share/applications/steam.desktop
+    _steam_prime: __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0
+  tasks:
+    - name: Verify | The user's launcher
+      ansible.builtin.stat:
+        path: "{{ _steam_launcher }}"
+      register: _steam
+
+    - name: Verify | Read the launchers and the user's .zshrc
+      ansible.builtin.slurp:
+        src: "{{ item }}"
+      loop: "{{ ([_steam_launcher] if _steam.stat.exists else []) + ['/home/alpi/.zshrc'] }}"
+      register: _steam_files
+
+    - name: Verify | Read the system launcher (GNOME)
+      ansible.builtin.slurp:
+        src: /usr/share/applications/steam.desktop
+      register: _steam_system
+      when: inventory_hostname == 'alpi-user-gnome'
+
+    - name: Verify | GNOME launcher
+      ansible.builtin.assert:
+        that:
+          - _steam.stat.pw_name == 'alpi'
+          - _steam_user.splitlines() | select('match', '^Exec=') | reject('match', '^Exec=env ' ~ _steam_prime ~ ' /usr/bin/steam') | list == []
+          - _steam_user.splitlines() | select('match', '^Exec=') | list | length == 4
+          - _steam_user | replace('Exec=env ' ~ _steam_prime ~ ' ', 'Exec=') == _steam_sys
+          - "'PrefersNonDefaultGPU=true' in _steam_user"
+          - "'alias nvidia-run=\"' ~ _steam_prime ~ '\"' in _steam_rc"
+        fail_msg: "{{ _steam_user }}"
+        quiet: true
+      vars:
+        _steam_user: "{{ _steam_files.results[0].content | b64decode }}"
+        _steam_sys: "{{ _steam_system.content | b64decode }}"
+        _steam_rc: "{{ _steam_files.results[1].content | b64decode }}"
+      when: inventory_hostname == 'alpi-user-gnome'
+
+    - name: Verify | KDE (NVIDIA vetoed) lost AFPI's launcher; EL kept the user's own; no alias
+      ansible.builtin.assert:
+        that:
+          - _steam.stat.exists == (inventory_hostname == 'alpi-user-el10')
+          - not _steam.stat.exists or 'Name=My Steam' in (_steam_files.results[0].content | b64decode)
+          - "'nvidia-run' not in (_steam_files.results[-1].content | b64decode)"
+        quiet: true
+      when: inventory_hostname != 'alpi-user-gnome'

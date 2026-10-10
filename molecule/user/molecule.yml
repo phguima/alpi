@@ -14,6 +14,9 @@
 # AI tools (roles/ai_tools) from local stand-ins (prepare.yml): installed for alpi only, once;
 # the IDE's AppImage checked against the manifest, its icon and menu entry, the URL handler in
 # mimeinfo.cache. GNOME and EL: every tool; KDE: the Antigravity CLI only (features in host_vars).
+# Steam on the NVIDIA GPU (roles/desktop): GNOME gets the user launcher built from the system one
+# (files/steam.desktop, a trimmed copy of RPM Fusion's) and the nvidia-run alias; KDE vetoes
+# NVIDIA, so AFPI's leftover launcher goes; EL has neither, and a user's own launcher stays.
 platforms:
   - name: alpi-user-gnome
     image: registry.fedoraproject.org/fedora:44
@@ -31,6 +34,10 @@ platforms:
     command: sleep infinity
     volumes: ["alpi-dnf-user-el10:/var/cache/dnf"]
 provisioner:
+  options:
+    # NVIDIA "detected" everywhere (all four listed: this replaces the base config's string);
+    # the driver resolves on Fedora only, and KDE vetoes it in host_vars
+    extra-vars: '{"is_nvidia": true, "is_asus": false, "is_intel": false, "is_amd": false}'
   playbooks:
     prepare: prepare.yml
     converge: converge.yml

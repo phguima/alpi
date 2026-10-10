@@ -23,3 +23,7 @@ ptyxis_dconf:
   font-name: "'Fira Code 10'"
 # Default profile's opacity (only once Ptyxis has created its default profile)
 ptyxis_opacity: 0.95
+
+# PRIME render offload: what runs a program on the NVIDIA GPU of a hybrid laptop (the Steam
+# launcher, and the nvidia-run alias in group_vars/all/zsh.yml)
+nvidia_prime_env: "__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0"

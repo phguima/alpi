@@ -3,5 +3,5 @@ _desktop: KDE
 # In real use, from the vault (group_vars/all/secrets.yml)
 api_keys: |
   export ALPI_TEST_KEY="secret"
-# As in custom.yml: only the Antigravity CLI of the AI tools
-features: {claude_code: false, antigravity_ide: false}
+# As in custom.yml: only the Antigravity CLI of the AI tools, and NVIDIA vetoed
+features: {claude_code: false, antigravity_ide: false, nvidia: false}

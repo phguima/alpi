@@ -94,7 +94,11 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   read-back value differs), cedilla (`~/.XCompose` from the Compose file of the locale in
   `/etc/locale.conf`, fallback `en_US.UTF-8`). Ansible runs modules with `LANG=C.utf8`, so
   `ansible_facts['env']['LANG']` never shows the session's locale (AFPI/AAPI's lookup found
-  nothing because of that).
+  nothing because of that). Steam on the NVIDIA GPU (`tasks/steam.yml`, when `steam` and
+  `nvidia-driver` are both selected): `~/.local/share/applications/steam.desktop` rebuilt from the
+  system launcher on every run, every `Exec=` (actions too) prefixed with `env
+  {{ nvidia_prime_env }}` (`group_vars/all/desktop.yml`, also the `nvidia-run` alias); otherwise
+  a user launcher carrying the offload (ours or AFPI's) is removed, any other one is kept.
 - `roles/asus` (after `packages`): `/etc/asusd` (`asusctl`), `supergfxd.service` (`supergfxctl`,
   tagged `supergfxd`), ROG Control Center autostart (`asusctl-rog-gui`), each gated on its
   resolved id (`asus_selected` in `vars/main.yml`).
@@ -211,7 +215,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     without a desktop. `roles/ai_tools` against stand-ins in `files/ai/` served by
     `python3 -m http.server` on 127.0.0.1:8765 in each container (prepare writes the manifest with
     the stand-in AppImage's real sha512; converge's play vars point the URLs there): every tool on
-    GNOME and EL, only the CLI on KDE; each stand-in refuses root and logs its runs). That recipe
+    GNOME and EL, only the CLI on KDE; each stand-in refuses root and logs its runs; `is_nvidia`
+    pinned true: GNOME gets the Steam launcher from `files/steam.desktop`, a trimmed copy of RPM
+    Fusion's, KDE vetoes NVIDIA and loses AFPI's leftover launcher, EL keeps a user's own). That recipe
     is the way to test any user-specific step (root and the user differ there).
   - `fedora44-personal` and `el10-work` have no systemd: they skip service roles by tag
     (`skip-tags: molecule-notest,notest,clamav,supergfxd,update`; setting skip-tags replaces
@@ -231,6 +237,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `raw` without a shell (wrap in `sh -c`). Bare Fedora lacks the Python rpm bindings, so verify
     with `rpm -q --whatprovides` (`shared/verify_installed.yml`), not `package_facts`.
   - A failure-case harness must be shown to fail on a case that should not fail before trusting it.
+  - Verify plays share registered vars across plays, and a registered var beats a task's `vars:`:
+    give each play's vars their own prefix (`_steam_…`) or a later assert reads an earlier
+    play's result.
   - `failures` runs every case in one play, and `group_by` groups stay for the whole play.
   - Pass/fail is Molecule's exit code and the absence of `Executed: Failed` lines, **not** the
     `SCENARIO RECAP`: after a failed step Molecule runs cleanup and the recap can still say
