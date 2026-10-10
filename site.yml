@@ -34,3 +34,9 @@
     - { role: clamav, tags: [clamav] }
     - { role: asus, tags: [asus] }
     - { role: nvidia, tags: [nvidia] }
+
+  post_tasks:
+    # Not 'always': the golden test (--tags resolve) only prints the sets
+    - name: ALPI | Reminders
+      ansible.builtin.import_tasks: tasks/reminders.yml
+      tags: [reminders]

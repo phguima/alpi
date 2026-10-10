@@ -23,6 +23,30 @@
         fail_msg: "native: {{ alpi_pkgs.native }}, flatpak: {{ alpi_pkgs.flatpak }}"
         quiet: true
 
+    # Each vendor repository once, under AAPI's id (prepare.yml wrote AAPI's files first)
+    - name: Verify | Repository ids and the files that define each base URL
+      ansible.builtin.shell: >-
+        grep -l '^baseurl *= *{{ item }}' /etc/yum.repos.d/*.repo
+      loop:
+        - https://brave-browser-rpm-release.s3.brave.com/x86_64/
+        - https://packages.microsoft.com/yumrepos/vscode
+        - https://cli.github.com/packages/rpm
+        - https://download.virtualbox.org/virtualbox/rpm/el/
+      register: _repo_files
+      changed_when: false
+
+    - name: Verify | No second copy of AAPI's repositories
+      ansible.builtin.assert:
+        that: _repo_files.results | map(attribute='stdout_lines') | list == _expected
+        fail_msg: "{{ _repo_files.results | map(attribute='stdout_lines') | list | to_json }}"
+        quiet: true
+      vars:
+        _expected:
+          - [/etc/yum.repos.d/brave-browser.repo]
+          - [/etc/yum.repos.d/code.repo]
+          - [/etc/yum.repos.d/gh-cli.repo]
+          - [/etc/yum.repos.d/virtualbox.repo]
+
     - name: Verify | Same resolution with EL10's ansible-core 2.16
       ansible.builtin.include_tasks: ../shared/verify_native_controller.yml
       vars:

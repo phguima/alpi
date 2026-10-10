@@ -111,7 +111,7 @@ aliases:  {p7zip: 7zip}                  # renamed ids still resolve
 ### Repositories and feature packages (added 2026-10-05, section 2)
 
 - A catalog entry names the repository its native packages need: `brave: {all: [brave-browser,
-  brave-origin], repo: brave}`. Repositories are defined by id (`alpi_repos_common` in
+  brave-origin], repo: brave-browser}`. Repositories are defined by id (`alpi_repos_common` in
   `group_vars/all/repos.yml`, `alpi_repos_os` in `group_vars/os_*`) with a type: `rpm` (release
   package by URL), `package`, `dnf_config` (CRB), `yum` (repo file) or `copr`.
 - `roles/repos` enables the distro's `alpi_repos_always` first, in order (RPM Fusion on Fedora;
@@ -133,7 +133,7 @@ aliases:  {p7zip: 7zip}                  # renamed ids still resolve
   module exists for the running kernel (AFPI rebuilt on every run until the reboot).
 - (2026-10-06) VirtualBox: a plain feature (`virtualbox`, on by default). The catalog names
   `akmod-VirtualBox` on Fedora, so `roles/akmods_mok` picks it up; on EL a per-distro value
-  `{native: […], repo: virtualbox-oracle}` adds Oracle's repository only there. `roles/virtualbox`
+  `{native: […], repo: virtualbox}` adds Oracle's repository only there. `roles/virtualbox`
   (before `roles/packages`) creates the Oracle signing key with Secure Boot and the groups.
 
 - (2026-10-09) Python apps installed with pipx are a third kind of catalog value,

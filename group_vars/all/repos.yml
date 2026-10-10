@@ -5,13 +5,16 @@
 # dnf_config (enable a defined repo, dnf4), yum (repo file), copr.
 # Repositories with the same URLs on every supported distro live here; distro-specific ones in
 # alpi_repos_os (group_vars/os_*).
+# yum repository ids are also the .repo file and section names: keep AFPI's and AAPI's
+# (brave-browser, code, gh-cli; virtualbox on EL) so a machine set up by them gets its files
+# rewritten, not a second copy of the same repository under another id.
 alpi_repos_common:
-  brave:
+  brave-browser:
     type: yum
     description: Brave Browser
     baseurl: https://brave-browser-rpm-release.s3.brave.com/x86_64/
     gpgkey: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
-  vscode:
+  code:
     type: yum
     description: Visual Studio Code
     baseurl: https://packages.microsoft.com/yumrepos/vscode

@@ -49,7 +49,7 @@ alpi_catalog:
 
   # --- Desktop applications ---
   argyllcms:     {fedora: argyllcms, el: ~}
-  brave:         {all: [brave-browser, brave-origin], repo: brave}
+  brave:         {all: [brave-browser, brave-origin], repo: brave-browser}
   chromium:      {all: chromium}
   discord:       {all: discord}                   # RPM Fusion nonfree
   drawy:         {fedora: drawy, el: {flatpak: org.kde.drawy}}
@@ -57,13 +57,13 @@ alpi_catalog:
   inkscape:      {fedora: inkscape, el: {flatpak: org.inkscape.Inkscape}}
   steam:         {fedora: steam, el: ~}
   telegram:      {fedora: telegram-desktop, el: {flatpak: org.telegram.desktop}}
-  vscode:        {all: code, repo: vscode}
+  vscode:        {all: code, repo: code}
   # Fixed source per distro (PROPOSAL decision 5): RPM Fusion's akmod on Fedora (named, so
   # roles/akmods_mok sees it), Oracle's repository on EL with the module build tools it needs.
   # kernel-devel is named on Fedora: akmods needs a kernel-devel-uname-r provider, and without an
   # installed kernel (containers) dnf picks kernel-debug-devel, which roles/boot then removes.
   virtualbox:    {fedora: [VirtualBox, akmod-VirtualBox, kernel-devel],
-                  el: {native: [VirtualBox-7.2, kernel-devel, gcc, make, elfutils-libelf-devel], repo: virtualbox-oracle}}
+                  el: {native: [VirtualBox-7.2, kernel-devel, gcc, make, elfutils-libelf-devel], repo: virtualbox}}
 
   # --- Python apps (pipx, for the user; roles/pipx) ---
   markitdown:          {all: {pipx: "markitdown[all]"}}         # documents to Markdown

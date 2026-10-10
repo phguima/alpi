@@ -1,0 +1,39 @@
+---
+- name: Prepare | Shared
+  ansible.builtin.import_playbook: ../shared/prepare.yml
+
+# A machine set up by AAPI: its repository files, as its yum_repository tasks wrote them. ALPI
+# must rewrite these (same ids), not add the same repositories again under other ids.
+- name: Prepare | AAPI's repository files
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Prepare | Brave, VS Code, GitHub CLI and Oracle VirtualBox repositories (AAPI ids)
+      ansible.builtin.yum_repository:
+        name: "{{ item.name }}"
+        description: "{{ item.description }}"
+        baseurl: "{{ item.baseurl }}"
+        gpgkey: "{{ item.gpgkey }}"
+        gpgcheck: true
+        repo_gpgcheck: "{{ item.repo_gpgcheck | default(omit) }}"
+        enabled: true
+      loop:
+        - name: brave-browser
+          description: Brave Browser
+          baseurl: https://brave-browser-rpm-release.s3.brave.com/x86_64/
+          gpgkey: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+        - name: code
+          description: Visual Studio Code
+          baseurl: https://packages.microsoft.com/yumrepos/vscode
+          gpgkey: https://packages.microsoft.com/keys/microsoft.asc
+        - name: gh-cli
+          description: packages for the GitHub CLI
+          baseurl: https://cli.github.com/packages/rpm
+          gpgkey: https://cli.github.com/packages/githubcli-archive-keyring.asc
+        - name: virtualbox
+          description: Oracle VirtualBox
+          baseurl: https://download.virtualbox.org/virtualbox/rpm/el/10/$basearch
+          gpgkey: https://www.virtualbox.org/download/oracle_vbox_2016.asc
+          repo_gpgcheck: true
+      loop_control:
+        label: "{{ item.name }}"

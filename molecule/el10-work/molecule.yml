@@ -3,7 +3,7 @@
 # the same resolution run by EL10's own ansible-core 2.16 inside the container (a real run uses
 # it as the controller; Molecule's controller is the host's newer ansible-core).
 # Repos: CRB, EPEL, RPM Fusion EL, Brave, VS Code, GitHub CLI. Flatpaks are covered by
-# fedora44-personal and skipped here.
+# fedora44-personal and skipped here. prepare.yml first writes AAPI's repository files (migration).
 platforms:
   - name: alpi-el10-work
     image: docker.io/library/almalinux:10
@@ -19,3 +19,5 @@ provisioner:
     # and reboot gate by 'update' (needs-restarting is unreliable in a container). Setting
     # skip-tags replaces Molecule's default, so its own tags are repeated.
     skip-tags: molecule-notest,notest,clamav,supergfxd,update
+  playbooks:
+    prepare: prepare.yml

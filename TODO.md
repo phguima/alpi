@@ -4,14 +4,6 @@ Work plan. Done items are ticked (with the commit); a section is removed once al
 ticked. Architecture, rationale and decisions in `PROPOSAL.md`. Every item ships with its Molecule
 scenarios / unit tests (see `CLAUDE.md`).
 
-## 3. Bring in AAPI (AlmaLinux 10, work machine)
-
-- [ ] `group_vars/os_AlmaLinux_10` + `tasks/RedHat.yml` (dnf4, CRB/EPEL). Oracle VirtualBox is
-      done (`feat(virtualbox): …`).
-- [x] Cleanup of both legacy `.zshrc` blocks (`feat(zsh): …`).
-- [x] Roboto from upstream on EL (AAPI's desktop role: latest GitHub release into
-      `roboto_font_dir`, replaced when the version changes) (`feat(upstream): …`).
-
 ## 4. Parity
 
 - [ ] Golden test: resolved sets per (distro, DE) compared with AFPI and AAPI.
@@ -39,3 +31,11 @@ scenarios / unit tests (see `CLAUDE.md`).
       work machine): Molecule 26.9.0 (host pipx), ansible-core 2.21.5 (Molecule's venv),
       `containers.podman` 1.21.1 (user; no system copy there). On 2026-10-06 (Fedora): ansible-core
       2.20.7 (system), `containers.podman` 1.21.0 (user) vs 1.20.2 (system).
+- [ ] VLC and HEIF/HEVC freeworld codecs on EL (`vlc-plugins-freeworld`, `libheif-freeworld`,
+      carried over from AAPI's TODO): left out because RPM Fusion builds them against newer
+      libraries than stable EPEL ships. On 2026-10-04 both only waited for stable EPEL (it had
+      `vlc-libs` 3.0.23 and `libheif` 1.17.6; `epel-testing` had 3.0.24 and 1.23.5, which both
+      require). Do not enable `epel-testing`; once stable has them, add both to the catalog (`el`)
+      and `packages_base`. Re-check with CRB, EPEL and RPM Fusion enabled:
+      `dnf repoquery --qf "%{name}-%{version}" vlc-libs libheif` vs
+      `dnf repoquery --requires vlc-plugins-freeworld libheif-freeworld | grep -E "^(vlc-libs|libheif)"`.

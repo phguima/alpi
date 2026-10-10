@@ -18,7 +18,7 @@ _golden:
     com.mattjakeman.ExtensionManager, de.haeckerfelix.Fragments, com.github.unrud.VideoDownloader]
   features: {amd: true, antigravity_cli: true, antigravity_ide: true, asus: true, claude_code: true, clamav: true,
     intel: true, nvidia: true, steam: true, virtualbox: true}
-  repos: [rpmfusion-free, rpmfusion-nonfree, brave, gh-cli, vscode, asus-linux]
+  repos: [rpmfusion-free, rpmfusion-nonfree, brave-browser, gh-cli, code, asus-linux]
   unavailable: []
   pipx: ["markitdown[all]", "notebooklm-py[browser]", pdf2docx]
   upstream: []

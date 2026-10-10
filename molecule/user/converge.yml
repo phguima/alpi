@@ -10,7 +10,7 @@
         quiet: true
 
 # Play-level environment reaches fact gathering too: env_setup sees the sudo user and the desktop
-- name: User | env_setup + roles/zsh + roles/desktop + roles/ai_tools as user alpi
+- name: User | env_setup + roles/zsh + roles/desktop + roles/ai_tools + reminders as user alpi
   hosts: all
   become: true
   environment:
@@ -37,3 +37,13 @@
     - name: User | AI tools
       ansible.builtin.import_role:
         name: ai_tools
+
+    - name: User | Reminders
+      ansible.builtin.import_tasks: ../../tasks/reminders.yml
+
+    # For verify.yml (facts do not survive the converge): unset when gh is not selected
+    - name: User | Record the gh login fact
+      ansible.builtin.copy:
+        content: "{{ alpi_gh_login_needed | default('unset') }}\n"
+        dest: /root/alpi-gh-login-needed
+        mode: "0644"

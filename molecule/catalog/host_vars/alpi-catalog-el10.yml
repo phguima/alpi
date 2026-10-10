@@ -14,7 +14,7 @@ _golden:
     com.mattjakeman.ExtensionManager, de.haeckerfelix.Fragments, com.github.unrud.VideoDownloader]
   features: {amd: true, antigravity_cli: true, antigravity_ide: true, asus: true, claude_code: true, clamav: true,
     intel: true, nvidia: true, steam: true, virtualbox: true}
-  repos: [crb, epel, rpmfusion-free, rpmfusion-nonfree, brave, gh-cli, vscode, virtualbox-oracle]
+  repos: [crb, epel, rpmfusion-free, rpmfusion-nonfree, brave-browser, gh-cli, code, virtualbox]
   unavailable: [gstreamer1-plugins-bad-free-extras, chkrootkit, unhide, argyllcms, steam, asusctl,
     supergfxctl, asusctl-rog-gui, mesa-va-drivers-freeworld, libva-utils, vdpauinfo, nvidia-driver, nvidia-build,
     nvidia-vulkan, nvidia-vaapi]

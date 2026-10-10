@@ -1,0 +1,27 @@
+---
+# End-of-run reminders for steps the playbook cannot do itself (ported from AFPI/AAPI's
+# post_tasks).
+
+# gh login is interactive (browser + token in the keyring), so the playbook only reminds.
+# hosts.yml lists the logged-in hosts even when the token itself lives in the keyring, and reading
+# it does not need the user's D-Bus session (gh auth status run through sudo would).
+- name: GitHub CLI | Check login
+  when: "'gh' in alpi_ids_selected and user_name != 'root'"
+  block:
+    - name: GitHub CLI | Read the logged-in hosts
+      ansible.builtin.slurp:
+        src: "{{ user_home }}/.config/gh/hosts.yml"
+      register: _gh_hosts
+      failed_when: false
+
+    - name: GitHub CLI | Set the login fact
+      ansible.builtin.set_fact:
+        alpi_gh_login_needed: "{{ 'github.com:' not in (_gh_hosts.content | default('') | b64decode) }}"
+
+    - name: GitHub CLI | Remind to log in
+      ansible.builtin.debug:
+        msg:
+          - "The GitHub CLI is not logged in. As {{ user_name }}, run:"
+          - "  gh auth login --hostname github.com --git-protocol https --web"
+          - "  gh auth setup-git"
+      when: alpi_gh_login_needed

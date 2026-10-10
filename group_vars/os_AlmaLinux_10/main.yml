@@ -25,7 +25,7 @@ alpi_repos_os:
     type: rpm
     url: "https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
   # VirtualBox is not packaged for EL10 (catalog: virtualbox)
-  virtualbox-oracle:
+  virtualbox:
     type: yum
     description: Oracle VirtualBox
     baseurl: "https://download.virtualbox.org/virtualbox/rpm/el/{{ ansible_facts['distribution_major_version'] }}/$basearch"

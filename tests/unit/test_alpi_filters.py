@@ -28,7 +28,7 @@ CATALOG = {
     "mesa-freeworld": {"fedora": ["mesa-va-drivers-freeworld"], "el": None, "swap": True},
     "codecs-flatpak": {"all": {"flatpak": "org.example.Codecs"}, "swap": True},
     "virtualbox": {"fedora": ["VirtualBox", "akmod-VirtualBox"],
-                   "el": {"native": ["VirtualBox-7.2", "gcc"], "repo": "virtualbox-oracle"}},
+                   "el": {"native": ["VirtualBox-7.2", "gcc"], "repo": "virtualbox"}},
     "vendor_both": {"fedora": {"native": "tool", "repo": ["a", "b"]}, "el": "tool", "repo": "entry"},
 }
 ALIASES = {"p7zip": "7zip"}
@@ -114,7 +114,7 @@ class TestResolve:
     def test_per_distro_repo_only_where_named(self):
         assert resolve(["virtualbox"], FEDORA)["repos"] == []
         out = resolve(["virtualbox"], EL10)
-        assert out["native"] == ["VirtualBox-7.2", "gcc"] and out["repos"] == ["virtualbox-oracle"]
+        assert out["native"] == ["VirtualBox-7.2", "gcc"] and out["repos"] == ["virtualbox"]
 
     def test_per_distro_repo_replaces_the_entry_repo(self):
         assert resolve(["vendor_both"], FEDORA) == dict(resolve([], FEDORA), native=["tool"], repos=["a", "b"])

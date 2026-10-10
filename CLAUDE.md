@@ -23,7 +23,10 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - `site.yml`: `tasks/env_setup.yml` (support matrix assert → user/hardware/DE facts, ported from
   AFPI → `group_by` into `os_<distro>`, `os_<distro>_<major>` → machine-settings assert →
   `tasks/resolve.yml`), then the roles (`repos`, `update`, `boot`, `akmods_mok`, `virtualbox`,
-  `packages`, `upstream`, `common`, `zsh`, `desktop`, `pipx`, `ai_tools`, `clamav`, `asus`, `nvidia` so far).
+  `packages`, `upstream`, `common`, `zsh`, `desktop`, `pipx`, `ai_tools`, `clamav`, `asus`, `nvidia` so far),
+  then `tasks/reminders.yml` in `post_tasks` (tag `reminders`, not `always`, so `--tags resolve`
+  stays quiet): the `gh auth login` reminder when `gh` is selected and `~/.config/gh/hosts.yml`
+  has no `github.com:` (sets `alpi_gh_login_needed`).
 - `tasks/resolve.yml` + `filter_plugins/alpi.py`: catalog lookup, merge of the package/feature
   layers, all validation (fails before anything changes). Keep logic in the filter plugin, not in
   long Jinja expressions.
@@ -44,6 +47,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   always-on repos, then the ones the selected catalog entries name with `repo:`). Repositories with
   `repo_gpgcheck` get `dnf -y makecache` so their metadata key is imported; otherwise every
   non-interactive dnf call fails on them.
+  yum repository ids are the `.repo` file/section names: keep AFPI's and AAPI's (`brave-browser`,
+  `code`, `gh-cli`, `virtualbox`), or a migrated machine gets each repository twice.
 - `roles/packages`: name checks first (`check_<os_family>.yml`: dnf dry run, which fails outright
   when a repository's metadata cannot be read instead of reporting nothing; `flatpak remote-info`),
   then replacements (catalog `swap: true`, installed with `allowerasing`: `ffmpeg`,
@@ -197,7 +202,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `fedora44-personal`, `el10-work` (real installs, heaviest apps skipped;
     `shared/verify_installed.yml` checks everything resolved is installed; `el10-work` also
     resolves with EL10's own ansible-core 2.16 inside the container,
-    `shared/verify_native_controller.yml`; both keep their settings in a host_vars directory,
+    `shared/verify_native_controller.yml`, and its `prepare.yml` writes AAPI's repository files
+    first: each vendor base URL must end up in one file only; both keep their settings in a host_vars directory,
     `host_vars/<instance>/{custom,selection}.yml`, like a real machine, and check that both
     files' layers apply), `failures` (every validation must fail with its message,
     `shared/expect_failure.yml`; Fedora + Alma; a case's `upstream_sources` goes through
@@ -231,7 +237,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     the stand-in AppImage's real sha512; converge's play vars point the URLs there): every tool on
     GNOME and EL, only the CLI on KDE; each stand-in refuses root and logs its runs; `is_nvidia`
     pinned true: GNOME gets the Steam launcher from `files/steam.desktop`, a trimmed copy of RPM
-    Fusion's, KDE vetoes NVIDIA and loses AFPI's leftover launcher, EL keeps a user's own). That recipe
+    Fusion's, KDE vetoes NVIDIA and loses AFPI's leftover launcher, EL keeps a user's own; `tasks/reminders.yml`: gh logged in on GNOME, reminded on KDE,
+    skipped on EL, the fact recorded in `/root/alpi-gh-login-needed` for verify). That recipe
     is the way to test any user-specific step (root and the user differ there).
   - `fedora44-personal` and `el10-work` have no systemd: they skip service roles by tag
     (`skip-tags: molecule-notest,notest,clamav,supergfxd,update`; setting skip-tags replaces

@@ -41,6 +41,32 @@
         name: libX11-common
         state: present
 
+# gh logged in on GNOME (hosts.yml as gh writes it with the token in the keyring), not on KDE;
+# gh skipped on EL (host_vars): no check there.
+- name: Prepare | GitHub CLI login
+  hosts: alpi-user-gnome
+  gather_facts: false
+  tasks:
+    - name: Prepare | ~/.config/gh, alpi's
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: alpi
+        mode: "0700"
+      loop: [/home/alpi/.config, /home/alpi/.config/gh]
+
+    - name: Prepare | ~/.config/gh/hosts.yml
+      ansible.builtin.copy:
+        dest: /home/alpi/.config/gh/hosts.yml
+        owner: alpi
+        mode: "0600"
+        content: |
+          github.com:
+              git_protocol: https
+              users:
+                  alpi:
+              user: alpi
+
 # The cedilla step reads the system locale: pt_BR here, none on the KDE container (fallback)
 - name: Prepare | System locale
   hosts: alpi-user-gnome

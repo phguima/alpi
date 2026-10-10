@@ -280,3 +280,20 @@
           - "'nvidia-run' not in (_steam_files.results[-1].content | b64decode)"
         quiet: true
       when: inventory_hostname != 'alpi-user-gnome'
+
+- name: Verify | GitHub CLI login reminder (tasks/reminders.yml)
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Verify | Read the recorded fact
+      ansible.builtin.command: cat /root/alpi-gh-login-needed
+      register: _gh_fact
+      changed_when: false
+
+    - name: Verify | Logged in on GNOME, reminded on KDE, not checked on EL (gh skipped)
+      ansible.builtin.assert:
+        that: _gh_fact.stdout == _gh_expected[_desktop]
+        fail_msg: "{{ _desktop }}: {{ _gh_fact.stdout }}"
+        quiet: true
+      vars:
+        _gh_expected: {GNOME: "False", KDE: "True", "": unset}
