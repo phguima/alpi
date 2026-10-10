@@ -2,6 +2,7 @@
 
 import base64
 import binascii
+import json
 import re
 
 # Raw names bypass the catalog: "pkg:<native name>", "flatpak:<app id>" or "pipx:<PyPI spec>".
@@ -15,6 +16,8 @@ def alpi_resolve(ids, catalog, keys, aliases=None):
     Returns a dict:
       native / flatpak / pipx: names to install with the package manager / Flatpak / pipx (pipx
                    values are PyPI specs, extras included: "markitdown[all]");
+      upstream:    source ids ({upstream: <id>}, defined in upstream_sources) that roles/upstream
+                   installs from their vendor's releases where the distro has no package;
       unknown:     ids missing from the catalog (user or repo error);
       missing:     ids in the catalog with no entry for any of the keys (catalog bug);
       unavailable: ids marked ~ (null) for this distro (skipped with a warning);
@@ -27,8 +30,8 @@ def alpi_resolve(ids, catalog, keys, aliases=None):
                    They are in 'native' too, so name checks and verification cover them.
     """
     aliases = aliases or {}
-    out = {"native": [], "flatpak": [], "pipx": [], "unknown": [], "missing": [], "unavailable": [],
-           "repos": [], "swap": []}
+    out = {"native": [], "flatpak": [], "pipx": [], "upstream": [], "unknown": [], "missing": [],
+           "unavailable": [], "repos": [], "swap": []}
 
     def add(kind, names):
         for name in names:
@@ -57,6 +60,8 @@ def alpi_resolve(ids, catalog, keys, aliases=None):
             add("flatpak", [value["flatpak"]])
         elif isinstance(value, dict) and "pipx" in value:
             add("pipx", [value["pipx"]])
+        elif isinstance(value, dict) and "upstream" in value:
+            add("upstream", [str(value["upstream"])])
         else:
             repo = entry.get("repo") or []
             if isinstance(value, dict):
@@ -193,6 +198,51 @@ def alpi_appimage_release(manifest):
     return {"version": str(manifest.get("version", "")), "url": str(entry["url"]), "sha512": digest.hex()}
 
 
+def alpi_github_release(release, pattern):
+    """The asset of a GitHub release (the API's JSON, parsed) whose name matches 'pattern' (regex).
+
+    Returns {"tag", "name", "url", "checksum"}: checksum is the asset's digest as get_url takes it
+    ("sha256:<hex>"), or "" when GitHub publishes none (older assets). {"error": <message>} when
+    the release has no tag or no matching asset.
+    """
+    if not isinstance(release, dict) or not release.get("tag_name"):
+        return {"error": "not a release (no tag_name)"}
+    try:
+        regex = re.compile(str(pattern))
+    except re.error as exc:
+        return {"error": f"bad asset pattern {pattern!r}: {exc}"}
+    asset = next((a for a in release.get("assets") or [] if isinstance(a, dict)
+                  and regex.search(str(a.get("name", ""))) and a.get("browser_download_url")), None)
+    if asset is None:
+        return {"error": f"no asset matching {pattern!r} in {release['tag_name']}"}
+    digest = str(asset.get("digest") or "")
+    return {"tag": str(release["tag_name"]), "name": str(asset["name"]),
+            "url": str(asset["browser_download_url"]),
+            "checksum": digest if re.fullmatch(r"sha256:[0-9a-f]{64}", digest) else ""}
+
+
+def alpi_upstream_missing(results, sources):
+    """Upstream source ids whose release lookup shows the source is wrong.
+
+    results: the uri loop results of the release lookups (item = source id); sources:
+    upstream_sources. A 404, or a 200 whose release has no asset matching the source's pattern,
+    is missing; any other status (offline, rate limit) is not decided here.
+    """
+    missing = []
+    for res in results or []:
+        sid, status = res.get("item"), res.get("status")
+        if status == 404:
+            missing.append(sid)
+        elif status == 200:
+            try:
+                release = json.loads(res.get("content") or "")
+            except ValueError:
+                release = None
+            if "error" in alpi_github_release(release, (sources.get(sid) or {}).get("asset", "")):
+                missing.append(sid)
+    return missing
+
+
 class FilterModule(object):
     def filters(self):
         return {
@@ -206,4 +256,6 @@ class FilterModule(object):
             "alpi_invalid_luks": alpi_invalid_luks,
             "alpi_pipx_name": alpi_pipx_name,
             "alpi_appimage_release": alpi_appimage_release,
+            "alpi_github_release": alpi_github_release,
+            "alpi_upstream_missing": alpi_upstream_missing,
         }

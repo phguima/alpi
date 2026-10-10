@@ -1,0 +1,22 @@
+---
+# Software from its vendor's releases where the distro has no package (catalog values
+# {upstream: <id>}, sources in group_vars/all/upstream.yml): the selected ones are installed or
+# updated, those in packages_absent removed. Each source type has its own task file.
+
+- name: Upstream | Install or update
+  ansible.builtin.include_tasks: "{{ upstream_sources[upstream_id].type }}.yml"
+  loop: "{{ (alpi_pkgs.upstream + alpi_pkgs_extra.upstream) | unique }}"
+  loop_control:
+    loop_var: upstream_id
+  vars:
+    upstream: "{{ upstream_sources[upstream_id] }}"
+    upstream_state: present
+
+- name: Upstream | Remove (packages_absent)
+  ansible.builtin.include_tasks: "{{ upstream_sources[upstream_id].type }}.yml"
+  loop: "{{ alpi_pkgs_absent.upstream }}"
+  loop_control:
+    loop_var: upstream_id
+  vars:
+    upstream: "{{ upstream_sources[upstream_id] }}"
+    upstream_state: absent

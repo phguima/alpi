@@ -1,0 +1,63 @@
+---
+- name: Verify | roles/upstream (Roboto on EL)
+  hosts: all
+  gather_facts: false
+  vars:
+    _up_dir: /usr/local/share/fonts/roboto
+    _up_names: "{{ _up_found.files | map(attribute='path') | map('basename') | sort }}"
+  tasks:
+    - name: Verify | Font directory
+      ansible.builtin.find:
+        paths: "{{ _up_dir }}"
+        hidden: true
+      register: _up_found
+
+    - name: Verify | Read the recorded version
+      ansible.builtin.slurp:
+        src: "{{ _up_dir }}/.version"
+      register: _up_version
+      failed_when: false
+
+    - name: Verify | Installed v1 then replaced by v2 wholesale, hinted static TTFs only
+      ansible.builtin.assert:
+        that:
+          - _up_names == ['.version', 'Roboto-Black.ttf', 'Roboto-Regular.ttf']
+          - _up_version.content | b64decode == 'v2\n'
+          - _up_found.files | map(attribute='pw_name') | unique | list == ['root']
+          - _up_found.files | map(attribute='mode') | unique | list == ['0644']
+        fail_msg: "{{ _up_names }} / {{ _up_found.files | map(attribute='mode') | list }}"
+        quiet: true
+      when: inventory_hostname == 'alpi-up-install'
+
+    - name: Verify | Read an installed font
+      ansible.builtin.slurp:
+        src: "{{ _up_dir }}/Roboto-Regular.ttf"
+      register: _up_font
+      when: inventory_hostname == 'alpi-up-install'
+
+    - name: Verify | The font is v2's hinted one
+      ansible.builtin.assert:
+        that: _up_font.content | b64decode == 'v2 Roboto-Regular\n'
+        quiet: true
+      when: inventory_hostname == 'alpi-up-install'
+
+    - name: Verify | GitHub unreachable, the installed version stays
+      ansible.builtin.assert:
+        that:
+          - _up_names == ['.version', 'Roboto-Regular.ttf']
+          - _up_version.content | b64decode == 'v0\n'
+        fail_msg: "{{ _up_names }}"
+        quiet: true
+      when: inventory_hostname == 'alpi-up-offline'
+
+    - name: Verify | packages_absent removed the fonts
+      ansible.builtin.stat:
+        path: "{{ _up_dir }}"
+      register: _up_stat
+      when: inventory_hostname == 'alpi-up-absent'
+
+    - name: Verify | Font directory gone
+      ansible.builtin.assert:
+        that: not _up_stat.stat.exists
+        quiet: true
+      when: inventory_hostname == 'alpi-up-absent'

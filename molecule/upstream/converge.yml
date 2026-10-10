@@ -1,0 +1,20 @@
+---
+- name: Upstream | Guard against running on the host
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Upstream | Require ALPI_TARGET
+      ansible.builtin.assert:
+        that: lookup('env', 'ALPI_TARGET') | length > 0
+        fail_msg: ALPI_TARGET is not set; this scenario must target its containers. Set it in molecule.yml.
+        quiet: true
+
+- name: Upstream | env_setup + roles/upstream
+  hosts: all
+  tasks:
+    - name: Upstream | Environment setup
+      ansible.builtin.import_tasks: ../../tasks/env_setup.yml
+
+    - name: Upstream | Role
+      ansible.builtin.import_role:
+        name: upstream

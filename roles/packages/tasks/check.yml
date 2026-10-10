@@ -37,16 +37,41 @@
   register: _pypi_info
   check_mode: false
 
+# Upstream sources (roles/upstream): GitHub must name a release with a matching asset. A 404 or a
+# release without one is an error (the source moved); no answer (offline, rate limit) only a
+# warning, as the role then keeps what is installed.
+- name: Packages | Look up upstream releases
+  ansible.builtin.uri:
+    url: "{{ upstream_sources[item].release_api }}"
+    headers:
+      Accept: application/vnd.github+json
+    return_content: true
+    status_code: [200, 404]
+  loop: "{{ (alpi_pkgs.upstream + alpi_pkgs_extra.upstream) | unique }}"
+  register: _upstream_info
+  failed_when: false
+  check_mode: false
+
+- name: Packages | Upstream releases that could not be checked
+  ansible.builtin.debug:
+    msg: "Could not reach {{ upstream_sources[item.item].release_api }} (status {{ item.status | default('n/a') }}): {{ item.item }} not checked."
+  loop: "{{ _upstream_info.results | default([]) | rejectattr('status', 'in', [200, 404]) | list }}"
+  loop_control:
+    label: "{{ item.item }}"
+
 - name: Packages | Fail on unknown names
   ansible.builtin.assert:
-    that: (alpi_missing_native + _missing_flatpak + _missing_pipx) | length == 0
+    that: (alpi_missing_native + _missing_flatpak + _missing_pipx + _missing_upstream) | length == 0
     fail_msg: >-
       Not found, none of the listed packages was installed. Native packages (not in any enabled repository):
       {{ alpi_missing_native | join(', ') or 'none' }}. Flatpaks (not on Flathub):
       {{ _missing_flatpak | join(', ') or 'none' }}. pipx apps (not on PyPI):
-      {{ _missing_pipx | join(', ') or 'none' }}. Fix the pkg:/flatpak:/pipx: names in
-      host_vars/127.0.0.1/custom.yml, or the entry in group_vars/all/catalog.yml.
+      {{ _missing_pipx | join(', ') or 'none' }}. Upstream sources (no such release or asset):
+      {{ _missing_upstream | join(', ') or 'none' }}. Fix the pkg:/flatpak:/pipx: names in
+      host_vars/127.0.0.1/custom.yml, or the entry in group_vars/all/catalog.yml (upstream
+      sources: group_vars/all/upstream.yml).
     quiet: true
   vars:
     _missing_flatpak: "{{ _flatpak_info.results | default([]) | rejectattr('rc', 'equalto', 0) | map(attribute='item') | list }}"
     _missing_pipx: "{{ _pypi_info.results | default([]) | rejectattr('status', 'equalto', 200) | map(attribute='item') | list }}"
+    _missing_upstream: "{{ _upstream_info.results | default([]) | alpi_upstream_missing(upstream_sources | default({})) }}"

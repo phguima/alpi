@@ -1,0 +1,4 @@
+---
+# As in custom.yml: not installed (a default otherwise), and the installed copy removed
+packages_skip: [google-roboto-fonts]
+packages_absent: [google-roboto-fonts]

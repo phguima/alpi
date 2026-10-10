@@ -1,0 +1,9 @@
+---
+# Nothing listens on port 9: GitHub "unreachable"
+upstream_sources:
+  roboto:
+    type: github_fonts
+    release_api: http://127.0.0.1:9/repos/googlefonts/roboto-3-classic/releases/latest
+    asset: '[.]zip$'
+    files: "hinted/static/*.ttf"
+    dest: /usr/local/share/fonts/roboto

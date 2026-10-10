@@ -91,8 +91,8 @@ class TestResolve:
 
     def test_empty_input(self):
         assert resolve(None, FEDORA) == {
-            "native": [], "flatpak": [], "pipx": [], "unknown": [], "missing": [], "unavailable": [],
-            "repos": [], "swap": []
+            "native": [], "flatpak": [], "pipx": [], "upstream": [], "unknown": [], "missing": [],
+            "unavailable": [], "repos": [], "swap": []
         }
 
     def test_repo_of_a_resolved_package(self):
@@ -185,7 +185,7 @@ class TestFeatures:
         assert set(alpi.FilterModule().filters()) == {
             "alpi_resolve", "alpi_canonical", "alpi_features", "alpi_repos", "alpi_feature_ids",
             "alpi_flatpak_overrides", "alpi_luks_aliases", "alpi_invalid_luks", "alpi_pipx_name",
-            "alpi_appimage_release",
+            "alpi_appimage_release", "alpi_github_release", "alpi_upstream_missing",
         }
 
 
@@ -269,6 +269,16 @@ def test_resolve_pipx_entries_and_raw_prefix():
     assert res["unavailable"] == ["tool_el"]
 
 
+def test_resolve_upstream_entries_per_distro():
+    catalog = {"roboto": {"fedora": "google-roboto-fonts", "el": {"upstream": "roboto"}},
+               "both": {"all": {"upstream": "src"}}}
+    res = alpi.alpi_resolve(["roboto", "both", "roboto"], catalog, EL10)
+    assert res["upstream"] == ["roboto", "src"]
+    assert res["native"] == [] and res["unavailable"] == [] and res["repos"] == []
+    res = alpi.alpi_resolve(["roboto"], catalog, FEDORA)
+    assert res["native"] == ["google-roboto-fonts"] and res["upstream"] == []
+
+
 @pytest.mark.parametrize("spec, name", [
     ("markitdown[all]", "markitdown"), ("notebooklm-py[browser]", "notebooklm-py"),
     ("pdf2docx", "pdf2docx"), ("cowsay==6.1", "cowsay"), ("x>=1; python_version>'3'", "x"),
@@ -304,3 +314,50 @@ def test_appimage_release_picks_the_appimage_with_a_hex_checksum():
 ])
 def test_appimage_release_errors(manifest, error):
     assert error in alpi.alpi_appimage_release(manifest)["error"]
+
+
+# The real release's shape (roboto-3-classic v3.016, 2026-10-10)
+DIGEST = "sha256:" + "ab" * 32
+RELEASE = {"tag_name": "v3.016", "assets": [
+    {"name": "Roboto_v3.016.zip", "digest": DIGEST,
+     "browser_download_url": "https://example.org/v3.016/Roboto_v3.016.zip"},
+    {"name": "notes.txt", "browser_download_url": "https://example.org/notes.txt"},
+]}
+
+
+def test_github_release_picks_the_matching_asset():
+    assert alpi.alpi_github_release(RELEASE, "[.]zip$") == {
+        "tag": "v3.016", "name": "Roboto_v3.016.zip",
+        "url": "https://example.org/v3.016/Roboto_v3.016.zip", "checksum": DIGEST}
+
+
+@pytest.mark.parametrize("digest", [None, "", "sha512:" + "ab" * 64, "sha256:short", "md5:x"])
+def test_github_release_without_a_usable_digest(digest):
+    release = {"tag_name": "v1", "assets": [{"name": "a.zip", "digest": digest, "browser_download_url": "u"}]}
+    assert alpi.alpi_github_release(release, "zip$")["checksum"] == ""
+
+
+@pytest.mark.parametrize("release, pattern, error", [
+    (None, "zip$", "no tag_name"), ({"assets": []}, "zip$", "no tag_name"),
+    (RELEASE, "[.]tar[.]gz$", "no asset matching"), ({"tag_name": "v1"}, "zip$", "no asset matching"),
+    ({"tag_name": "v1", "assets": [{"name": "a.zip"}]}, "zip$", "no asset matching"),
+    (RELEASE, "(", "bad asset pattern"),
+])
+def test_github_release_errors(release, pattern, error):
+    assert error in alpi.alpi_github_release(release, pattern)["error"]
+
+
+def test_upstream_missing_decides_only_on_answers():
+    import json
+    sources = {"ok": {"asset": "zip$"}, "moved": {"asset": "zip$"}, "noasset": {"asset": "tar$"},
+               "down": {"asset": "zip$"}, "limited": {"asset": "zip$"}, "garbled": {"asset": "zip$"}}
+    results = [
+        {"item": "ok", "status": 200, "content": json.dumps(RELEASE)},
+        {"item": "moved", "status": 404},
+        {"item": "noasset", "status": 200, "content": json.dumps(RELEASE)},
+        {"item": "down", "status": -1},
+        {"item": "limited", "status": 403, "content": "{}"},
+        {"item": "garbled", "status": 200, "content": "<html>"},
+    ]
+    assert alpi.alpi_upstream_missing(results, sources) == ["moved", "noasset", "garbled"]
+    assert alpi.alpi_upstream_missing(None, {}) == []

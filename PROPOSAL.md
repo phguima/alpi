@@ -140,6 +140,11 @@ aliases:  {p7zip: 7zip}                  # renamed ids still resolve
   `{pipx: "<PyPI spec>"}` (extras included, "markitdown[all]"), next to native names and
   `{flatpak: …}`; `pipx:<spec>` is the raw prefix. They are installed for the user by
   `roles/pipx`, checked on PyPI with the other name checks, and picked like any package.
+- (2026-10-10) `{upstream: <source id>}` is a fourth kind of catalog value, for software the
+  distro does not package (Roboto on EL, from its GitHub release). Sources are data
+  (`upstream_sources`, with a type per install method) and `roles/upstream` installs them by
+  root. The id stays an ordinary catalog id: selected, skipped, picked and gated on like any other,
+  and `packages_absent` removes it. AAPI's warn-and-keep when GitHub cannot be reached stays.
 - (2026-10-10) AI tools are features without catalog packages: `claude_code`, `antigravity_cli`
   and `antigravity_ide` (on by default, as AFPI/AAPI install all three). Their vendors ship
   installers and self-updating binaries, not packages, so `roles/ai_tools` runs each installer

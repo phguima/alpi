@@ -54,7 +54,8 @@
   ansible.builtin.assert:
     that: >-
       _summary.native == _golden.native and _summary.flatpak == _golden.flatpak
-      and _summary.pipx == _golden.pipx and _summary.features == _golden.features
+      and _summary.pipx == _golden.pipx and _summary.upstream == _golden.upstream
+      and _summary.features == _golden.features
       and _summary.repos == _golden.repos
     fail_msg: "Expected {{ _golden | to_json }}, got {{ _summary | to_json }}"
     quiet: true

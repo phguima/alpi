@@ -36,9 +36,26 @@
         only: AlmaLinux
         packages_add: [steam]
         strict: true
-        # The default set already has ids unavailable on EL (fonts, codecs, security, argyllcms)
-        expect: ["Not available on AlmaLinux: google-roboto-fonts, gstreamer1-plugins-bad-free-extras,
+        # The default set already has ids unavailable on EL (codecs, security, argyllcms)
+        expect: ["Not available on AlmaLinux: gstreamer1-plugins-bad-free-extras,
                   chkrootkit, unhide, argyllcms, steam", "alpi_strict is on"]
+      # The catalog names an upstream source (Roboto on EL) that upstream_sources lacks
+      - name: upstream source not defined
+        only: AlmaLinux
+        upstream_sources: {}
+        expect: ["Catalog bug, upstream sources with no definition", "roboto"]
+      # Roboto's real GitHub release, asked for an asset it does not have
+      - name: upstream release without the asset
+        only: AlmaLinux
+        packages_role: true
+        upstream_sources:
+          roboto:
+            type: github_fonts
+            release_api: "https://api.github.com/repos/googlefonts/roboto-3-classic/releases/latest"
+            asset: '[.]alpi-nope$'
+            files: "hinted/static/*.ttf"
+            dest: /usr/local/share/fonts/roboto
+        expect: ["Upstream sources (no such release or asset): roboto."]
       - name: names not found
         # Like a real run, repos first: every real name resolves, only the bad ones are reported
         packages_add: ["pkg:nope-xyz", "flatpak:org.nope.App", "pipx:alpi-nope-not-on-pypi-xyz"]

@@ -22,6 +22,8 @@
     - { role: akmods_mok, tags: [akmods_mok, secureboot] }
     - { role: virtualbox, tags: [virtualbox] }
     - { role: packages, tags: [packages] }
+    # After packages: software the distro does not package, from its vendor's releases
+    - { role: upstream, tags: [upstream] }
     - { role: common, tags: [common] }
     - { role: zsh, tags: [zsh] }
     - { role: desktop, tags: [desktop] }

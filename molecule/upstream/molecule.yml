@@ -1,0 +1,32 @@
+---
+# roles/upstream on AlmaLinux 10 (no Roboto package), against a stand-in GitHub served by
+# python3 -m http.server in the container (prepare.yml: release JSON in the API's shape, zips
+# with the real archive's traps: __MACOSX resource forks, unhinted copies, a non-font file):
+#   alpi-up-install: installs v1 (only hinted/static/*.ttf, root-owned, version recorded);
+#                    side_effect.yml publishes v2 (a font dropped, one added) and runs again:
+#                    replaced wholesale
+#   alpi-up-offline: the API does not answer: the installed version stays, the run goes on
+#   alpi-up-absent:  google-roboto-fonts in packages_absent: the installed fonts are removed
+platforms:
+  - name: alpi-up-install
+    image: docker.io/library/almalinux:10
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-up-install:/var/cache/dnf"]
+  - name: alpi-up-offline
+    image: docker.io/library/almalinux:10
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-up-offline:/var/cache/dnf"]
+  - name: alpi-up-absent
+    image: docker.io/library/almalinux:10
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-up-absent:/var/cache/dnf"]
+provisioner:
+  playbooks:
+    prepare: prepare.yml
+    converge: converge.yml
+    side_effect: side_effect.yml
+scenario:
+  test_sequence: [destroy, syntax, create, prepare, converge, idempotence, side_effect, verify, destroy]

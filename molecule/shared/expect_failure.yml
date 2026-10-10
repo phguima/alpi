@@ -2,6 +2,8 @@
 # One failure case: runs env_setup (and the repos + packages roles when _case.packages_role is true) with
 # the case's settings and passes only if it fails with a message containing every _case.expect.
 # _case.broken_repo adds an unreachable repository for the duration of the case.
+# _case.upstream_sources replaces upstream_sources for the case: through set_fact, saved and
+# restored, since a block var could not fall back to the variable it shadows.
 - name: "Case | {{ _case.name }}"
   vars:
     packages_add: "{{ _case.packages_add | default([]) }}"
@@ -16,6 +18,16 @@
     git_user_email: "{{ _case.git_user_email | default('') }}"
     luks_volumes: "{{ _case.luks_volumes | default({}) }}"
   block:
+    - name: "Case | {{ _case.name }} | Save upstream_sources"
+      ansible.builtin.set_fact:
+        _saved_upstream_sources: "{{ upstream_sources }}"
+      when: _case.upstream_sources is defined
+
+    - name: "Case | {{ _case.name }} | The case's upstream_sources"
+      ansible.builtin.set_fact:
+        upstream_sources: "{{ _case.upstream_sources }}"
+      when: _case.upstream_sources is defined
+
     - name: "Case | {{ _case.name }} | Run env_setup"
       ansible.builtin.include_tasks: ../../tasks/env_setup.yml
 
@@ -59,6 +71,11 @@
         fail_msg: "Expected {{ _case.expect }} in: {{ ansible_failed_result.msg }}"
         quiet: true
   always:
+    - name: "Case | {{ _case.name }} | Restore upstream_sources"
+      ansible.builtin.set_fact:
+        upstream_sources: "{{ _saved_upstream_sources }}"
+      when: _case.upstream_sources is defined
+
     - name: "Case | {{ _case.name }} | Remove the broken repository"
       ansible.builtin.file:
         path: /etc/yum.repos.d/alpi-broken.repo

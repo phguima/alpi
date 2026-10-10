@@ -56,8 +56,10 @@ def test_features_without_packages_are_listed_with_their_description():
 def test_el10_hides_unavailable_ids_and_empty_features():
     _, (features, packages) = real_choices("AlmaLinux", "10")
     assert "steam" not in ids(features)
-    assert not {"chkrootkit", "unhide", "argyllcms", "google-roboto-fonts", "multimedia"} & set(ids(packages))
+    assert not {"chkrootkit", "unhide", "argyllcms", "multimedia"} & set(ids(packages))
     labels = {c.id: c.label for c in packages}
+    # Not packaged for EL, installed from upstream instead: listed, and labelled so
+    assert labels["google-roboto-fonts"].endswith("upstream roboto")
     assert labels["telegram"].endswith("flatpak org.telegram.desktop")
     assert labels["vim"].endswith("vim-enhanced")
 

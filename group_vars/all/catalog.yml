@@ -3,7 +3,8 @@
 # Keys are tried in the order of alpi_catalog_keys (group_vars/os_*), most specific first:
 #   Fedora: fedora, all        AlmaLinux 10: el10, el, all
 # Values: a native package name, a list of names, {flatpak: <app id>}, {pipx: <PyPI spec>} (a
-# Python app installed for the user by roles/pipx; extras allowed: "markitdown[all]"), or ~
+# Python app installed for the user by roles/pipx; extras allowed: "markitdown[all]"),
+# {upstream: <source id>} (from the vendor's own releases, group_vars/all/upstream.yml), or ~
 # (unavailable: the id is skipped with a warning). 'repo:' names the repository (group_vars/all/repos.yml) the native
 # packages come from when it is not always on; roles/repos enables it only when needed.
 # 'swap: true' marks a package that replaces a conflicting one (ffmpeg-free -> ffmpeg): roles/packages
@@ -95,7 +96,7 @@ alpi_catalog:
 
   # --- Fonts ---
   fira-code-fonts:     {all: fira-code-fonts}           # EPEL on EL
-  google-roboto-fonts: {fedora: google-roboto-fonts, el: ~}
+  google-roboto-fonts: {fedora: google-roboto-fonts, el: {upstream: roboto}}  # not packaged for EL
 
   # --- Multimedia codecs (RPM Fusion) ---
   ffmpeg:              {all: ffmpeg, swap: true}         # replaces ffmpeg-free

@@ -16,6 +16,8 @@ packages_add: []
 #  - "pkg:sqlitebrowser"
 #  - "flatpak:org.gimp.GIMP"
 #  - "pipx:httpie"
+# (Software from a vendor's releases, like Roboto on EL, is a catalog id too: skip or remove it
+# by id. Sources: group_vars/all/upstream.yml.)
 
 # Defaults not to install (never uninstalls anything)
 packages_skip: []

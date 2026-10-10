@@ -1,0 +1,18 @@
+---
+# roles/upstream: software installed from its vendor's releases where the distro has no package
+# (catalog values {upstream: <id>}). Each source has a type, handled by
+# roles/upstream/tasks/<type>.yml. An id the catalog names but this map lacks stops the run.
+#
+# github_fonts: the latest GitHub release (release_api); the asset whose name matches 'asset'
+# (a regex), checked against the digest GitHub publishes for it; the archive members matching
+# 'files' go flat into 'dest'. Replaced wholesale when the release tag differs from the one
+# recorded in <dest>/.version. If GitHub cannot be reached, what is installed stays.
+upstream_sources:
+  # Ported from AAPI (EL10 has no Roboto package). Static hinted TTFs only, as distro packages
+  # ship: adding the variable font too would show duplicate families in font pickers.
+  roboto:
+    type: github_fonts
+    release_api: "https://api.github.com/repos/googlefonts/roboto-3-classic/releases/latest"
+    asset: '[.]zip$'
+    files: "hinted/static/*.ttf"
+    dest: /usr/local/share/fonts/roboto

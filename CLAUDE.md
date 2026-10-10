@@ -23,7 +23,7 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - `site.yml`: `tasks/env_setup.yml` (support matrix assert → user/hardware/DE facts, ported from
   AFPI → `group_by` into `os_<distro>`, `os_<distro>_<major>` → machine-settings assert →
   `tasks/resolve.yml`), then the roles (`repos`, `update`, `boot`, `akmods_mok`, `virtualbox`,
-  `packages`, `common`, `zsh`, `desktop`, `pipx`, `ai_tools`, `clamav`, `asus`, `nvidia` so far).
+  `packages`, `upstream`, `common`, `zsh`, `desktop`, `pipx`, `ai_tools`, `clamav`, `asus`, `nvidia` so far).
 - `tasks/resolve.yml` + `filter_plugins/alpi.py`: catalog lookup, merge of the package/feature
   layers, all validation (fails before anything changes). Keep logic in the filter plugin, not in
   long Jinja expressions.
@@ -119,6 +119,15 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   `group_vars/all/ai_tools.yml`; the picker labels features without packages from
   `feature_descriptions`. `tasks/check.yml` (run by `catalog`) checks the upstream URLs without
   downloading. The alias is `antigravity-ide` because `agy install` deletes `alias antigravity=`.
+- `roles/upstream` (after `packages`): catalog values `{upstream: <source id>}` (Roboto on EL),
+  sources in `group_vars/all/upstream.yml` (`upstream_sources`, each with a `type` handled by
+  `tasks/<type>.yml`; an undefined id stops the run in `resolve.yml`). `github_fonts`: latest
+  GitHub release, asset by regex (`alpi_github_release`: asset + its `sha256:` digest for
+  get_url), the members matching `files` flat into `dest`, replaced wholesale when the tag differs
+  from `<dest>/.version`; GitHub unreachable keeps what is installed; `packages_absent` removes
+  it. The release body is parsed whatever its Content-Type. Name check in
+  `roles/packages/tasks/check.yml` (`alpi_upstream_missing`: a 404 or no matching asset fails,
+  no answer only warns). Installed by root, so it runs for root-only runs too.
 - Catalog values per distro may be `{native: …, repo: …}`: a repository only that distro needs
   (Oracle VirtualBox on EL).
 - `roles/nvidia` (after `packages`): `/etc/modprobe.d/nvidia.conf`; akmods rebuild + `dracut` only
@@ -191,7 +200,12 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `shared/verify_native_controller.yml`; both keep their settings in a host_vars directory,
     `host_vars/<instance>/{custom,selection}.yml`, like a real machine, and check that both
     files' layers apply), `failures` (every validation must fail with its message,
-    `shared/expect_failure.yml`; Fedora + Alma), `unsupported` (Debian 13), `bootstrap`
+    `shared/expect_failure.yml`; Fedora + Alma; a case's `upstream_sources` goes through
+    set_fact, saved and restored), `unsupported` (Debian 13), `upstream` (`roles/upstream` on
+    AlmaLinux 10 against a stand-in GitHub served by `http.server` on 127.0.0.1:8766: install v1,
+    `side_effect.yml` publishes v2 and runs again (Molecule's side_effect step, added to the
+    scenario's test_sequence), GitHub unreachable keeps v0, `packages_absent` removes it;
+    `el10-work` installs the real release), `bootstrap`
     (bootstrap.sh with scripted answers, picker in text mode), `common` (env_setup +
     `roles/common` on `almalinux/10-init` with systemd: static hostname via hostnamectl, git),
     `secureboot` (env_setup + `akmods_mok`, `virtualbox`, `nvidia`, nothing downloaded; Secure Boot

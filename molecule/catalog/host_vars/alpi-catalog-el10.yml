@@ -15,10 +15,12 @@ _golden:
   features: {amd: true, antigravity_cli: true, antigravity_ide: true, asus: true, claude_code: true, clamav: true,
     intel: true, nvidia: true, steam: true, virtualbox: true}
   repos: [crb, epel, rpmfusion-free, rpmfusion-nonfree, brave, gh-cli, vscode, virtualbox-oracle]
-  unavailable: [google-roboto-fonts, gstreamer1-plugins-bad-free-extras, chkrootkit, unhide, argyllcms, steam, asusctl,
+  unavailable: [gstreamer1-plugins-bad-free-extras, chkrootkit, unhide, argyllcms, steam, asusctl,
     supergfxctl, asusctl-rog-gui, mesa-va-drivers-freeworld, libva-utils, vdpauinfo, nvidia-driver, nvidia-build,
     nvidia-vulkan, nvidia-vaapi]
   pipx: ["markitdown[all]", "notebooklm-py[browser]", pdf2docx]
+  # Not packaged for EL: from its GitHub release (roles/upstream)
+  upstream: [roboto]
   extra: []
   absent: []
   # KDE forced: the repository's KDE overrides, both apps selected

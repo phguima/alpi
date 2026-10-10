@@ -1,0 +1,75 @@
+---
+- name: Prepare | Shared
+  ansible.builtin.import_playbook: ../shared/prepare.yml
+
+# Two releases in the GitHub API's shape. Each zip has what the role must take (hinted/static
+# TTFs) and what it must leave (macOS resource forks, unhinted copies, a README). v2 drops
+# Roboto-Bold and adds Roboto-Black.
+- name: Prepare | Stand-in GitHub releases
+  hosts: alpi-up-install
+  gather_facts: false
+  tasks:
+    - name: Prepare | Zips and release JSON (v1 published, v2 kept for side_effect.yml)
+      ansible.builtin.shell:
+        cmd: |
+          python3 - <<'PY'
+          import hashlib, json, pathlib, zipfile
+          root = pathlib.Path("/srv/alpi-up")
+          api = root / "repos/googlefonts/roboto-3-classic/releases"
+          api.mkdir(parents=True, exist_ok=True)
+          fonts = {"v1": ["Roboto-Regular", "Roboto-Bold"], "v2": ["Roboto-Regular", "Roboto-Black"]}
+          for tag, names in fonts.items():
+              (root / "dl" / tag).mkdir(parents=True, exist_ok=True)
+              zpath = root / "dl" / tag / f"Roboto_{tag}.zip"
+              with zipfile.ZipFile(zpath, "w") as z:
+                  z.writestr("hinted/static/", "")
+                  for n in names:
+                      z.writestr(f"hinted/static/{n}.ttf", f"{tag} {n}\n")
+                      z.writestr(f"unhinted/static/{n}.ttf", "unhinted\n")
+                      z.writestr(f"__MACOSX/hinted/static/._{n}.ttf", "fork\n")
+                  z.writestr("hinted/static/README.txt", "not a font\n")
+              digest = "sha256:" + hashlib.sha256(zpath.read_bytes()).hexdigest()
+              release = {"tag_name": tag, "assets": [
+                  {"name": "notes.txt", "browser_download_url": "http://127.0.0.1:8766/notes.txt"},
+                  {"name": zpath.name, "digest": digest,
+                   "browser_download_url": f"http://127.0.0.1:8766/dl/{tag}/{zpath.name}"}]}
+              (root / f"release-{tag}.json").write_text(json.dumps(release))
+          (api / "latest").write_text((root / "release-v1.json").read_text())
+          PY
+        creates: /srv/alpi-up/release-v2.json
+
+    # Detached, or the exec never returns
+    - name: Prepare | HTTP server on 127.0.0.1:8766
+      ansible.builtin.shell:
+        cmd: >-
+          setsid python3 -m http.server 8766 --bind 127.0.0.1 --directory /srv/alpi-up
+          </dev/null >/dev/null 2>&1 &
+      changed_when: true
+
+    - name: Prepare | Wait for the server
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 8766
+        timeout: 30
+
+# What an earlier run left: v0 installed
+- name: Prepare | Roboto already installed
+  hosts: alpi-up-offline:alpi-up-absent
+  gather_facts: false
+  tasks:
+    - name: Prepare | Font directory
+      ansible.builtin.file:
+        path: /usr/local/share/fonts/roboto
+        state: directory
+        mode: "0755"
+
+    - name: Prepare | Installed font and version
+      ansible.builtin.copy:
+        dest: "/usr/local/share/fonts/roboto/{{ item.name }}"
+        content: "{{ item.content }}"
+        mode: "0644"
+      loop:
+        - { name: Roboto-Regular.ttf, content: "v0 Roboto-Regular\n" }
+        - { name: .version, content: "v0\n" }
+      loop_control:
+        label: "{{ item.name }}"

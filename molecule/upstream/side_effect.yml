@@ -1,0 +1,15 @@
+---
+# A new release is published after converge + idempotence; the next run must replace v1
+- name: Side effect | Publish v2
+  hosts: alpi-up-install
+  gather_facts: false
+  tasks:
+    - name: Side effect | latest -> v2
+      ansible.builtin.copy:
+        src: /srv/alpi-up/release-v2.json
+        dest: /srv/alpi-up/repos/googlefonts/roboto-3-classic/releases/latest
+        remote_src: true
+        mode: "0644"
+
+- name: Side effect | Run again
+  ansible.builtin.import_playbook: converge.yml

@@ -9,8 +9,8 @@ scenarios / unit tests (see `CLAUDE.md`).
 - [ ] `group_vars/os_AlmaLinux_10` + `tasks/RedHat.yml` (dnf4, CRB/EPEL). Oracle VirtualBox is
       done (`feat(virtualbox): …`).
 - [x] Cleanup of both legacy `.zshrc` blocks (`feat(zsh): …`).
-- [ ] Roboto from upstream on EL (AAPI's desktop role: latest GitHub release into
-      `roboto_font_dir`, replaced when the version changes); the catalog has it as `~` on EL.
+- [x] Roboto from upstream on EL (AAPI's desktop role: latest GitHub release into
+      `roboto_font_dir`, replaced when the version changes) (`feat(upstream): …`).
 
 ## 4. Parity
 

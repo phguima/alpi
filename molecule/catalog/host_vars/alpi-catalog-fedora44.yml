@@ -21,6 +21,7 @@ _golden:
   repos: [rpmfusion-free, rpmfusion-nonfree, brave, gh-cli, vscode, asus-linux]
   unavailable: []
   pipx: ["markitdown[all]", "notebooklm-py[browser]", pdf2docx]
+  upstream: []
   extra: []
   absent: []
   # KDE forced: the repository's KDE overrides, both apps selected

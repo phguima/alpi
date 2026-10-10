@@ -1,0 +1,156 @@
+---
+# Fonts from the latest GitHub release of a source (ported from AAPI's desktop role, Roboto): the
+# matching asset, checked against GitHub's digest; the archive members matching upstream.files go
+# flat into upstream.dest, replaced wholesale when the release tag differs from <dest>/.version.
+# If GitHub cannot be reached, what is installed stays. Vars: upstream_id, upstream,
+# upstream_state (present | absent).
+
+- name: Upstream | {{ upstream_id }}
+  when: upstream_state == 'present'
+  block:
+    # The body is parsed whatever the Content-Type (GitHub sends JSON; a mirror may not)
+    - name: Upstream | {{ upstream_id }}, latest release
+      ansible.builtin.uri:
+        url: "{{ upstream.release_api }}"
+        headers:
+          Accept: application/vnd.github+json
+        return_content: true
+      register: _up_api
+      failed_when: false
+      check_mode: false
+
+    - name: Upstream | {{ upstream_id }}, GitHub unreachable
+      ansible.builtin.debug:
+        msg: >-
+          Could not query {{ upstream.release_api }} (status {{ _up_api.status | default('n/a') }});
+          keeping the installed {{ upstream_id }}, if any.
+      when: _up_api.status | default(0) != 200
+
+    - name: Upstream | {{ upstream_id }}, update
+      when: _up_api.status | default(0) == 200
+      block:
+        - name: Upstream | {{ upstream_id }}, pick the asset
+          ansible.builtin.set_fact:
+            _up_release: "{{ _up_api.content | from_json | alpi_github_release(upstream.asset) }}"
+
+        - name: Upstream | {{ upstream_id }}, check the release
+          ansible.builtin.assert:
+            that: _up_release.error is not defined
+            fail_msg: "{{ upstream_id }}: {{ _up_release.error | default('') }} ({{ upstream.release_api }}); fix upstream_sources in group_vars/all/upstream.yml."
+            quiet: true
+
+        - name: Upstream | {{ upstream_id }}, installed version
+          ansible.builtin.slurp:
+            src: "{{ upstream.dest }}/.version"
+          register: _up_installed
+          failed_when: false
+
+        - name: Upstream | {{ upstream_id }}, install {{ _up_release.tag }}
+          when: (_up_installed.content | default('') | b64decode | trim) != _up_release.tag
+          block:
+            # --check cannot download or extract into a directory it never creates
+            - name: Upstream | {{ upstream_id }}, would install (check mode)
+              ansible.builtin.debug:
+                msg: "Would install {{ upstream_id }} {{ _up_release.tag }} (installed: {{ _up_installed.content | default('') | b64decode | trim | default('none', true) }})"
+              changed_when: true
+              when: ansible_check_mode
+
+            - name: Upstream | {{ upstream_id }}, download and install
+              when: not ansible_check_mode
+              block:
+                - name: Upstream | {{ upstream_id }}, unzip and fontconfig
+                  ansible.builtin.package:
+                    name: [unzip, fontconfig]
+                    state: present
+
+                - name: Upstream | {{ upstream_id }}, temporary directory
+                  ansible.builtin.tempfile:
+                    state: directory
+                    suffix: "{{ upstream_id }}"
+                  register: _up_tmp
+
+                - name: Upstream | {{ upstream_id }}, download {{ _up_release.name }}
+                  ansible.builtin.get_url:
+                    url: "{{ _up_release.url }}"
+                    dest: "{{ _up_tmp.path }}/{{ _up_release.name }}"
+                    checksum: "{{ _up_release.checksum | default(omit, true) }}"
+                    mode: "0644"
+
+                - name: Upstream | {{ upstream_id }}, extract {{ upstream.files }}
+                  ansible.builtin.unarchive:
+                    src: "{{ _up_tmp.path }}/{{ _up_release.name }}"
+                    dest: "{{ _up_tmp.path }}"
+                    remote_src: true
+                    include: ["{{ upstream.files }}"]
+
+                - name: Upstream | {{ upstream_id }}, find the extracted files
+                  ansible.builtin.find:
+                    paths: "{{ _up_tmp.path }}/{{ upstream.files | dirname }}"
+                    patterns: "{{ upstream.files | basename }}"
+                  register: _up_files
+
+                - name: Upstream | {{ upstream_id }}, check the archive
+                  ansible.builtin.assert:
+                    that: _up_files.matched > 0
+                    fail_msg: "{{ upstream_id }}: nothing matches {{ upstream.files }} in {{ _up_release.name }}; fix upstream_sources in group_vars/all/upstream.yml."
+                    quiet: true
+
+                # Wholesale: files dropped by a new release must not linger
+                - name: Upstream | {{ upstream_id }}, remove the previous version
+                  ansible.builtin.file:
+                    path: "{{ upstream.dest }}"
+                    state: absent
+
+                - name: Upstream | {{ upstream_id }}, font directory
+                  ansible.builtin.file:
+                    path: "{{ upstream.dest }}"
+                    state: directory
+                    owner: root
+                    group: root
+                    mode: "0755"
+
+                - name: Upstream | {{ upstream_id }}, install the fonts
+                  ansible.builtin.copy:
+                    src: "{{ item.path }}"
+                    dest: "{{ upstream.dest }}/"
+                    remote_src: true
+                    owner: root
+                    group: root
+                    mode: "0644"
+                  loop: "{{ _up_files.files }}"
+                  loop_control:
+                    label: "{{ item.path | basename }}"
+
+                - name: Upstream | {{ upstream_id }}, record the version
+                  ansible.builtin.copy:
+                    content: "{{ _up_release.tag }}\n"
+                    dest: "{{ upstream.dest }}/.version"
+                    owner: root
+                    group: root
+                    mode: "0644"
+
+                - name: Upstream | {{ upstream_id }}, rebuild the font cache
+                  ansible.builtin.command: "fc-cache -f {{ upstream.dest }}"
+                  changed_when: true
+
+              always:
+                - name: Upstream | {{ upstream_id }}, remove the temporary directory
+                  ansible.builtin.file:
+                    path: "{{ _up_tmp.path }}"
+                    state: absent
+                  when: _up_tmp.path is defined
+
+- name: Upstream | {{ upstream_id }}, remove
+  when: upstream_state == 'absent'
+  block:
+    - name: Upstream | {{ upstream_id }}, remove the fonts
+      ansible.builtin.file:
+        path: "{{ upstream.dest }}"
+        state: absent
+      register: _up_removed
+
+    # Nothing to rebuild without fontconfig (removing installs nothing)
+    - name: Upstream | {{ upstream_id }}, rebuild the font cache
+      ansible.builtin.shell: "if command -v fc-cache >/dev/null; then fc-cache -f; fi"
+      changed_when: true
+      when: _up_removed is changed

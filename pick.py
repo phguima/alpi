@@ -100,7 +100,8 @@ def desktops(xdg):
 
 def _names(res):
     return ", ".join(res["native"] + [f"flatpak {n}" for n in res["flatpak"]]
-                     + [f"pipx {n}" for n in res.get("pipx", [])])
+                     + [f"pipx {n}" for n in res.get("pipx", [])]
+                     + [f"upstream {n}" for n in res.get("upstream", [])])
 
 
 def choices(data, des, filters):
@@ -116,7 +117,8 @@ def choices(data, des, filters):
         if name in hardware:
             continue
         res = resolve(feature_packages.get(name) or [])
-        if feature_packages.get(name) and not (res["native"] or res["flatpak"] or res.get("pipx")):
+        if feature_packages.get(name) and not (res["native"] or res["flatpak"] or res.get("pipx")
+                                               or res.get("upstream")):
             continue  # nothing to install here (Steam on EL)
         features.append(Choice(name, descriptions.get(name) or _names(res), bool(value)))
 

@@ -1,0 +1,9 @@
+---
+# The stand-in GitHub (prepare.yml); the rest as in group_vars/all/upstream.yml
+upstream_sources:
+  roboto:
+    type: github_fonts
+    release_api: http://127.0.0.1:8766/repos/googlefonts/roboto-3-classic/releases/latest
+    asset: '[.]zip$'
+    files: "hinted/static/*.ttf"
+    dest: /usr/local/share/fonts/roboto

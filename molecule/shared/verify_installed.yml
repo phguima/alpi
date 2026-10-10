@@ -74,3 +74,24 @@
     _missing_groups: "{{ _groups.results | rejectattr('stdout', 'search', '(?m)^Installed\\s*:\\s*yes') | map(attribute='item') | list }}"
     _present: "{{ alpi_pkgs_absent.native | intersect(_installed) }}"
     _missing_flatpak: "{{ (alpi_pkgs.flatpak + alpi_pkgs_extra.flatpak) | difference(_flatpak_list.stdout_lines | default([])) }}"
+
+# Upstream sources (roles/upstream): the recorded version and the files are there, removed ones
+# gone. github_fonts is the only type so far.
+- name: Verify | Upstream sources
+  ansible.builtin.find:
+    paths: "{{ upstream_sources[item].dest }}"
+    hidden: true
+  loop: "{{ (alpi_pkgs.upstream + alpi_pkgs_extra.upstream + alpi_pkgs_absent.upstream) | unique }}"
+  register: _upstream_found
+
+- name: Verify | Upstream sources installed, absent ones removed
+  ansible.builtin.assert:
+    that: >-
+      ((item.files | map(attribute='path') | map('basename') | select('eq', '.version') | list | length == 1
+        and item.files | map(attribute='path') | select('match', '.*[.]ttf$') | list | length > 0)
+       if item.item not in alpi_pkgs_absent.upstream else item.matched == 0)
+    fail_msg: "{{ item.item }} in {{ upstream_sources[item.item].dest }}: {{ item.files | map(attribute='path') | list }}"
+    quiet: true
+  loop: "{{ _upstream_found.results }}"
+  loop_control:
+    label: "{{ item.item }}"
