@@ -58,7 +58,20 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   the user's `flatpak_overrides` and `flatpak_filesystem_overrides` (`custom.yml`), merged by
   `alpi_flatpak_overrides` in `resolve.yml` into `alpi_flatpak_overrides`, only for apps in the
   resolved Flatpak sets; applied at the end of `roles/packages` with `flatpak override --user`
-  (changed only when the override file differs). Removing an entry does not undo it.
+  (`tasks/flatpak_overrides.yml`; changed only when the override file differs). Removing an
+  entry does not undo it, except for the cedilla workaround's apps (`reset_if`, below).
+- Cedilla on XWayland (ported from AAPI, 2026-10-13): under KWin 6.6, Chromium/Electron apps on
+  native Wayland ignore `~/.XCompose`. `env_setup` reads `kwin_version` (`rpm -q kwin`, KDE only,
+  before `roles/update`; pinned by extra vars in tests), `resolve.yml` sets
+  `alpi_cedilla_xwayland` (`alpi_cedilla_xwayland` filter: `cedilla_xwayland` auto/true/false in
+  `custom.yml`, auto = KWin older than `cedilla_xwayland_kwin_below`, KDE only). On: the
+  `cedilla_flatpak_overrides` layer replaces `flatpak_overrides_kde` app by app; Brave/VS Code
+  menu entries copied with `--ozone-platform=x11` (`roles/desktop/tasks/xwayland.yml`, plan from
+  `alpi_xwayland_entries`: ALPI's copies carry a marker and are rebuilt on every run, AAPI's are
+  recognized as the system entry plus the flag, a user's own copy only gets the flag); the flag
+  in the Antigravity entry and the `antigravity-ide`/`code` aliases. Off: everything undone, and
+  each cedilla app's override file that still grants `~/.XCompose` is reset before the other
+  layers are applied again.
 - `roles/update` (after `repos`, before anything that builds modules or installs packages):
   `dnf_config` into `/etc/dnf/dnf.conf` (replaced, not appended), full upgrade, then the reboot
   gate: `dnf needs-restarting -r` rc 1, or the newest installed `kernel-core` is not the running
@@ -232,10 +245,14 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     and XDG_CURRENT_DESKTOP, which fact gathering sees too, and becomes alpi through sudo; GNOME
     container with Ptyxis and a session bus started as alpi at `/run/user/1000/bus` and a pt_BR
     `/etc/locale.conf`; KDE container without one, for the fallback; AlmaLinux 10 container
-    without a desktop. `roles/ai_tools` against stand-ins in `files/ai/` served by
+    without a desktop. Cedilla on XWayland on KDE: stand-in `kwin` RPMs (rpmbuild) 6.6.4
+    installed, stand-in Brave/VS Code system entries (`files/xwayland/`, on every container),
+    AAPI's leftovers, and `roles/packages/tasks/flatpak_overrides.yml` run alone (flatpak only
+    there); `side_effect.yml` keeps the on-state in `/root/alpi-xwayland-on/`, upgrades to 6.7.5
+    and runs converge again, verify checks both states. `roles/ai_tools` against stand-ins in `files/ai/` served by
     `python3 -m http.server` on 127.0.0.1:8765 in each container (prepare writes the manifest with
     the stand-in AppImage's real sha512; converge's play vars point the URLs there): every tool on
-    GNOME and EL, only the CLI on KDE; each stand-in refuses root and logs its runs; `is_nvidia`
+    GNOME and EL, the Antigravity CLI and IDE on KDE; each stand-in refuses root and logs its runs; `is_nvidia`
     pinned true: GNOME gets the Steam launcher from `files/steam.desktop`, a trimmed copy of RPM
     Fusion's, KDE vetoes NVIDIA and loses AFPI's leftover launcher, EL keeps a user's own; `tasks/reminders.yml`: gh logged in on GNOME, reminded on KDE,
     skipped on EL, the fact recorded in `/root/alpi-gh-login-needed` for verify). That recipe

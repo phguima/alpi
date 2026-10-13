@@ -10,7 +10,9 @@
 #   alpi_ids_selected: catalog ids that will be installed (base + extra, minus the unavailable):
 #                    what roles gate their configuration on
 #   alpi_repos_enabled: repository definitions to enable, in order (roles/repos)
-#   alpi_flatpak_overrides: [{app, flags}] for the selected Flatpak apps (roles/packages)
+#   alpi_cedilla_xwayland: run Chromium/Electron apps on XWayland for the cedilla (KDE with an
+#                    older KWin; cedilla_xwayland in group_vars/all/desktop.yml)
+#   alpi_flatpak_overrides: [{app, flags, reset_if}] for the selected Flatpak apps (roles/packages)
 
 - name: Resolve | Merge features
   ansible.builtin.set_fact:
@@ -110,12 +112,33 @@
   ansible.builtin.set_fact:
     alpi_repos_enabled: "{{ _repos.enabled }}"
 
+- name: Resolve | Check the cedilla setting
+  ansible.builtin.assert:
+    that: cedilla_xwayland in ['auto', true, false]
+    fail_msg: >-
+      cedilla_xwayland must be auto, true or false (host_vars/127.0.0.1/custom.yml), not
+      '{{ cedilla_xwayland }}'.
+    quiet: true
+
+- name: Resolve | Cedilla on XWayland (KDE with an older KWin)
+  ansible.builtin.set_fact:
+    alpi_cedilla_xwayland: >-
+      {{ cedilla_xwayland | alpi_cedilla_xwayland(is_kde, kwin_version | default(''),
+                                                  cedilla_xwayland_kwin_below) }}
+
+# The cedilla layer replaces the KDE layer app by app (Bitwarden: X11 instead of Wayland). When
+# it is off, its apps' files that still grant ~/.XCompose are reset first (reset_if).
 - name: Resolve | Select Flatpak overrides
   ansible.builtin.set_fact:
     _overrides: >-
-      {{ [flatpak_overrides_kde | default({}) if is_kde else {}, flatpak_overrides | default({})]
+      {{ [(flatpak_overrides_kde | default({})) | combine(cedilla_flatpak_overrides if alpi_cedilla_xwayland else {})
+          if is_kde else {},
+          flatpak_overrides | default({})]
          | alpi_flatpak_overrides(flatpak_filesystem_overrides | default({}),
-                                  alpi_pkgs.flatpak + alpi_pkgs_extra.flatpak) }}
+                                  alpi_pkgs.flatpak + alpi_pkgs_extra.flatpak,
+                                  {} if alpi_cedilla_xwayland
+                                  else dict(cedilla_flatpak_overrides | list | product(['/.XCompose'])))
+      }}
 
 - name: Resolve | Check Flatpak override flags
   ansible.builtin.assert:
@@ -145,3 +168,4 @@
       features: "{{ alpi_feature }}"
       repos: "{{ alpi_repos_enabled | map(attribute='id') }}"
       flatpak_overrides: "{{ alpi_flatpak_overrides | map(attribute='app') }}"
+      cedilla_xwayland: "{{ alpi_cedilla_xwayland }} (KWin {{ kwin_version | default('') or 'not found' }})"

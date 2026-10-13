@@ -27,3 +27,26 @@ ptyxis_opacity: 0.95
 # PRIME render offload: what runs a program on the NVIDIA GPU of a hybrid laptop (the Steam
 # launcher, and the nvidia-run alias in group_vars/all/zsh.yml)
 nvidia_prime_env: "__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0"
+
+# Cedilla on KDE (ported from AAPI): under KWin 6.6 (EL10; Fedora 44 before its 6.7 update),
+# Chromium/Electron apps on native Wayland ignore ~/.XCompose and type "ć". On XWayland they read
+# it through GTK, so on such a KWin they run on X11 (resolved into alpi_cedilla_xwayland by
+# tasks/resolve.yml from the KWin version read in env_setup):
+#   cedilla_xwayland: auto (KWin older than cedilla_xwayland_kwin_below) | true | false, on KDE
+#   only; set it in custom.yml to force it. Everything below is undone when it no longer applies.
+cedilla_xwayland: auto
+cedilla_xwayland_kwin_below: "6.7"
+cedilla_ozone_flag: --ozone-platform=x11
+# System menu entries (/usr/share/applications) copied to ~/.local/share/applications (the copy
+# wins) with the flag on every Exec line, rebuilt on every run so updates reach them; a copy of
+# the user's own only gets the flag. VS Code's argv.json does not accept ozone-platform, hence its
+# entries here too. Antigravity's entry (roles/ai_tools) and the antigravity-ide and code aliases
+# (group_vars/all/zsh.yml) get the flag directly. The Flatpak apps: group_vars/all/flatpak.yml.
+cedilla_x11_desktop_entries:
+  - brave-browser.desktop
+  - brave-origin.desktop
+  - com.brave.Browser.desktop
+  - com.brave.Origin.desktop
+  - com.microsoft.VSCode.desktop
+  - com.microsoft.VSCode.UrlHandler.desktop
+cedilla_x11_desktop_marker: "ALPI: copy of the system entry on XWayland for the cedilla (cedilla_xwayland), rebuilt on every run"

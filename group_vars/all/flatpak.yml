@@ -1,10 +1,13 @@
 ---
 # Flatpak overrides (flatpak override --user <flags> <app>), applied by roles/packages only to apps
 # in the resolved Flatpak sets: skipping an app (picker, packages_skip) skips its overrides too.
-# Layers, each with its own key: flatpak_overrides_kde here (KDE sessions only), then the user's
-# flatpak_overrides and flatpak_filesystem_overrides (host_vars/127.0.0.1/custom.yml). Flags of
-# the same app add up across layers. Removing an entry does not undo it on the machine:
-# 'flatpak override --user --reset <app>' does.
+# Layers, each with its own key: flatpak_overrides_kde here (KDE sessions only), replaced app by
+# app by cedilla_flatpak_overrides when the cedilla workaround is on (alpi_cedilla_xwayland), then
+# the user's flatpak_overrides and flatpak_filesystem_overrides (host_vars/127.0.0.1/custom.yml).
+# Flags of the same app add up across layers. Removing an entry does not undo it on the machine:
+# 'flatpak override --user --reset <app>' does. The exception is the cedilla workaround: when it
+# is off, the override file of each of its apps that still grants ~/.XCompose is reset, then
+# the remaining layers are applied again (anything else set by hand for that app goes too).
 
 flatpak_overrides_kde:
   # Bitwarden runs on native Wayland (the Flatpak wrapper picks the display mode from the granted
@@ -25,3 +28,27 @@ flatpak_overrides_kde:
     - --env=XDG_CURRENT_DESKTOP=KDE
     - --env=GTK_USE_PORTAL=1
     - --nofilesystem=home
+
+# Cedilla on KDE when KWin is too old (see cedilla_xwayland in group_vars/all/desktop.yml, ported
+# from AAPI). Flatpaks only see ~/.XCompose when it is granted. The Electron ones also lose the
+# Wayland socket; XDG_SESSION_TYPE=x11, or Slack still insists on Wayland and crashes. On X11, GTK
+# takes its theme from XSETTINGS (Breeze-Dark), which Flathub does not ship (only Breeze, dark
+# variant included), so the apps would turn light without GTK_THEME.
+cedilla_flatpak_gtk_theme: "Breeze:dark"
+cedilla_flatpak_x11_args:
+  - --socket=x11
+  - --nosocket=wayland
+  - --unset-env=WAYLAND_DISPLAY
+  - --env=XDG_SESSION_TYPE=x11
+  - "--env=GTK_THEME={{ cedilla_flatpak_gtk_theme }}"
+  - "--filesystem={{ user_home }}/.XCompose:ro"
+cedilla_flatpak_overrides:
+  com.slack.Slack: "{{ cedilla_flatpak_x11_args }}"
+  com.spotify.Client: "{{ cedilla_flatpak_x11_args }}"
+  # Replaces the KDE layer's Wayland flags; its wrapper picks --ozone-platform=x11 when only
+  # DISPLAY is set
+  com.bitwarden.desktop: "{{ cedilla_flatpak_x11_args + ['--unset-env=GTK_IM_MODULE', '--env=XDG_CURRENT_DESKTOP=KDE', '--env=GTK_USE_PORTAL=1'] }}"
+  # Qt reads ~/.XCompose itself through its compose input context, so ZapZap stays on Wayland
+  com.rtosta.zapzap:
+    - "--filesystem={{ user_home }}/.XCompose:ro"
+    - --env=QT_IM_MODULE=compose

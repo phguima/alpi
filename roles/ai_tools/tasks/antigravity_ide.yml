@@ -78,6 +78,7 @@
 
     # Named antigravity.desktop so the dock matches the window (Wayland app_id 'antigravity') to
     # it; the MimeType lets the browser hand the login callback (antigravity://) back to the app.
+    # On XWayland for the cedilla on KDE with an older KWin (alpi_cedilla_xwayland).
     - name: Antigravity IDE | Desktop entry
       ansible.builtin.copy:
         dest: "{{ user_home }}/.local/share/applications/antigravity.desktop"
@@ -86,7 +87,7 @@
           Type=Application
           Name=Antigravity
           Comment=Agentic development platform
-          Exec={{ antigravity_ide_dir }}/antigravity %U
+          Exec={{ ([antigravity_ide_dir ~ '/antigravity'] + ([cedilla_ozone_flag] if alpi_cedilla_xwayland else [])) | join(' ') }} %U
           Icon={{ _icon }}
           Terminal=false
           Categories=Development;IDE;

@@ -23,6 +23,9 @@
       - name: flatpak override flag without dashes
         flatpak_overrides: {com.bitwarden.desktop: [socket=wayland]}
         expect: ["Flatpak override flags must start with '--'", "com.bitwarden.desktop: socket=wayland"]
+      - name: invalid cedilla setting
+        cedilla_xwayland: "yes"
+        expect: ["cedilla_xwayland must be auto, true or false", "not 'yes'"]
       - name: unknown feature
         features: {steamm: true}
         expect: ["Unknown features: steamm"]

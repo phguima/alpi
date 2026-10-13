@@ -20,11 +20,16 @@ zsh_aliases_common: |
   alias clean-cache="sudo sync; echo 3 | sudo tee /proc/sys/vm/drop_caches"
 
 # antigravity-ide, not antigravity: the Antigravity CLI's shell setup deletes any
-# 'alias antigravity=' line (antigravity_ide_dir is in group_vars/all/ai_tools.yml)
+# 'alias antigravity=' line (antigravity_ide_dir is in group_vars/all/ai_tools.yml). With the
+# cedilla workaround (alpi_cedilla_xwayland), the IDE and VS Code start on XWayland from the shell
+# too.
 zsh_aliases_user: |
   alias claudecli="cd ~/wks; clear; claude"
   alias agycli="cd ~/wks; clear; agy"
-  alias antigravity-ide='"{{ antigravity_ide_dir }}/antigravity"'
+  alias antigravity-ide='"{{ antigravity_ide_dir }}/antigravity"{{ (' ' ~ cedilla_ozone_flag) if alpi_cedilla_xwayland | default(false) else '' }}'
+  {% if alpi_cedilla_xwayland | default(false) and 'vscode' in alpi_ids_selected | default([]) %}
+  alias code='code {{ cedilla_ozone_flag }}'
+  {% endif %}
 
 zsh_aliases_nvidia: |
   alias nvidia-run="{{ nvidia_prime_env }}"

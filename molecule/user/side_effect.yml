@@ -1,0 +1,23 @@
+---
+# The cedilla on XWayland, after converge + idempotence with KWin 6.6.4 (KDE): keep what it
+# made for verify.yml, then upgrade KWin to 6.7.5 and run again: everything must be undone.
+- name: Side effect | KWin 6.7 (KDE)
+  hosts: alpi-user-kde
+  gather_facts: false
+  tasks:
+    - name: Side effect | Keep the state with the workaround on
+      ansible.builtin.shell:
+        cmd: |
+          set -e
+          mkdir -p /root/alpi-xwayland-on/applications /root/alpi-xwayland-on/overrides
+          cp /home/alpi/.local/share/applications/*.desktop /root/alpi-xwayland-on/applications/
+          cp /home/alpi/.local/share/flatpak/overrides/* /root/alpi-xwayland-on/overrides/
+          cp /home/alpi/.zshrc /root/alpi-cedilla-xwayland /root/alpi-xwayland-on/
+        creates: /root/alpi-xwayland-on/.zshrc
+
+    - name: Side effect | Upgrade kwin
+      ansible.builtin.command: rpm -U /opt/alpi-test/repo/noarch/kwin-6.7.5-1.noarch.rpm
+      changed_when: true
+
+- name: Side effect | Run again
+  ansible.builtin.import_playbook: converge.yml

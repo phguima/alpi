@@ -122,13 +122,16 @@ def alpi_features(merged, hardware, detected):
     return out
 
 
-def alpi_flatpak_overrides(layers, filesystem, selected):
+def alpi_flatpak_overrides(layers, filesystem, selected, reset_if=None):
     """Merge Flatpak override layers and keep the apps that are selected.
 
     layers:     list of {app id: [flatpak override flags]} (repo, desktop, user), merged in order;
     filesystem: {app id: [folders]}, the user's folder grants, turned into --filesystem=<folder>;
-    selected:   Flatpak app ids in the resolved sets (only those get overrides).
-    Returns {"apply": [{"app", "flags"}], "skipped": [app ids not selected],
+    selected:   Flatpak app ids in the resolved sets (only those get overrides);
+    reset_if:   {app id: text}: a selected app's override file is reset before its flags are
+                applied when it contains that text (a workaround that no longer applies, such as
+                the cedilla's XWayland flags). Those apps get an entry even without flags.
+    Returns {"apply": [{"app", "flags", "reset_if"}], "skipped": [app ids not selected],
              "invalid": ["<app>: <flag>" for flags not starting with "--"]}.
     """
     merged = {}
@@ -139,15 +142,88 @@ def alpi_flatpak_overrides(layers, filesystem, selected):
         for app, flags in (layer or {}).items():
             out = merged.setdefault(str(app), [])
             out.extend(str(f) for f in flags or [] if str(f) not in out)
+    reset_if = {str(app): str(text) for app, text in (reset_if or {}).items()}
+    for app in reset_if:
+        merged.setdefault(app, [])
     selected = set(selected or [])
     result = {"apply": [], "skipped": [], "invalid": []}
     for app, flags in merged.items():
         result["invalid"].extend(f"{app}: {f}" for f in flags if not f.startswith("--"))
         if app not in selected:
             result["skipped"].append(app)
-        elif flags:
-            result["apply"].append({"app": app, "flags": flags})
+        elif flags or app in reset_if:
+            result["apply"].append({"app": app, "flags": flags, "reset_if": reset_if.get(app, "")})
     return result
+
+
+def _version(text):
+    return tuple(int(n) for n in re.findall(r"\d+", str(text)))
+
+
+def alpi_cedilla_xwayland(setting, is_kde, kwin_version, below):
+    """Whether the cedilla workaround runs Chromium/Electron apps on XWayland.
+
+    On native Wayland they ignore ~/.XCompose under KWin 6.6 (EL10, Fedora 44 before its 6.7
+    update) and type "ć". Only on KDE; setting (cedilla_xwayland): "auto" follows the KWin version
+    (older than 'below'; no KWin installed means no), true/false force it on KDE.
+    """
+    if not is_kde or setting is False:
+        return False
+    if setting is True:
+        return True
+    return bool(_version(kwin_version)) and _version(kwin_version) < _version(below)
+
+
+def _exec_flag(text, flag, add):
+    """Add flag after the command of every Exec= line (once), or remove it from them."""
+    out = []
+    for line in text.splitlines(keepends=True):
+        if line.startswith("Exec="):
+            body = line.rstrip("\r\n")
+            end = line[len(body):]
+            words = body.split(" ")
+            if add and flag not in words:
+                words.insert(1, flag)
+            elif not add:
+                words = [w for w in words if w != flag]
+            line = " ".join(words) + end
+        out.append(line)
+    return "".join(out)
+
+
+def alpi_xwayland_entries(system, user, flag, enabled, marker):
+    """What to do with the user's copies of system menu entries for the XWayland flag.
+
+    system, user: slurp results (each with 'item', the entry's file name, and 'content' when the
+    file exists) of /usr/share/applications/<name> and ~/.local/share/applications/<name>.
+    A copy is ALPI's when it has the marker, or when it is the system entry plus the flag (AAPI
+    made those, without a marker). On: ALPI's copy is rebuilt from the system entry (or removed
+    when the app is gone); a user's own copy only gets the flag. Off: ALPI's copy is removed and
+    the flag is taken out of a user's own copy.
+    Returns [{"name", "state": "present"|"absent", "content"}] for files that must change.
+    """
+    def text(result):
+        return base64.b64decode(result["content"]).decode() if result.get("content") else None
+
+    users = {str(r["item"]): text(r) for r in user or []}
+    plan = []
+    for result in system or []:
+        name, sys_text = str(result["item"]), text(result)
+        usr = users.get(name)
+        ours = usr is not None and (marker in usr or (sys_text is not None
+                                                      and _exec_flag(usr, flag, False) == sys_text))
+        if usr is None and not (enabled and sys_text is not None):
+            continue
+        if ours and not (enabled and sys_text is not None):
+            plan.append({"name": name, "state": "absent", "content": ""})
+            continue
+        if enabled and (usr is None or ours):
+            content = f"# {marker}\n" + _exec_flag(sys_text, flag, True)
+        else:
+            content = _exec_flag(usr, flag, enabled)
+        if content != usr:
+            plan.append({"name": name, "state": "present", "content": content})
+    return plan
 
 
 def alpi_luks_aliases(volumes):
@@ -252,6 +328,8 @@ class FilterModule(object):
             "alpi_repos": alpi_repos,
             "alpi_feature_ids": alpi_feature_ids,
             "alpi_flatpak_overrides": alpi_flatpak_overrides,
+            "alpi_cedilla_xwayland": alpi_cedilla_xwayland,
+            "alpi_xwayland_entries": alpi_xwayland_entries,
             "alpi_luks_aliases": alpi_luks_aliases,
             "alpi_invalid_luks": alpi_invalid_luks,
             "alpi_pipx_name": alpi_pipx_name,

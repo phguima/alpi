@@ -10,7 +10,7 @@
         quiet: true
 
 # Play-level environment reaches fact gathering too: env_setup sees the sudo user and the desktop
-- name: User | env_setup + roles/zsh + roles/desktop + roles/ai_tools + reminders as user alpi
+- name: User | env_setup + roles/zsh + roles/desktop + roles/ai_tools + Flatpak overrides + reminders as user alpi
   hosts: all
   become: true
   environment:
@@ -38,6 +38,13 @@
       ansible.builtin.import_role:
         name: ai_tools
 
+    # As in roles/packages; only KDE has flatpak (and the cedilla's Flatpak overrides)
+    - name: User | Flatpak overrides (KDE)
+      ansible.builtin.import_role:
+        name: packages
+        tasks_from: flatpak_overrides.yml
+      when: _desktop == 'KDE'
+
     - name: User | Reminders
       ansible.builtin.import_tasks: ../../tasks/reminders.yml
 
@@ -46,4 +53,10 @@
       ansible.builtin.copy:
         content: "{{ alpi_gh_login_needed | default('unset') }}\n"
         dest: /root/alpi-gh-login-needed
+        mode: "0644"
+
+    - name: User | Record the cedilla fact
+      ansible.builtin.copy:
+        content: "{{ alpi_cedilla_xwayland }} {{ kwin_version }}\n"
+        dest: /root/alpi-cedilla-xwayland
         mode: "0644"

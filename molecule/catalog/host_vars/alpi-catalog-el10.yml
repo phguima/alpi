@@ -23,5 +23,7 @@ _golden:
   upstream: [roboto]
   extra: []
   absent: []
-  # KDE forced: the repository's KDE overrides, both apps selected
-  flatpak_overrides: [com.bitwarden.desktop, us.zoom.Zoom]
+  # KDE forced with KWin 6.6.4 (molecule.yml): the repository's KDE overrides, the cedilla layer
+  # replacing Bitwarden's and adding Slack, Spotify and ZapZap; every app selected
+  flatpak_overrides: [com.bitwarden.desktop, us.zoom.Zoom, com.slack.Slack, com.spotify.Client, com.rtosta.zapzap]
+  cedilla_xwayland: true

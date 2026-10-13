@@ -28,9 +28,10 @@
         force: false
         mode: "0644"
       become_user: "{{ user_name }}"
+      register: _xcompose
 
-    # The keysyms too (U0107/U0106): apps that read the keysym instead of the string (e.g.
-    # Chromium on Wayland) would otherwise still get "ć".
+    # The keysyms too (U0107/U0106): apps that read the keysym instead of the string would
+    # otherwise still get "ć". In --check a copy that was only reported does not exist yet.
     - name: Cedilla | Map ć/Ć to ç/Ç
       ansible.builtin.replace:
         path: "{{ user_home }}/.XCompose"
@@ -43,6 +44,7 @@
         - { regexp: 'U0107', replace: 'ccedilla' }
         - { regexp: 'U0106', replace: 'Ccedilla' }
       register: _cedilla
+      when: not (ansible_check_mode and _xcompose is changed)
 
     - name: Cedilla | Ask for a new login
       ansible.builtin.debug:

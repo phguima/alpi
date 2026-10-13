@@ -13,10 +13,17 @@
 # goes to alpi only; the legacy blocks pre-seeded by prepare.yml are removed from both.
 # AI tools (roles/ai_tools) from local stand-ins (prepare.yml): installed for alpi only, once;
 # the IDE's AppImage checked against the manifest, its icon and menu entry, the URL handler in
-# mimeinfo.cache. GNOME and EL: every tool; KDE: the Antigravity CLI only (features in host_vars).
+# mimeinfo.cache. GNOME and EL: every tool; KDE: the Antigravity CLI and IDE (features in host_vars).
 # Steam on the NVIDIA GPU (roles/desktop): GNOME gets the user launcher built from the system one
 # (files/steam.desktop, a trimmed copy of RPM Fusion's) and the nvidia-run alias; KDE vetoes
 # NVIDIA, so AFPI's leftover launcher goes; EL has neither, and a user's own launcher stays.
+# Cedilla on XWayland (KDE, stand-in kwin package): with KWin 6.6.4 the Brave and VS Code menu
+# entries are copied with --ozone-platform=x11 (AAPI's copy taken over, the user's own only
+# flagged), the Antigravity entry and aliases get it, and the cedilla's Flatpak overrides apply
+# (roles/packages' override step, run alone; Bitwarden's KDE Wayland flags replaced);
+# side_effect.yml keeps that state and upgrades KWin to 6.7.5, and the next run undoes it all
+# (Slack's and Bitwarden's files reset, AAPI's flags and the hand-set one gone). GNOME and EL have
+# the same system entries and get nothing.
 platforms:
   - name: alpi-user-gnome
     image: registry.fedoraproject.org/fedora:44
@@ -41,3 +48,6 @@ provisioner:
   playbooks:
     prepare: prepare.yml
     converge: converge.yml
+    side_effect: side_effect.yml
+scenario:
+  test_sequence: [destroy, syntax, create, prepare, converge, idempotence, side_effect, verify, destroy]

@@ -1,0 +1,52 @@
+---
+# Cedilla on KDE with an older KWin (alpi_cedilla_xwayland, see cedilla_xwayland in
+# group_vars/all/desktop.yml; ported from AAPI): Chromium/Electron menu entries on XWayland.
+# Copies in ~/.local/share/applications keep the system entry's desktop id, so they shadow it
+# (mimeinfo.cache needs no update). The plan (alpi_xwayland_entries) also undoes it: ALPI's copies
+# (the marker, or AAPI's copies: the system entry plus the flag) are removed when it is off, and a
+# user's own copy only gets the flag added or removed.
+- name: XWayland | Read the system menu entries
+  ansible.builtin.slurp:
+    src: "/usr/share/applications/{{ item }}"
+  loop: "{{ cedilla_x11_desktop_entries }}"
+  register: _xw_system
+  failed_when: false
+
+- name: XWayland | Read the user's copies
+  ansible.builtin.slurp:
+    src: "{{ user_home }}/.local/share/applications/{{ item }}"
+  loop: "{{ cedilla_x11_desktop_entries }}"
+  register: _xw_user
+  failed_when: false
+
+- name: XWayland | Plan
+  ansible.builtin.set_fact:
+    _xw_plan: >-
+      {{ _xw_system.results | alpi_xwayland_entries(_xw_user.results, cedilla_ozone_flag,
+                                                    alpi_cedilla_xwayland, cedilla_x11_desktop_marker) }}
+
+- name: XWayland | Applications directory
+  ansible.builtin.file:
+    path: "{{ user_home }}/.local/share/applications"
+    state: directory
+    mode: "0755"
+  become_user: "{{ user_name }}"
+  when: _xw_plan | selectattr('state', 'eq', 'present') | list | length > 0
+
+- name: XWayland | Write the menu entries
+  ansible.builtin.copy:
+    dest: "{{ user_home }}/.local/share/applications/{{ item.name }}"
+    content: "{{ item.content }}"
+    mode: "0644"
+  become_user: "{{ user_name }}"
+  loop: "{{ _xw_plan | selectattr('state', 'eq', 'present') }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: XWayland | Remove the copies that no longer apply
+  ansible.builtin.file:
+    path: "{{ user_home }}/.local/share/applications/{{ item.name }}"
+    state: absent
+  loop: "{{ _xw_plan | selectattr('state', 'eq', 'absent') }}"
+  loop_control:
+    label: "{{ item.name }}"

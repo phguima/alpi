@@ -184,7 +184,7 @@ class TestFeatures:
     def test_filters_are_registered(self):
         assert set(alpi.FilterModule().filters()) == {
             "alpi_resolve", "alpi_canonical", "alpi_features", "alpi_repos", "alpi_feature_ids",
-            "alpi_flatpak_overrides", "alpi_luks_aliases", "alpi_invalid_luks", "alpi_pipx_name",
+            "alpi_flatpak_overrides", "alpi_cedilla_xwayland", "alpi_xwayland_entries", "alpi_luks_aliases", "alpi_invalid_luks", "alpi_pipx_name",
             "alpi_appimage_release", "alpi_github_release", "alpi_upstream_missing",
         }
 
@@ -203,7 +203,7 @@ def test_flatpak_overrides_merge_layers_and_folders_in_order():
         [BW],
     )
     assert res == {"apply": [{"app": BW, "flags": ["--socket=wayland", "--nosocket=x11", "--env=A=1",
-                                                   "--filesystem=/srv/wks:ro"]}],
+                                                   "--filesystem=/srv/wks:ro"], "reset_if": ""}],
                    "skipped": [], "invalid": []}
 
 
@@ -222,6 +222,89 @@ def test_flatpak_overrides_report_flags_without_dashes_even_when_skipped():
 @pytest.mark.parametrize("layers, filesystem", [(None, None), ([None, {}], {}), ([{BW: None}], {BW: []})])
 def test_flatpak_overrides_empty_inputs(layers, filesystem):
     assert alpi.alpi_flatpak_overrides(layers, filesystem, [BW]) == {"apply": [], "skipped": [], "invalid": []}
+
+
+def test_flatpak_overrides_reset_if_for_selected_apps_even_without_flags():
+    res = alpi.alpi_flatpak_overrides([{BW: ["--socket=wayland"]}], {}, [BW, ZAP],
+                                      {BW: ".XCompose", ZAP: ".XCompose", ZOOM: ".XCompose"})
+    assert res["apply"] == [{"app": BW, "flags": ["--socket=wayland"], "reset_if": ".XCompose"},
+                            {"app": ZAP, "flags": [], "reset_if": ".XCompose"}]
+    assert res["skipped"] == [ZOOM]
+
+
+# --- alpi_cedilla_xwayland ---------------------------------------------------------------------
+
+@pytest.mark.parametrize(
+    "setting, is_kde, kwin, expected",
+    [
+        ("auto", True, "6.6.4", True),
+        ("auto", True, "6.7.5", False),
+        ("auto", True, "6.10.0", False),   # numeric, not string, comparison
+        ("auto", True, "5.27.11", True),
+        ("auto", True, "", False),         # KWin not installed
+        ("auto", False, "6.6.4", False),   # not a KDE session
+        (True, True, "6.7.5", True),
+        (True, False, "6.6.4", False),     # forced on KDE only
+        (False, True, "6.6.4", False),
+    ],
+)
+def test_cedilla_xwayland(setting, is_kde, kwin, expected):
+    assert alpi.alpi_cedilla_xwayland(setting, is_kde, kwin, "6.7") is expected
+
+
+# --- alpi_xwayland_entries ---------------------------------------------------------------------
+
+FLAG = "--ozone-platform=x11"
+MARK = "ALPI: XWayland copy"
+SYS = "[Desktop Entry]\nName=Code\nExec=/usr/share/code/code %F\n[Desktop Action new]\nExec=/usr/share/code/code --new-window %F\n"
+SYS_X11 = SYS.replace("code/code ", "code/code " + FLAG + " ")
+OWN = "[Desktop Entry]\nName=My Code\nExec=/opt/code/code\n"
+
+
+def _slurp(name, text):
+    return {"item": name} if text is None else {"item": name, "content": base64.b64encode(text.encode()).decode()}
+
+
+def plan(sys_text, usr_text, enabled):
+    return alpi.alpi_xwayland_entries([_slurp("c.desktop", sys_text)], [_slurp("c.desktop", usr_text)],
+                                      FLAG, enabled, MARK)
+
+
+def test_xwayland_on_copies_the_system_entry_with_the_flag_and_marker():
+    assert plan(SYS, None, True) == [{"name": "c.desktop", "state": "present",
+                                      "content": f"# {MARK}\n" + SYS_X11}]
+
+
+def test_xwayland_on_is_stable_and_rebuilds_ours_from_the_system_entry():
+    ours = f"# {MARK}\n" + SYS_X11
+    assert plan(SYS, ours, True) == []
+    newer = SYS.replace("Name=Code", "Name=Code 2")
+    assert plan(newer, ours, True)[0]["content"] == f"# {MARK}\n" + SYS_X11.replace("Name=Code", "Name=Code 2")
+
+
+def test_xwayland_on_adds_the_flag_once_to_a_users_own_copy():
+    res = plan(SYS, OWN, True)
+    assert res == [{"name": "c.desktop", "state": "present", "content": OWN.replace("code/code", "code/code " + FLAG)}]
+    assert plan(SYS, res[0]["content"], True) == []
+
+
+def test_xwayland_aapi_copy_without_marker_is_ours():
+    assert plan(SYS, SYS_X11, True)[0]["content"] == f"# {MARK}\n" + SYS_X11
+    assert plan(SYS, SYS_X11, False) == [{"name": "c.desktop", "state": "absent", "content": ""}]
+
+
+def test_xwayland_off_removes_ours_and_strips_the_flag_from_the_users_own():
+    assert plan(SYS, f"# {MARK}\n" + SYS_X11, False) == [{"name": "c.desktop", "state": "absent", "content": ""}]
+    own_x11 = OWN.replace("code/code", "code/code " + FLAG)
+    assert plan(SYS, own_x11, False) == [{"name": "c.desktop", "state": "present", "content": OWN}]
+    assert plan(SYS, OWN, False) == []
+
+
+def test_xwayland_nothing_without_the_app():
+    assert plan(None, None, True) == []
+    assert plan(None, None, False) == []
+    assert plan(None, f"# {MARK}\n" + SYS_X11, True) == [{"name": "c.desktop", "state": "absent", "content": ""}]
+    assert plan(None, OWN, True) == [{"name": "c.desktop", "state": "present", "content": OWN.replace("code/code", "code/code " + FLAG)}]
 
 
 # --- alpi_luks_aliases ---------------------------------------------------------------------------

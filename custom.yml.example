@@ -45,3 +45,8 @@ flatpak_filesystem_overrides: {}
 flatpak_overrides: {}
 #  com.spotify.Client:
 #    - --socket=wayland
+
+# Cedilla on KDE (group_vars/all/desktop.yml): under KWin 6.6, Chromium/Electron apps (Brave, VS
+# Code, Antigravity, Slack, Spotify, Bitwarden) type "ć" on native Wayland, so ALPI runs them on
+# XWayland. auto follows the KWin version; true/false force it (KDE only). Undone when off.
+cedilla_xwayland: auto

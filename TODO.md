@@ -14,13 +14,11 @@ scenarios / unit tests (see `CLAUDE.md`).
 - [ ] On noir: does Steam run on the NVIDIA GPU from its own launcher (`PrefersNonDefaultGPU`,
       `X-KDE-RunOnDiscreteGpu`, via switcheroo-control) without ALPI's user launcher
       (`feat(desktop): …`)? If so, drop the override.
-- [ ] Cedilla on KDE with KWin 6.6 (EL10, from AAPI `fix(desktop): …`): Chromium/Electron apps
-      ignore `~/.XCompose` on native Wayland, so AAPI runs them on XWayland: `--ozone-platform=x11`
-      in copies of the Brave and VS Code menu entries, the Antigravity entry and aliases; Slack,
-      Spotify and Bitwarden Flatpak overrides (X11 only, `XDG_SESSION_TYPE=x11`,
-      `GTK_THEME=Breeze:dark`, `~/.XCompose:ro`); ZapZap gets `~/.XCompose:ro` +
-      `QT_IM_MODULE=compose` (AAPI's `cedilla_*` vars). Not needed on Fedora 44 (Plasma 6.7):
-      decide per distro/KWin version.
+- [x] Cedilla on KDE with KWin 6.6 (EL10, from AAPI `fix(desktop): …`): Chromium/Electron apps
+      ignore `~/.XCompose` on native Wayland, so they run on XWayland. Gated on the KWin version
+      (`cedilla_xwayland: auto`, KWin < 6.7; EL10 has 6.6.4, the version Fedora 44 shipped with)
+      and undone when it no longer applies (`feat(desktop): cedilla on XWayland gated on the KWin
+      version`).
 - [ ] Freeze AAPI and AFPI with a README pointing to ALPI.
 
 ## 5. New distros (after parity, only with a test VM)

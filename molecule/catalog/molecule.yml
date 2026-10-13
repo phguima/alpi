@@ -15,6 +15,7 @@ platforms:
     volumes: ["alpi-dnf-catalog-el10:/var/cache/dnf"]
 provisioner:
   options:
-    extra-vars: '{"is_kde": true, "is_gnome": true, "is_nvidia": true, "is_asus": true, "is_intel": true, "is_amd": true}'
+    # kwin_version: EL10's, so the cedilla's XWayland overrides are in the golden values
+    extra-vars: '{"is_kde": true, "is_gnome": true, "is_nvidia": true, "is_asus": true, "is_intel": true, "is_amd": true, "kwin_version": "6.6.4"}'
   playbooks:
     converge: converge.yml

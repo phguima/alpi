@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Visual Studio Code
+Exec=/usr/share/code/code %F
+Type=Application
+Icon=vscode
+Actions=new-empty-window;
+
+[Desktop Action new-empty-window]
+Name=New Empty Window
+Exec=/usr/share/code/code --new-window %F

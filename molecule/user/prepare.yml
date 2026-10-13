@@ -212,3 +212,122 @@
             Name=My Steam
             Exec=/opt/steam/steam
       when: inventory_hostname != 'alpi-user-gnome'
+
+# The cedilla on XWayland (KDE): a stand-in kwin package, 6.6.4 installed (the workaround applies)
+# and 6.7.5 built for side_effect.yml (it no longer does); the system menu entries of Brave and VS
+# Code (a trimmed copy of each); what AAPI and the user left behind: an AAPI copy of VS Code's URL
+# handler (system entry plus the flag, no marker), the user's own VS Code entry, and Slack's
+# override from AAPI plus a flag set by hand; Bitwarden's Wayland override from the KDE layer.
+- name: Prepare | Cedilla on XWayland
+  hosts: all
+  gather_facts: false
+  vars:
+    _apps: /home/alpi/.local/share/applications
+    _overrides: /home/alpi/.local/share/flatpak/overrides
+  tasks:
+    # Everywhere: GNOME and EL must leave them alone
+    - name: Prepare | System menu entries of Brave and VS Code
+      ansible.builtin.copy:
+        src: files/xwayland/
+        dest: /usr/share/applications/
+        mode: "0644"
+
+    - name: Prepare | KDE pieces
+      when: inventory_hostname == 'alpi-user-kde'
+      block:
+        - name: Prepare | rpm-build and flatpak
+          ansible.builtin.package:
+            name: [rpm-build, flatpak]
+            state: present
+
+        - name: Prepare | Build directory
+          ansible.builtin.file:
+            path: /opt/alpi-test
+            state: directory
+            mode: "0755"
+
+        - name: Prepare | kwin spec files
+          ansible.builtin.copy:
+            dest: "/opt/alpi-test/kwin-{{ item }}.spec"
+            content: |
+              Name: kwin
+              Version: {{ item }}
+              Release: 1
+              Summary: ALPI test stand-in
+              License: GPL-3.0-or-later
+              BuildArch: noarch
+              %description
+              ALPI test stand-in for KWin.
+              %files
+            mode: "0644"
+          loop: ["6.6.4", "6.7.5"]
+
+        - name: Prepare | Build the kwin packages
+          ansible.builtin.command:
+            cmd: "rpmbuild -bb --define '_rpmdir /opt/alpi-test/repo' /opt/alpi-test/kwin-{{ item }}.spec"
+            creates: "/opt/alpi-test/repo/noarch/kwin-{{ item }}-1.noarch.rpm"
+          loop: ["6.6.4", "6.7.5"]
+
+        - name: Prepare | Install kwin 6.6.4
+          ansible.builtin.shell:
+            cmd: rpm -q kwin || rpm -i /opt/alpi-test/repo/noarch/kwin-6.6.4-1.noarch.rpm
+          changed_when: true
+
+        - name: Prepare | AAPI's copy of the URL handler
+          ansible.builtin.shell:
+            cmd: >-
+              sed 's|^Exec=/usr/share/code/code |Exec=/usr/share/code/code --ozone-platform=x11 |'
+              /usr/share/applications/com.microsoft.VSCode.UrlHandler.desktop
+              > {{ _apps }}/com.microsoft.VSCode.UrlHandler.desktop
+            creates: "{{ _apps }}/com.microsoft.VSCode.UrlHandler.desktop"
+          become: true
+          become_user: alpi
+
+        - name: Prepare | The user's own VS Code entry
+          ansible.builtin.copy:
+            dest: "{{ _apps }}/com.microsoft.VSCode.desktop"
+            content: |
+              [Desktop Entry]
+              Name=My Code
+              Exec=/opt/code/code --user-data-dir=/srv/code
+              Type=Application
+            mode: "0644"
+          become: true
+          become_user: alpi
+
+        - name: Prepare | Overrides directory
+          ansible.builtin.file:
+            path: "{{ _overrides }}"
+            state: directory
+            mode: "0755"
+          become: true
+          become_user: alpi
+
+        - name: Prepare | Slack's override from AAPI, and Bitwarden's from the KDE layer
+          ansible.builtin.copy:
+            dest: "{{ _overrides }}/{{ item.app }}"
+            content: "{{ item.content }}"
+            mode: "0644"
+          become: true
+          become_user: alpi
+          loop:
+            - app: com.slack.Slack
+              content: |
+                [Context]
+                sockets=x11;!wayland;
+                filesystems=/home/alpi/.XCompose:ro;
+
+                [Environment]
+                XDG_SESSION_TYPE=x11
+                GTK_THEME=Breeze:dark
+                ALPI_BY_HAND=1
+            - app: com.bitwarden.desktop
+              content: |
+                [Context]
+                sockets=wayland;fallback-x11;!x11;
+
+                [Environment]
+                XDG_CURRENT_DESKTOP=KDE
+                GTK_USE_PORTAL=1
+          loop_control:
+            label: "{{ item.app }}"

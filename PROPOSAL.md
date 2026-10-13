@@ -304,3 +304,18 @@ Each of these becomes a feature or is guarded by the resolved package set.
 2. **Hardware vetoes stay in `custom.yml`**, not in the picker (no second detection).
 3. A `bootstrap.yml` written before this keeps working: `alpi_profile` is ignored by the playbook
    and dropped by the next `bootstrap.sh`.
+
+## Decisions (2026-10-13)
+
+1. **Cedilla on XWayland, gated on the KWin version, not the distro** (ported from AAPI's
+   `fix(desktop): cedilla on KDE via XWayland for Chromium/Electron apps`). Under KWin 6.6,
+   Chromium/Electron apps on native Wayland ignore `~/.XCompose` and type "ć". Checked that day:
+   EL10's EPEL ships KWin 6.6.4, the very version Fedora 44 was released with (its updates have
+   6.7.5, where the bug is gone), so the distro does not tell. `cedilla_xwayland: auto` applies
+   the workaround on KDE when KWin is older than `cedilla_xwayland_kwin_below` (6.7); the cutoff
+   rests on those two data points, so `custom.yml` can force it (`true`/`false`).
+2. **The workaround undoes itself.** A gate only helps if a KWin upgrade removes what it set:
+   ALPI's menu-entry copies carry a marker (AAPI's are recognized as the system entry plus the
+   flag) and are removed; the flag leaves a user's own copy, the Antigravity entry and the
+   aliases; the cedilla apps' Flatpak override files that still grant `~/.XCompose` are reset and
+   the remaining layers applied again (an exception to "removing an entry does not undo it").

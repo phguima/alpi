@@ -297,3 +297,114 @@
         quiet: true
       vars:
         _gh_expected: {GNOME: "False", KDE: "True", "": unset}
+
+- name: Verify | Cedilla on XWayland (KWin 6.6.4 on KDE, then 6.7.5 after side_effect.yml)
+  hosts: all
+  gather_facts: false
+  vars:
+    _xw_flag: --ozone-platform=x11
+    _xw_apps: /home/alpi/.local/share/applications
+    _xw_overrides: /home/alpi/.local/share/flatpak/overrides
+    _xw_on: /root/alpi-xwayland-on
+    _xw_marker: "# ALPI: copy of the system entry on XWayland"
+    _xw_entries: [brave-browser.desktop, com.microsoft.VSCode.desktop, com.microsoft.VSCode.UrlHandler.desktop]
+    _xw_flatpaks: [com.slack.Slack, com.spotify.Client, com.bitwarden.desktop, com.rtosta.zapzap, us.zoom.Zoom]
+  tasks:
+    - name: Verify | Read the cedilla fact, the menu entries, .zshrc and the overrides as they are now
+      ansible.builtin.slurp:
+        src: "{{ item }}"
+      loop: "{{ ['/root/alpi-cedilla-xwayland', '/home/alpi/.zshrc']
+                + _xw_entries | map('regex_replace', '^', _xw_apps ~ '/') | list
+                + _xw_flatpaks | map('regex_replace', '^', _xw_overrides ~ '/') | list }}"
+      register: _xw_now
+      failed_when: false
+
+    - name: Verify | Decode
+      ansible.builtin.set_fact:
+        _xw_now_text: "{{ dict(_xw_now.results | map(attribute='item') | map('basename')
+                               | zip(_xw_now.results | map(attribute='content', default='') | map('b64decode'))) }}"
+        # A missing file reads as '' (no content)
+        _xw_now_exists: "{{ dict(_xw_now.results | map(attribute='item') | map('basename')
+                                 | zip(_xw_now.results | map(attribute='content', default='') | map('length') | map('bool'))) }}"
+
+    - name: Verify | Not on GNOME nor EL, nothing on XWayland and the system entries left alone
+      ansible.builtin.assert:
+        that:
+          - _xw_now_text['alpi-cedilla-xwayland'] == 'False \n'
+          - _xw_flag not in _xw_now_text['.zshrc']
+          - _xw_entries | map('extract', _xw_now_exists) | select | list == []
+        fail_msg: "{{ _xw_now_text | to_json }}"
+        quiet: true
+      when: inventory_hostname != 'alpi-user-kde'
+
+    - name: Verify | KDE state with KWin 6.6.4 (kept by side_effect.yml)
+      when: inventory_hostname == 'alpi-user-kde'
+      block:
+        - name: Verify | Read the kept state
+          ansible.builtin.slurp:
+            src: "{{ item }}"
+          loop: "{{ [_xw_on ~ '/alpi-cedilla-xwayland', _xw_on ~ '/.zshrc', _xw_on ~ '/applications/antigravity.desktop']
+                    + _xw_entries | map('regex_replace', '^', _xw_on ~ '/applications/') | list
+                    + _xw_flatpaks | map('regex_replace', '^', _xw_on ~ '/overrides/') | list }}"
+          register: _xw_kept
+
+        - name: Verify | Workaround on with KWin 6.6.4
+          ansible.builtin.assert:
+            that:
+              - _on['alpi-cedilla-xwayland'] == 'True 6.6.4\n'
+              # aliases
+              - "\"alias antigravity-ide='\\\"/home/alpi/wks/tools/antigravity/antigravity\\\" --ozone-platform=x11'\" in _on['.zshrc']"
+              - "\"alias code='code --ozone-platform=x11'\" in _on['.zshrc']"
+              # Antigravity's entry
+              - "'Exec=/home/alpi/wks/tools/antigravity/antigravity --ozone-platform=x11 %U' in _on['antigravity.desktop']"
+              # Brave: a marked copy, every Exec flagged
+              - _on['brave-browser.desktop'].startswith(_xw_marker)
+              - _on['brave-browser.desktop'].splitlines() | select('match', '^Exec=') | list ==
+                ['Exec=/usr/bin/brave-browser-stable --ozone-platform=x11 %U',
+                 'Exec=/usr/bin/brave-browser-stable --ozone-platform=x11',
+                 'Exec=/usr/bin/brave-browser-stable --ozone-platform=x11 --incognito']
+              # AAPI's copy of the URL handler taken over (marker added, flag once)
+              - _on['com.microsoft.VSCode.UrlHandler.desktop'].startswith(_xw_marker)
+              - "'Exec=/usr/share/code/code --ozone-platform=x11 --open-url %U' in _on['com.microsoft.VSCode.UrlHandler.desktop']"
+              - _on['com.microsoft.VSCode.UrlHandler.desktop'].count(_xw_flag) == 1
+              # the user's own entry: only flagged
+              - _on['com.microsoft.VSCode.desktop'] ==
+                '[Desktop Entry]\nName=My Code\nExec=/opt/code/code --ozone-platform=x11 --user-data-dir=/srv/code\nType=Application\n'
+              # Flatpaks: Electron apps on X11 with ~/.XCompose; Bitwarden's KDE Wayland flags
+              # replaced; ZapZap on Wayland with the compose module; Zoom untouched
+              - "'/home/alpi/.XCompose:ro' in _on['com.slack.Slack'] and 'XDG_SESSION_TYPE=x11' in _on['com.slack.Slack']"
+              - "'ALPI_BY_HAND=1' in _on['com.slack.Slack']"
+              - "'/home/alpi/.XCompose:ro' in _on['com.spotify.Client'] and 'GTK_THEME=Breeze:dark' in _on['com.spotify.Client']"
+              - "'/home/alpi/.XCompose:ro' in _on['com.bitwarden.desktop']"
+              - "_on['com.bitwarden.desktop'] is search('(?m)^sockets=(.*;)?x11;') and '!wayland;' in _on['com.bitwarden.desktop']"
+              - "'QT_IM_MODULE=compose' in _on['com.rtosta.zapzap'] and '/home/alpi/.XCompose:ro' in _on['com.rtosta.zapzap']"
+              - "'XCompose' not in _on['us.zoom.Zoom']"
+            fail_msg: "{{ _on | to_json }}"
+            quiet: true
+          vars:
+            _on: "{{ dict(_xw_kept.results | map(attribute='item') | map('basename')
+                          | zip(_xw_kept.results | map(attribute='content') | map('b64decode'))) }}"
+
+        - name: Verify | Undone with KWin 6.7.5
+          ansible.builtin.assert:
+            that:
+              - _xw_now_text['alpi-cedilla-xwayland'] == 'False 6.7.5\n'
+              - _xw_flag not in _xw_now_text['.zshrc']
+              # ALPI's (and AAPI's) copies gone, the user's own entry as it was
+              - not _xw_now_exists['brave-browser.desktop']
+              - not _xw_now_exists['com.microsoft.VSCode.UrlHandler.desktop']
+              - _xw_now_text['com.microsoft.VSCode.desktop'] ==
+                '[Desktop Entry]\nName=My Code\nExec=/opt/code/code --user-data-dir=/srv/code\nType=Application\n'
+              # Flatpaks: reset, the KDE layer back on Bitwarden, Zoom as before
+              - _xw_flatpaks | map('extract', _xw_now_text) | select('search', 'XCompose') | list == []
+              - "'ALPI_BY_HAND' not in _xw_now_text['com.slack.Slack']"
+              - "'XDG_SESSION_TYPE' not in _xw_now_text['com.slack.Slack'] + _xw_now_text['com.spotify.Client'] + _xw_now_text['com.bitwarden.desktop']"
+              # the KDE layer's sockets, in flatpak's own order
+              - _xw_now_text['com.bitwarden.desktop'] | regex_search('(?m)^sockets=(.*)$', '\\1') | first
+                | split(';') | select | sort == ['!x11', 'fallback-x11', 'wayland']
+              - "'QT_IM_MODULE=compose' not in _xw_now_text['com.rtosta.zapzap']"
+              - _xw_now_text['us.zoom.Zoom'] == _xw_on_zoom
+            fail_msg: "{{ _xw_now_text | to_json }}"
+            quiet: true
+          vars:
+            _xw_on_zoom: "{{ _xw_kept.results[-1].content | b64decode }}"
