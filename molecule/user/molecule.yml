@@ -21,8 +21,9 @@
 # entries are copied with --ozone-platform=x11 (AAPI's copy taken over, the user's own only
 # flagged), the Antigravity entry and aliases get it, and the cedilla's Flatpak overrides apply
 # (roles/packages' override step, run alone; Bitwarden's KDE Wayland flags replaced);
-# side_effect.yml keeps that state and upgrades KWin to 6.7.5, and the next run undoes it all
-# (Slack's and Bitwarden's files reset, AAPI's flags and the hand-set one gone). GNOME and EL have
+# side_effect.yml keeps that state and publishes KWin 6.7.5; the next run reads 6.6.4 in
+# env_setup, upgrades in converge's stand-in for roles/update, decides again and undoes it all in
+# that same run (Slack's and Bitwarden's files reset, AAPI's flags and the hand-set one gone). GNOME and EL have
 # the same system entries and get nothing.
 platforms:
   - name: alpi-user-gnome

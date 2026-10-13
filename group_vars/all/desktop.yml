@@ -31,7 +31,7 @@ nvidia_prime_env: "__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia 
 # Cedilla on KDE (ported from AAPI): under KWin 6.6 (EL10; Fedora 44 before its 6.7 update),
 # Chromium/Electron apps on native Wayland ignore ~/.XCompose and type "ć". On XWayland they read
 # it through GTK, so on such a KWin they run on X11 (resolved into alpi_cedilla_xwayland by
-# tasks/resolve.yml from the KWin version read in env_setup):
+# tasks/cedilla.yml from the installed KWin, again after roles/update's upgrade):
 #   cedilla_xwayland: auto (KWin older than cedilla_xwayland_kwin_below) | true | false, on KDE
 #   only; set it in custom.yml to force it. Everything below is undone when it no longer applies.
 cedilla_xwayland: auto

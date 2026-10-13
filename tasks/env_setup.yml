@@ -130,23 +130,6 @@
     is_kde: "{{ 'KDE' in detected_xdg or 'PLASMA' in detected_xdg }}"
   tags: [always, system, detection]
 
-# For the cedilla workaround (cedilla_xwayland in group_vars/all/desktop.yml). Read before
-# roles/update: a KWin upgraded by this run counts from the next one, which also undoes the
-# workaround. Empty when KWin is not installed. Extra vars win over set_fact (tests pin it).
-- name: Env Setup | Read the KWin version (KDE)
-  ansible.builtin.command: rpm -q --qf '%{VERSION}' kwin
-  register: _kwin_rpm
-  changed_when: false
-  failed_when: false
-  check_mode: false
-  when: is_kde
-  tags: [always, system, detection]
-
-- name: Env Setup | Set the KWin version fact
-  set_fact:
-    kwin_version: "{{ _kwin_rpm.stdout | trim if (_kwin_rpm.rc | default(1)) == 0 else '' }}"
-  tags: [always, system, detection]
-
 # group_vars/os_<distro> and os_<distro>_<major> load once the host is in these groups (only the
 # directories that exist count).
 - name: Env Setup | Join the distro groups

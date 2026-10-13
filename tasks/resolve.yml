@@ -120,38 +120,9 @@
       '{{ cedilla_xwayland }}'.
     quiet: true
 
-- name: Resolve | Cedilla on XWayland (KDE with an older KWin)
-  ansible.builtin.set_fact:
-    alpi_cedilla_xwayland: >-
-      {{ cedilla_xwayland | alpi_cedilla_xwayland(is_kde, kwin_version | default(''),
-                                                  cedilla_xwayland_kwin_below) }}
-
-# The cedilla layer replaces the KDE layer app by app (Bitwarden: X11 instead of Wayland). When
-# it is off, its apps' files that still grant ~/.XCompose are reset first (reset_if).
-- name: Resolve | Select Flatpak overrides
-  ansible.builtin.set_fact:
-    _overrides: >-
-      {{ [(flatpak_overrides_kde | default({})) | combine(cedilla_flatpak_overrides if alpi_cedilla_xwayland else {})
-          if is_kde else {},
-          flatpak_overrides | default({})]
-         | alpi_flatpak_overrides(flatpak_filesystem_overrides | default({}),
-                                  alpi_pkgs.flatpak + alpi_pkgs_extra.flatpak,
-                                  {} if alpi_cedilla_xwayland
-                                  else dict(cedilla_flatpak_overrides | list | product(['/.XCompose'])))
-      }}
-
-- name: Resolve | Check Flatpak override flags
-  ansible.builtin.assert:
-    that: _overrides.invalid | length == 0
-    fail_msg: >-
-      Flatpak override flags must start with '--' (flatpak_overrides in
-      host_vars/127.0.0.1/custom.yml; folders go in flatpak_filesystem_overrides):
-      {{ _overrides.invalid | join(', ') }}.
-    quiet: true
-
-- name: Resolve | Set Flatpak overrides
-  ansible.builtin.set_fact:
-    alpi_flatpak_overrides: "{{ _overrides.apply }}"
+# Again after roles/update, which may upgrade KWin (tasks/cedilla.yml)
+- name: Resolve | Cedilla on XWayland and Flatpak overrides
+  ansible.builtin.import_tasks: cedilla.yml
 
 - name: Resolve | Summary
   ansible.builtin.debug:

@@ -57,3 +57,8 @@
 
     - name: Update | End the play for this host
       ansible.builtin.meta: end_host
+
+# The upgrade may have brought a newer KWin: decide the cedilla workaround again for the roles
+# after this one (a KWin upgrade needs a new login, not a reboot)
+- name: Update | Cedilla decision with the upgraded KWin
+  ansible.builtin.import_tasks: ../../../tasks/cedilla.yml

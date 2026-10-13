@@ -1,0 +1,67 @@
+---
+# The cedilla workaround's decision (cedilla_xwayland in group_vars/all/desktop.yml) and the
+# Flatpak overrides that depend on it. Run by resolve.yml, then again at the end of roles/update:
+# an upgrade can bring a newer KWin, and the roles after it (packages, zsh, desktop, ai_tools) must
+# follow the KWin the next login will run. Sets:
+#   kwin_version:          empty when KWin is not installed (extra vars win: tests pin it)
+#   alpi_cedilla_xwayland: run Chromium/Electron apps on XWayland
+#   alpi_cedilla_flipped:  the decision changed since the previous pass (KWin upgraded)
+#   alpi_flatpak_overrides: [{app, flags, reset_if}] for the selected Flatpak apps
+
+- name: Cedilla | Read the KWin version (KDE)
+  ansible.builtin.command: rpm -q --qf '%{VERSION}' kwin
+  register: _kwin_rpm
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when: is_kde
+
+- name: Cedilla | Set the KWin version fact
+  ansible.builtin.set_fact:
+    kwin_version: "{{ _kwin_rpm.stdout | trim if (_kwin_rpm.rc | default(1)) == 0 else '' }}"
+
+- name: Cedilla | On XWayland when KDE runs an older KWin
+  ansible.builtin.set_fact:
+    _cedilla_before: "{{ alpi_cedilla_xwayland | default('unset') | string }}"
+    alpi_cedilla_xwayland: >-
+      {{ cedilla_xwayland | alpi_cedilla_xwayland(is_kde, kwin_version, cedilla_xwayland_kwin_below) }}
+
+- name: Cedilla | Did the decision change?
+  ansible.builtin.set_fact:
+    alpi_cedilla_flipped: "{{ _cedilla_before != 'unset' and _cedilla_before != alpi_cedilla_xwayland | string }}"
+
+- name: Cedilla | Ask for a new login
+  ansible.builtin.debug:
+    msg: >-
+      KWin is now {{ kwin_version }}: the cedilla workaround
+      ({{ cedilla_ozone_flag }}, Flatpak overrides) is
+      {{ 'applied' if alpi_cedilla_xwayland else 'removed' }}. Log out and back in once the run
+      ends, so the session runs this KWin.
+  when: alpi_cedilla_flipped
+
+# The cedilla layer replaces the KDE layer app by app (Bitwarden: X11 instead of Wayland). When
+# it is off, its apps' files that still grant ~/.XCompose are reset first (reset_if).
+- name: Cedilla | Select Flatpak overrides
+  ansible.builtin.set_fact:
+    _overrides: >-
+      {{ [(flatpak_overrides_kde | default({})) | combine(cedilla_flatpak_overrides if alpi_cedilla_xwayland else {})
+          if is_kde else {},
+          flatpak_overrides | default({})]
+         | alpi_flatpak_overrides(flatpak_filesystem_overrides | default({}),
+                                  alpi_pkgs.flatpak + alpi_pkgs_extra.flatpak,
+                                  {} if alpi_cedilla_xwayland
+                                  else dict(cedilla_flatpak_overrides | list | product(['/.XCompose'])))
+      }}
+
+- name: Cedilla | Check Flatpak override flags
+  ansible.builtin.assert:
+    that: _overrides.invalid | length == 0
+    fail_msg: >-
+      Flatpak override flags must start with '--' (flatpak_overrides in
+      host_vars/127.0.0.1/custom.yml; folders go in flatpak_filesystem_overrides):
+      {{ _overrides.invalid | join(', ') }}.
+    quiet: true
+
+- name: Cedilla | Set Flatpak overrides
+  ansible.builtin.set_fact:
+    alpi_flatpak_overrides: "{{ _overrides.apply }}"

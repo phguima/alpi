@@ -25,6 +25,21 @@
     - name: Desktop | Environment setup
       ansible.builtin.import_tasks: ../../tasks/env_setup.yml
 
+    # Stand-in for roles/update (a full upgrade is too heavy here): KWin 6.7.5 once side_effect.yml
+    # has published it, then the cedilla decision again, as roles/update ends
+    - name: User | Stand-in for the upgrade, KWin 6.7.5 when published (KDE)
+      ansible.builtin.shell:
+        cmd: |
+          [ -e /root/alpi-kwin-published ] || exit 0
+          rpm -q kwin-6.7.5 >/dev/null && exit 0
+          rpm -U /opt/alpi-test/repo/noarch/kwin-6.7.5-1.noarch.rpm && echo upgraded
+      register: _kwin_upgrade
+      changed_when: "'upgraded' in _kwin_upgrade.stdout"
+      when: _desktop == 'KDE'
+
+    - name: User | Cedilla decision with the upgraded KWin
+      ansible.builtin.import_tasks: ../../tasks/cedilla.yml
+
     - name: User | Zsh
       ansible.builtin.import_role:
         name: zsh
@@ -57,6 +72,6 @@
 
     - name: User | Record the cedilla fact
       ansible.builtin.copy:
-        content: "{{ alpi_cedilla_xwayland }} {{ kwin_version }}\n"
+        content: "{{ alpi_cedilla_xwayland }} {{ kwin_version }} {{ alpi_cedilla_flipped }}\n"
         dest: /root/alpi-cedilla-xwayland
         mode: "0644"

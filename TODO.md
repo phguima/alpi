@@ -17,8 +17,8 @@ scenarios / unit tests (see `CLAUDE.md`).
 - [x] Cedilla on KDE with KWin 6.6 (EL10, from AAPI `fix(desktop): …`): Chromium/Electron apps
       ignore `~/.XCompose` on native Wayland, so they run on XWayland. Gated on the KWin version
       (`cedilla_xwayland: auto`, KWin < 6.7; EL10 has 6.6.4, the version Fedora 44 shipped with)
-      and undone when it no longer applies (`feat(desktop): cedilla on XWayland gated on the KWin
-      version`).
+      and undone when it no longer applies (`c254add`); decided again after `roles/update`'s
+      upgrade (`feat(desktop): decide the cedilla workaround again after the upgrade`).
 - [ ] Freeze AAPI and AFPI with a README pointing to ALPI.
 
 ## 5. New distros (after parity, only with a test VM)

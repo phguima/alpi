@@ -61,10 +61,13 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   (`tasks/flatpak_overrides.yml`; changed only when the override file differs). Removing an
   entry does not undo it, except for the cedilla workaround's apps (`reset_if`, below).
 - Cedilla on XWayland (ported from AAPI, 2026-10-13): under KWin 6.6, Chromium/Electron apps on
-  native Wayland ignore `~/.XCompose`. `env_setup` reads `kwin_version` (`rpm -q kwin`, KDE only,
-  before `roles/update`; pinned by extra vars in tests), `resolve.yml` sets
-  `alpi_cedilla_xwayland` (`alpi_cedilla_xwayland` filter: `cedilla_xwayland` auto/true/false in
-  `custom.yml`, auto = KWin older than `cedilla_xwayland_kwin_below`, KDE only). On: the
+  native Wayland ignore `~/.XCompose`. `tasks/cedilla.yml` (from `resolve.yml`, and again at the
+  end of `roles/update`, which may upgrade KWin) reads `kwin_version` (`rpm -q kwin`, KDE only;
+  pinned by extra vars in tests) and sets `alpi_cedilla_xwayland` (`alpi_cedilla_xwayland`
+  filter: `cedilla_xwayland` auto/true/false in `custom.yml`, auto = KWin older than
+  `cedilla_xwayland_kwin_below`, KDE only) and the Flatpak overrides; when the second pass
+  changes the decision it sets `alpi_cedilla_flipped` and asks for a new login (a new KWin needs
+  a login, not a reboot). On: the
   `cedilla_flatpak_overrides` layer replaces `flatpak_overrides_kde` app by app; Brave/VS Code
   menu entries copied with `--ozone-platform=x11` (`roles/desktop/tasks/xwayland.yml`, plan from
   `alpi_xwayland_entries`: ALPI's copies carry a marker and are rebuilt on every run, AAPI's are
@@ -75,7 +78,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - `roles/update` (after `repos`, before anything that builds modules or installs packages):
   `dnf_config` into `/etc/dnf/dnf.conf` (replaced, not appended), full upgrade, then the reboot
   gate: `dnf needs-restarting -r` rc 1, or the newest installed `kernel-core` is not the running
-  kernel (noir's local-time RTC fools needs-restarting), ends the play for the host.
+  kernel (noir's local-time RTC fools needs-restarting), ends the play for the host. Otherwise
+  it ends with `tasks/cedilla.yml` again (the upgrade may bring a newer KWin).
 - `roles/boot` (after `update`): kernel maintenance (refuses to run on a debug kernel; removes
   debug kernels, disables enabled debug repositories (`debug_repos_dnf5.yml` / `_dnf4.yml` by
   `pkg_mgr`: dnf5's `config-manager setopt` writes `/etc/dnf/repos.override.d/`, not the .repo),
@@ -248,8 +252,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     without a desktop. Cedilla on XWayland on KDE: stand-in `kwin` RPMs (rpmbuild) 6.6.4
     installed, stand-in Brave/VS Code system entries (`files/xwayland/`, on every container),
     AAPI's leftovers, and `roles/packages/tasks/flatpak_overrides.yml` run alone (flatpak only
-    there); `side_effect.yml` keeps the on-state in `/root/alpi-xwayland-on/`, upgrades to 6.7.5
-    and runs converge again, verify checks both states. `roles/ai_tools` against stand-ins in `files/ai/` served by
+    there); `side_effect.yml` keeps the on-state in `/root/alpi-xwayland-on/` and publishes 6.7.5,
+    which converge's stand-in for `roles/update` installs before `tasks/cedilla.yml` runs again:
+    the same run must undo everything; verify checks both states. `roles/ai_tools` against stand-ins in `files/ai/` served by
     `python3 -m http.server` on 127.0.0.1:8765 in each container (prepare writes the manifest with
     the stand-in AppImage's real sha512; converge's play vars point the URLs there): every tool on
     GNOME and EL, the Antigravity CLI and IDE on KDE; each stand-in refuses root and logs its runs; `is_nvidia`

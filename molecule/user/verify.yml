@@ -330,7 +330,7 @@
     - name: Verify | Not on GNOME nor EL, nothing on XWayland and the system entries left alone
       ansible.builtin.assert:
         that:
-          - _xw_now_text['alpi-cedilla-xwayland'] == 'False \n'
+          - _xw_now_text['alpi-cedilla-xwayland'] == 'False  False\n'
           - _xw_flag not in _xw_now_text['.zshrc']
           - _xw_entries | map('extract', _xw_now_exists) | select | list == []
         fail_msg: "{{ _xw_now_text | to_json }}"
@@ -351,7 +351,7 @@
         - name: Verify | Workaround on with KWin 6.6.4
           ansible.builtin.assert:
             that:
-              - _on['alpi-cedilla-xwayland'] == 'True 6.6.4\n'
+              - _on['alpi-cedilla-xwayland'] == 'True 6.6.4 False\n'
               # aliases
               - "\"alias antigravity-ide='\\\"/home/alpi/wks/tools/antigravity/antigravity\\\" --ozone-platform=x11'\" in _on['.zshrc']"
               - "\"alias code='code --ozone-platform=x11'\" in _on['.zshrc']"
@@ -388,7 +388,8 @@
         - name: Verify | Undone with KWin 6.7.5
           ansible.builtin.assert:
             that:
-              - _xw_now_text['alpi-cedilla-xwayland'] == 'False 6.7.5\n'
+              # read again after the upgrade, in the same run, which asked for a new login
+              - _xw_now_text['alpi-cedilla-xwayland'] == 'False 6.7.5 True\n'
               - _xw_flag not in _xw_now_text['.zshrc']
               # ALPI's (and AAPI's) copies gone, the user's own entry as it was
               - not _xw_now_exists['brave-browser.desktop']

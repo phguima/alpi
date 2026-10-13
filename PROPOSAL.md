@@ -319,3 +319,10 @@ Each of these becomes a feature or is guarded by the resolved package set.
    flag) and are removed; the flag leaves a user's own copy, the Antigravity entry and the
    aliases; the cedilla apps' Flatpak override files that still grant `~/.XCompose` are reset and
    the remaining layers applied again (an exception to "removing an entry does not undo it").
+3. **Decided again after the upgrade, without a reboot.** KWin is read in `resolve.yml` and
+   again at the end of `roles/update` (`tasks/cedilla.yml`), so a run that upgrades KWin
+   configures for the KWin the next login runs, instead of waiting for the next run. Reading
+   before the upgrade and predicting it (`dnf repoquery --upgrades`) was rejected: a second
+   query that must agree with what the upgrade really does. A new KWin needs a new login, not a
+   reboot, so the reboot gate is unchanged; the run asks for a new login when the decision
+   flips. `--tags resolve` shows the decision before the upgrade.
