@@ -44,3 +44,11 @@ scenarios / unit tests (see `CLAUDE.md`).
       and `packages_base`. Re-check with CRB, EPEL and RPM Fusion enabled:
       `dnf repoquery --qf "%{name}-%{version}" vlc-libs libheif` vs
       `dnf repoquery --requires vlc-plugins-freeworld libheif-freeworld | grep -E "^(vlc-libs|libheif)"`.
+- [ ] VirtualBox vs KVM on kernel 6.12+: `kvm.enable_virt_at_load=Y` (the default) keeps VMX on
+      while `kvm_intel` is loaded, even unused, so VirtualBox VMs fail with `VT-x is being used by
+      another hypervisor (VERR_VMX_IN_VMX_ROOT_MODE)`. Seen on 2026-10-13 on the AlmaLinux 10 work
+      machine (kernel 6.12.0-211.64.1.el10_2, VM `el10-kde-alpi`); worked around by hand with
+      `sudo modprobe -r kvm_intel kvm` (until reboot). noir (kernel 7.2) runs VirtualBox VMs; why
+      it differs is not checked yet. Candidate fix in `roles/virtualbox`:
+      `/etc/modprobe.d/kvm.conf` with `options kvm enable_virt_at_load=0` (KVM still works, VMX is
+      enabled only while a KVM guest runs), with a Molecule check of the file.
