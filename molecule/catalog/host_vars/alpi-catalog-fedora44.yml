@@ -14,7 +14,7 @@ _golden:
     xorg-x11-drv-nvidia-cuda-libs, libva-nvidia-driver]
   swap: [ffmpeg, mesa-va-drivers-freeworld]
   flatpak: [com.bitwarden.desktop, net.displaycal.DisplayCAL, com.dec05eba.gpu_screen_recorder, com.slack.Slack,
-    com.spotify.Client, com.rtosta.zapzap, us.zoom.Zoom, org.zotero.Zotero, com.markopejic.downloader,
+    com.spotify.Client, com.rtosta.zapzap, us.zoom.Zoom, org.zotero.Zotero, org.gtk.Gtk3theme.Breeze, com.markopejic.downloader,
     com.mattjakeman.ExtensionManager, de.haeckerfelix.Fragments, com.github.unrud.VideoDownloader]
   features: {amd: true, antigravity_cli: true, antigravity_ide: true, asus: true, claude_code: true, clamav: true,
     intel: true, nvidia: true, steam: true, virtualbox: true}
