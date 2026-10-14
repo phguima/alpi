@@ -1,0 +1,47 @@
+---
+# zram switched off: zram-generator-defaults stays installed (ALPI uninstalls only what
+# packages_absent lists); an /etc/systemd/zram-generator.conf without devices overrides its file,
+# as that file itself says. ALPI's drop-in and kernel settings go.
+
+- name: Memory | Switch zram-generator off
+  ansible.builtin.copy:
+    dest: /etc/systemd/zram-generator.conf
+    content: |
+      # {{ zram_marker }}
+      # No devices: zram is off (zram: false). Removed when zram is switched back on.
+    mode: "0644"
+  when: alpi_memory.mask
+
+- name: Memory | Remove ALPI's zram size and kernel settings
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/systemd/zram-generator.conf.d/50-alpi.conf
+    - /etc/sysctl.d/99-alpi-zram.conf
+
+# Moves what the device holds back to RAM first; stopping fails when it does not fit
+- name: Memory | Stop the zram devices
+  ansible.builtin.systemd_service:
+    name: "systemd-zram-setup@{{ item.name | basename }}.service"
+    state: stopped
+  loop: "{{ alpi_memory.zram }}"
+  loop_control:
+    label: "{{ item.name }}"
+  tags: [zram_apply]
+
+- name: Memory | Read the running kernel settings
+  ansible.builtin.command: "sysctl -n {{ zram_sysctl.keys() | join(' ') }}"
+  register: _memory_sysctl_off
+  changed_when: false
+  check_mode: false
+  tags: [zram_apply]
+
+# Only the values ALPI set: anything else came from somewhere else
+- name: Memory | Restore the kernel's defaults
+  ansible.builtin.command: "sysctl -q -w {{ item.0.key }}={{ item.0.value.kernel }}"
+  loop: "{{ zram_sysctl | dict2items | zip(_memory_sysctl_off.stdout_lines) | list }}"
+  loop_control:
+    label: "{{ item.0.key }}"
+  when: item.1 == item.0.value.zram | string
+  tags: [zram_apply]

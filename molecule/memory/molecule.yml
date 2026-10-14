@@ -1,0 +1,48 @@
+---
+# env_setup + roles/memory + tasks/reminders.yml. A container sees the host's /proc/swaps and
+# /sys/module/zswap, so prepare.yml scripts both per instance: a swapon wrapper in /usr/local/bin
+# prints _test_swaps, and zram_zswap_param points to a file holding _test_zswap. The steps that
+# change the running kernel (tag zram_apply: sysctl values, starting/stopping zram0) are skipped;
+# everything else runs for real.
+#   alpi-mem-el10-none:      no swap at all (this AlmaLinux work machine): zram-generator-defaults
+#                            installed, kernel settings written; hibernate on, so the reminder
+#   alpi-mem-fedora44-size:  Fedora's own zram0 already active: zram_size as a drop-in, a leftover
+#                            switch-off file of ALPI's removed
+#   alpi-mem-el10-zswap:     zswap on and a 1 TiB swap file: auto leaves zram alone, hibernation
+#                            fits in the disk swap (no reminder)
+#   alpi-mem-el10-off:       zram: false after an earlier run: switch-off file written, ALPI's size
+#                            and kernel settings removed, the package kept
+#   alpi-mem-fedora44-own:   the user's own /etc/systemd/zram-generator.conf: left alone
+platforms:
+  - name: alpi-mem-el10-none
+    image: docker.io/library/almalinux:10
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-mem-el10-none:/var/cache/dnf"]
+  - name: alpi-mem-fedora44-size
+    image: registry.fedoraproject.org/fedora:44
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-mem-fedora44-size:/var/cache/libdnf5"]
+  - name: alpi-mem-el10-zswap
+    image: docker.io/library/almalinux:10
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-mem-el10-zswap:/var/cache/dnf"]
+  - name: alpi-mem-el10-off
+    image: docker.io/library/almalinux:10
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-mem-el10-off:/var/cache/dnf"]
+  - name: alpi-mem-fedora44-own
+    image: registry.fedoraproject.org/fedora:44
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-mem-fedora44-own:/var/cache/libdnf5"]
+provisioner:
+  options:
+    # Setting skip-tags replaces Molecule's default, so its own tags are repeated
+    skip-tags: molecule-notest,notest,zram_apply
+  playbooks:
+    prepare: prepare.yml
+    converge: converge.yml

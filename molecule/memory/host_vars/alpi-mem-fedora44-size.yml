@@ -1,0 +1,19 @@
+---
+_test_swaps: "/dev/zram0 partition 8589934592 100\n"
+_test_zswap: "N"
+_test_preinstall: true
+_test_files:
+  - path: /etc/systemd/zram-generator.conf
+    content: "# Managed by ALPI (roles/memory)\n# No devices: zram is off (zram: false). Removed when zram is switched back on.\n"
+zram_zswap_param: /etc/alpi-test/zswap
+zram_size: "ram / 2"
+
+_expect_state: "on"
+_expect_reminder: false
+_expect_notes: []
+_expect_installed: true
+_expect_files:
+  /etc/systemd/zram-generator.conf.d/50-alpi.conf: ["[zram0]", "zram-size = ram / 2"]
+  /etc/sysctl.d/99-alpi-zram.conf: ["vm.swappiness = 180"]
+_expect_absent:
+  - /etc/systemd/zram-generator.conf

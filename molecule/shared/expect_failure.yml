@@ -18,6 +18,9 @@
     git_user_email: "{{ _case.git_user_email | default('') }}"
     luks_volumes: "{{ _case.luks_volumes | default({}) }}"
     cedilla_xwayland: "{{ _case.cedilla_xwayland | default('auto') }}"
+    zram: "{{ _case.zram | default('auto') }}"
+    zram_size: "{{ _case.zram_size | default('') }}"
+    hibernate: "{{ _case.hibernate | default(false) }}"
   block:
     - name: "Case | {{ _case.name }} | Save upstream_sources"
       ansible.builtin.set_fact:

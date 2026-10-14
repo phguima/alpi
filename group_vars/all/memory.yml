@@ -1,0 +1,29 @@
+---
+# roles/memory: swap on compressed RAM (zram, made by zram-generator at boot). Disk swap is never
+# created or removed. Overridden in host_vars/127.0.0.1/custom.yml.
+
+# auto: zram on, unless the machine already has a zram setup of its own (another tool, or a hand-
+# written /etc/systemd/zram-generator.conf) or zswap is on; true: on, and stop when it cannot be;
+# false: off (an empty /etc/systemd/zram-generator.conf, the documented way to switch it off).
+zram: auto
+
+# zram0's size as a zram-generator expression (MiB, 'ram' = RAM size). Empty: the distro's
+# default from zram-generator-defaults, min(ram, 8192). The size is the uncompressed capacity:
+# RAM is only used as pages are swapped out, about a third of that at zstd's usual ratio.
+zram_size: ""
+
+# The machine hibernates: its disk swap must hold all of RAM (zram cannot keep a hibernation
+# image). When it is smaller, the run ends with a reminder; ALPI does not create swap files.
+hibernate: false
+
+# Kernel settings while zram is on (Fedora's and Pop!_OS's for swap on zram: swapping to RAM is
+# cheap, and reading ahead from it buys nothing); 'kernel' is the value restored when zram goes off.
+zram_sysctl:
+  vm.swappiness: {zram: 180, kernel: 60}
+  vm.page-cluster: {zram: 0, kernel: 3}
+
+# First line of the files ALPI writes, so it knows them from the user's own
+zram_marker: "Managed by ALPI (roles/memory)"
+
+# Read to tell whether zswap is on (a test path in Molecule)
+zram_zswap_param: /sys/module/zswap/parameters/enabled

@@ -1,0 +1,54 @@
+---
+- name: Verify | roles/memory
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Verify | Read the decision
+      ansible.builtin.slurp:
+        src: /root/alpi-memory.json
+      register: _mem_decision
+
+    - name: Verify | Check zram-generator-defaults
+      ansible.builtin.command: rpm -q zram-generator-defaults
+      register: _mem_rpm
+      changed_when: false
+      failed_when: false
+
+    # Fails when a file is missing
+    - name: Verify | Read the files that must exist
+      ansible.builtin.slurp:
+        src: "{{ item.key }}"
+      loop: "{{ _expect_files | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+      register: _mem_files
+
+    - name: Verify | Check the files that must not exist
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop: "{{ _expect_absent }}"
+      register: _mem_absent
+
+    - name: Verify | Decision, package and files
+      ansible.builtin.assert:
+        that:
+          - _plan.state == _expect_state
+          - _plan.hibernate_reminder == _expect_reminder
+          - _expect_notes | reject('in', _plan.notes | join(' ')) | list == []
+          - (_mem_rpm.rc == 0) == _expect_installed
+          - _mem_absent.results | selectattr('stat.exists') | map(attribute='item') | list == []
+        fail_msg: >-
+          plan {{ _plan }}; installed rc {{ _mem_rpm.rc }}; present {{ _mem_absent.results | selectattr('stat.exists') | map(attribute='item') | list }}
+        quiet: true
+      vars:
+        _plan: "{{ _mem_decision.content | b64decode | from_json }}"
+
+    # Each expected text must be in its file
+    - name: Verify | File contents
+      ansible.builtin.assert:
+        that: item.item.value | reject('in', item.content | b64decode) | list == []
+        fail_msg: "{{ item.item.key }}: {{ item.content | b64decode }}"
+        quiet: true
+      loop: "{{ _mem_files.results }}"
+      loop_control:
+        label: "{{ item.item.key }}"

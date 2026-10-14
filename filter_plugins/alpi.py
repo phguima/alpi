@@ -174,6 +174,77 @@ def alpi_cedilla_xwayland(setting, is_kde, kwin_version, below):
     return bool(_version(kwin_version)) and _version(kwin_version) < _version(below)
 
 
+def _gib(size):
+    return f"{size / 2**30:.1f} GiB"
+
+
+def alpi_zram_plan(setting, swaps, zswap, generator, etc_conf, marker, hibernate, mem_mb):
+    """What roles/memory does with zram, from what the machine already has.
+
+    setting:   zram (auto/true/false);
+    swaps:     stdout of 'swapon --show --raw --noheadings --bytes --output NAME,TYPE,SIZE,PRIO';
+    zswap:     /sys/module/zswap/parameters/enabled ("Y"/"N"; "" when there is no zswap);
+    generator: zram-generator is installed;
+    etc_conf:  slurp result of /etc/systemd/zram-generator.conf ('content' when it exists); a
+               file without the marker is the user's own configuration;
+    hibernate: the machine hibernates, so its disk swap must hold all of RAM (zram cannot);
+    mem_mb:    RAM size.
+    A zram device that zram-generator did not make, or the user's own configuration, is left
+    alone; so is zram while zswap is on (it would compress every page twice). auto says why in
+    'notes'; true/false, which ALPI cannot honor there, get an 'error'.
+    Returns {"state": "on"|"off"|"skip", "error", "notes", "summary", "zram", "disk",
+             "own_mask": /etc/systemd/zram-generator.conf is ALPI's switch-off file,
+             "mask": write that file (off, with zram-generator installed),
+             "hibernate_reminder": hibernate is on and disk swap is smaller than RAM}.
+    """
+    zram, disk = [], []
+    for line in str(swaps or "").splitlines():
+        fields = line.split()
+        if len(fields) < 4:
+            continue
+        name = fields[0].replace("\\x20", " ")
+        dev = {"name": name, "type": fields[1], "size": int(fields[2]), "prio": int(fields[3])}
+        (zram if re.fullmatch(r"/dev/zram\d+", name) else disk).append(dev)
+    conf = None
+    if isinstance(etc_conf, dict) and etc_conf.get("content") is not None:
+        conf = base64.b64decode(etc_conf["content"]).decode(errors="replace")
+    own_mask = conf is not None and marker in conf
+    notes, error, state = [], "", "on"
+
+    def leave(why):
+        nonlocal state, error
+        state = "skip"
+        if setting == "auto":
+            notes.append(why + " ALPI leaves it alone.")
+        else:
+            error = f"zram: {str(setting).lower()} cannot be applied: {why}"
+
+    if conf is not None and not own_mask:
+        leave("/etc/systemd/zram-generator.conf is your own zram configuration.")
+    elif zram and not generator:
+        leave(f"{', '.join(d['name'] for d in zram)} was set up by something other than zram-generator.")
+    elif setting is False:
+        state = "off"
+    elif str(zswap).strip() == "Y":
+        leave("zswap is on; with zram too, every swapped page would be compressed twice. To use "
+              "zram, turn zswap off (kernel argument zswap.enabled=0).")
+
+    ram = int(mem_mb) * 2**20
+    disk_total = sum(d["size"] for d in disk)
+    summary = [f"RAM {_gib(ram)}"]
+    summary += [f"zram {d['name']}: {_gib(d['size'])}, priority {d['prio']}" for d in zram]
+    summary += [f"disk swap {d['name']} ({d['type']}): {_gib(d['size'])}, priority {d['prio']}"
+                for d in disk]
+    if not zram and not disk:
+        summary.append("no swap")
+    summary.append(f"zram: {state}")
+    if state == "on" and disk:
+        notes.append("Disk swap stays: zram (priority 100) is used first, the disk when zram is full.")
+    return {"state": state, "error": error, "notes": notes, "summary": summary, "zram": zram,
+            "disk": disk, "own_mask": own_mask, "mask": state == "off" and generator,
+            "hibernate_reminder": bool(hibernate) and disk_total < ram}
+
+
 def _exec_flag(text, flag, add):
     """Add flag after the command of every Exec= line (once), or remove it from them."""
     out = []
@@ -329,6 +400,7 @@ class FilterModule(object):
             "alpi_feature_ids": alpi_feature_ids,
             "alpi_flatpak_overrides": alpi_flatpak_overrides,
             "alpi_cedilla_xwayland": alpi_cedilla_xwayland,
+            "alpi_zram_plan": alpi_zram_plan,
             "alpi_xwayland_entries": alpi_xwayland_entries,
             "alpi_luks_aliases": alpi_luks_aliases,
             "alpi_invalid_luks": alpi_invalid_luks,

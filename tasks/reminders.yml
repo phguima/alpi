@@ -25,3 +25,15 @@
           - "  gh auth login --hostname github.com --git-protocol https --web"
           - "  gh auth setup-git"
       when: alpi_gh_login_needed
+
+# roles/memory reports it (alpi_memory); a skipped role leaves it undefined
+- name: Memory | Remind about disk swap for hibernation
+  ansible.builtin.debug:
+    msg:
+      - "hibernate is on, but the disk swap ({{ (alpi_memory.disk | sum(attribute='size') / 2**30) | round(1) }} GiB) is smaller than RAM ({{ _ram_gib }} GiB); zram cannot hold a hibernation image. A swap file of {{ _ram_gib }} GiB:"
+      - "  btrfs: btrfs subvolume create /swap && btrfs filesystem mkswapfile --size {{ _ram_gib }}g /swap/swapfile"
+      - "  xfs/ext4: fallocate -l {{ _ram_gib }}G /swapfile && chmod 600 /swapfile && mkswap /swapfile"
+      - "then 'swapon /swapfile' (or /swap/swapfile), the same path in /etc/fstab ('<path> none swap defaults,pri=10 0 0', below zram's 100), and resume from it (kernel argument resume=)."
+  vars:
+    _ram_gib: "{{ (ansible_facts['memtotal_mb'] / 1024) | round(0, 'ceil') | int }}"
+  when: alpi_memory is defined and alpi_memory.hibernate_reminder

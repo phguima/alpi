@@ -22,11 +22,12 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 
 - `site.yml`: `tasks/env_setup.yml` (support matrix assert → user/hardware/DE facts, ported from
   AFPI → `group_by` into `os_<distro>`, `os_<distro>_<major>` → machine-settings assert →
-  `tasks/resolve.yml`), then the roles (`repos`, `update`, `boot`, `akmods_mok`, `virtualbox`,
+  `tasks/resolve.yml`), then the roles (`repos`, `update`, `boot`, `memory`, `akmods_mok`, `virtualbox`,
   `packages`, `upstream`, `common`, `zsh`, `desktop`, `pipx`, `ai_tools`, `clamav`, `asus`, `nvidia` so far),
   then `tasks/reminders.yml` in `post_tasks` (tag `reminders`, not `always`, so `--tags resolve`
   stays quiet): the `gh auth login` reminder when `gh` is selected and `~/.config/gh/hosts.yml`
-  has no `github.com:` (sets `alpi_gh_login_needed`).
+  has no `github.com:` (sets `alpi_gh_login_needed`), and the disk swap reminder when
+  `hibernate` is on and disk swap is smaller than RAM (`alpi_memory.hibernate_reminder`).
 - `tasks/resolve.yml` + `filter_plugins/alpi.py`: catalog lookup, merge of the package/feature
   layers, all validation (fails before anything changes). Keep logic in the filter plugin, not in
   long Jinja expressions.
@@ -88,6 +89,18 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   when it does not exist; `grub_settings_absent` removes dead keys, AFPI's `GRUB_GFXPAYLOAD`),
   handler `grub2-mkconfig -o /boot/grub2/grub.cfg`. On BLS (Fedora, EL) `10_linux` only emits
   `blscfg`: settings read by `linux_entry` (`GRUB_GFXPAYLOAD_LINUX`) do nothing there.
+- `roles/memory` (after `boot`; installs its own package): swap on zram through zram-generator
+  (`group_vars/all/memory.yml`, PROPOSAL "Decisions (2026-10-14)"). Reads `swapon --show --raw
+  --bytes`, zswap (`zram_zswap_param`), `rpm -q zram-generator` and
+  `/etc/systemd/zram-generator.conf`; `alpi_zram_plan` decides on/off/skip and prints the swap
+  summary. `zram: auto` skips (with a note) a zram device zram-generator did not make, the user's
+  own `/etc` config (no `zram_marker`) and zswap on; `true`/`false` fail there instead. On:
+  `zram-generator-defaults` (Fedora's default, EL lacks it), `zram_size` as the drop-in
+  `zram-generator.conf.d/50-alpi.conf` (not `/etc/systemd/zram-generator.conf`, which replaces
+  the vendor file), `/etc/sysctl.d/99-alpi-zram.conf` from `zram_sysctl`. Off: the package
+  stays, a marker-only `/etc/systemd/zram-generator.conf` switches it off. Disk swap is never
+  created or removed. Runtime steps (sysctl values, starting/stopping zram0) are tagged
+  `zram_apply`.
 - `roles/akmods_mok` (before `packages`): Secure Boot signing key + MOK enrollment request, only
   when Secure Boot is on and an `akmod-*` package was resolved (akmods signs at build time, so the
   key must exist first). `mok_password` in `group_vars/all/secureboot.yml`. `tasks/enroll.yml`
@@ -241,7 +254,10 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `prepare.yml`: everything selected, and supergfxctl + GUI skipped), `update` (repos +
     `roles/update`; wrappers in `/usr/local/bin` script needs-restarting's answer and the newest
     kernel per instance, the dnf one still running the real needs-restarting: no reboot, reboot
-    by needs-restarting (EL), reboot by a newer kernel), `boot` (`roles/boot` on Fedora + Alma;
+    by needs-restarting (EL), reboot by a newer kernel), `memory` (env_setup + `roles/memory` +
+    `tasks/reminders.yml`, `zram_apply` skipped; a `swapon` wrapper and a zswap file script the
+    swap state per instance: no swap, Fedora's zram0 with `zram_size`, zswap on, `zram: false`
+    after a run, the user's own config), `boot` (`roles/boot` on Fedora + Alma;
     stand-in installonly packages and a debug kernel built with rpmbuild into a local repository
     whose id has 'debug', `/etc/default/grub` and a logging `grub2-mkconfig`), `user`
     (`roles/zsh` + `roles/desktop` + `roles/ai_tools` for a regular user `alpi`, so root and the user differ: aliases
@@ -263,7 +279,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     skipped on EL, the fact recorded in `/root/alpi-gh-login-needed` for verify). That recipe
     is the way to test any user-specific step (root and the user differ there).
   - `fedora44-personal` and `el10-work` have no systemd: they skip service roles by tag
-    (`skip-tags: molecule-notest,notest,clamav,supergfxd,update`; setting skip-tags replaces
+    (`skip-tags: molecule-notest,notest,clamav,supergfxd,update,memory`; `memory` because a
+    container sees the host's swap; setting skip-tags replaces
     Molecule's default, so its own tags are repeated). Add each new service task's tag there;
     tag the service step alone when the rest of the role can run without systemd (as in
     `roles/asus`), so the real packages still get checked there.

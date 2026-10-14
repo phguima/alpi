@@ -26,6 +26,16 @@
       - name: invalid cedilla setting
         cedilla_xwayland: "yes"
         expect: ["cedilla_xwayland must be auto, true or false", "not 'yes'"]
+      - name: invalid zram setting
+        zram: "yes"
+        expect: ["Invalid memory settings", "not 'yes'"]
+      # A newline would start a new section in zram-generator's ini file
+      - name: zram size that is not an expression
+        zram_size: "ram\n[zram1]"
+        expect: ["Invalid memory settings", "zram_size a zram-generator expression"]
+      - name: invalid hibernate setting
+        hibernate: "sometimes"
+        expect: ["Invalid memory settings", "hibernate true or false (not 'sometimes')"]
       - name: unknown feature
         features: {steamm: true}
         expect: ["Unknown features: steamm"]

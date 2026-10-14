@@ -120,6 +120,19 @@
       '{{ cedilla_xwayland }}'.
     quiet: true
 
+# zram_size goes into an ini file: one expression, no line breaks or sections
+- name: Resolve | Check the memory settings
+  ansible.builtin.assert:
+    that:
+      - zram in ['auto', true, false]
+      - zram_size | string | length == 0 or zram_size | string is regex('^[A-Za-z0-9_ ().,+*/-]+$')
+      - hibernate in [true, false]
+    fail_msg: >-
+      Invalid memory settings (host_vars/127.0.0.1/custom.yml): zram must be auto, true or false
+      (not '{{ zram }}'), zram_size a zram-generator expression such as 'ram / 2' or empty (not
+      '{{ zram_size }}'), hibernate true or false (not '{{ hibernate }}').
+    quiet: true
+
 # Again after roles/update, which may upgrade KWin (tasks/cedilla.yml)
 - name: Resolve | Cedilla on XWayland and Flatpak overrides
   ansible.builtin.import_tasks: cedilla.yml

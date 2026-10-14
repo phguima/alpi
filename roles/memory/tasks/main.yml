@@ -1,0 +1,55 @@
+---
+# Swap on compressed RAM (zram, through zram-generator). Reads what the machine already has (active
+# swap devices, zswap, zram-generator, /etc/systemd/zram-generator.conf), decides with
+# alpi_zram_plan and prints the swap summary. Disk swap is only reported, never changed. Steps
+# that change the running system (sysctl values, the zram device) are tagged zram_apply: they
+# need a real kernel, so the test scenarios skip them.
+
+- name: Memory | Read the active swap devices
+  ansible.builtin.command: swapon --show --raw --noheadings --bytes --output NAME,TYPE,SIZE,PRIO
+  register: _memory_swaps
+  changed_when: false
+  check_mode: false
+
+- name: Memory | Read the zswap setting
+  ansible.builtin.slurp:
+    src: "{{ zram_zswap_param }}"
+  register: _memory_zswap
+  failed_when: false
+
+- name: Memory | Check for zram-generator
+  ansible.builtin.command: rpm -q zram-generator
+  register: _memory_generator
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Memory | Read zram-generator's configuration in /etc
+  ansible.builtin.slurp:
+    src: /etc/systemd/zram-generator.conf
+  register: _memory_etc_conf
+  failed_when: false
+
+- name: Memory | Decide
+  ansible.builtin.set_fact:
+    alpi_memory: >-
+      {{ zram | alpi_zram_plan(_memory_swaps.stdout, _memory_zswap.content | default('') | b64decode,
+                               _memory_generator.rc == 0, _memory_etc_conf, zram_marker, hibernate,
+                               ansible_facts['memtotal_mb']) }}
+
+- name: Memory | Stop when the zram setting cannot be applied
+  ansible.builtin.fail:
+    msg: "{{ alpi_memory.error }} (host_vars/127.0.0.1/custom.yml)"
+  when: alpi_memory.error | length > 0
+
+- name: Memory | Swap summary
+  ansible.builtin.debug:
+    msg: "{{ alpi_memory.summary + alpi_memory.notes }}"
+
+- name: Memory | zram on
+  ansible.builtin.import_tasks: "on.yml"
+  when: alpi_memory.state == 'on'
+
+- name: Memory | zram off
+  ansible.builtin.import_tasks: "off.yml"
+  when: alpi_memory.state == 'off'

@@ -18,6 +18,8 @@
     - { role: update, tags: [update] }
     # After the reboot gate: the running kernel is the newest, older ones can go
     - { role: boot, tags: [boot] }
+    # Swap on zram; installs its own package, so it does not wait for 'packages'
+    - { role: memory, tags: [memory] }
     # Before packages: module signing keys must exist before akmods/vboxdrv build anything
     - { role: akmods_mok, tags: [akmods_mok, secureboot] }
     - { role: virtualbox, tags: [virtualbox] }

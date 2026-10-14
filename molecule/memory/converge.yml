@@ -1,0 +1,31 @@
+---
+- name: Memory | Guard against running on the host
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Memory | Require ALPI_TARGET
+      ansible.builtin.assert:
+        that: lookup('env', 'ALPI_TARGET') | length > 0
+        fail_msg: ALPI_TARGET is not set; this scenario must target its containers. Set it in molecule.yml.
+        quiet: true
+
+- name: Memory | env_setup + roles/memory + reminders
+  hosts: all
+  tasks:
+    - name: Memory | Environment setup
+      ansible.builtin.import_tasks: ../../tasks/env_setup.yml
+
+    - name: Memory | Role
+      ansible.builtin.import_role:
+        name: memory
+
+    - name: Memory | Reminders
+      ansible.builtin.import_tasks: ../../tasks/reminders.yml
+
+    # Test scaffolding for verify.yml, not a change under test (idempotence)
+    - name: Memory | Record the decision
+      ansible.builtin.copy:
+        dest: /root/alpi-memory.json
+        content: "{{ alpi_memory | to_nice_json }}\n"
+        mode: "0644"
+      changed_when: false

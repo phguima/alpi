@@ -184,7 +184,7 @@ class TestFeatures:
     def test_filters_are_registered(self):
         assert set(alpi.FilterModule().filters()) == {
             "alpi_resolve", "alpi_canonical", "alpi_features", "alpi_repos", "alpi_feature_ids",
-            "alpi_flatpak_overrides", "alpi_cedilla_xwayland", "alpi_xwayland_entries", "alpi_luks_aliases", "alpi_invalid_luks", "alpi_pipx_name",
+            "alpi_flatpak_overrides", "alpi_cedilla_xwayland", "alpi_zram_plan", "alpi_xwayland_entries", "alpi_luks_aliases", "alpi_invalid_luks", "alpi_pipx_name",
             "alpi_appimage_release", "alpi_github_release", "alpi_upstream_missing",
         }
 
@@ -444,3 +444,84 @@ def test_upstream_missing_decides_only_on_answers():
     ]
     assert alpi.alpi_upstream_missing(results, sources) == ["moved", "noasset", "garbled"]
     assert alpi.alpi_upstream_missing(None, {}) == []
+
+
+# alpi_zram_plan: swapon --raw --bytes lines (NAME TYPE SIZE PRIO)
+GIB = 2**30
+ZRAM0 = f"/dev/zram0 partition {8 * GIB} 100"
+SWAPFILE = f"/swap/swapfile file {4 * GIB} -2"
+MARKER = "Managed by ALPI"
+
+
+def _conf(text):
+    return {"content": base64.b64encode(text.encode()).decode()}
+
+
+def zram_plan(setting="auto", swaps="", zswap="N", generator=True, etc_conf=None,
+              hibernate=False, mem_mb=32768):
+    return alpi.alpi_zram_plan(setting, swaps, zswap, generator, etc_conf or {"failed": True},
+                               MARKER, hibernate, mem_mb)
+
+
+@pytest.mark.parametrize("swaps,generator", [("", False), (ZRAM0, True), (SWAPFILE, False)])
+def test_zram_auto_is_on_without_conflicts(swaps, generator):
+    plan = zram_plan(swaps=swaps, generator=generator)
+    assert plan["state"] == "on" and plan["error"] == "" and not plan["mask"]
+
+
+def test_zram_swaps_are_split_into_zram_and_disk():
+    plan = zram_plan(swaps=ZRAM0 + "\n" + SWAPFILE + "\n/dev/my\\x20disk partition 1024 -3")
+    assert [d["name"] for d in plan["zram"]] == ["/dev/zram0"]
+    assert plan["disk"] == [{"name": "/swap/swapfile", "type": "file", "size": 4 * GIB, "prio": -2},
+                            {"name": "/dev/my disk", "type": "partition", "size": 1024, "prio": -3}]
+    assert any("zram (priority 100) is used first" in n for n in plan["notes"])
+
+
+def test_zram_summary():
+    assert zram_plan(mem_mb=16384)["summary"] == ["RAM 16.0 GiB", "no swap", "zram: on"]
+    assert zram_plan(swaps=ZRAM0)["summary"][1] == "zram /dev/zram0: 8.0 GiB, priority 100"
+
+
+def test_zram_off_masks_only_with_the_generator():
+    assert zram_plan(False, swaps=ZRAM0)["mask"] is True
+    off = zram_plan(False, generator=False)
+    assert off["state"] == "off" and off["mask"] is False
+
+
+def test_zram_own_mask_is_recognized():
+    plan = zram_plan(etc_conf=_conf(f"# {MARKER}\n"))
+    assert plan["state"] == "on" and plan["own_mask"]
+
+
+@pytest.mark.parametrize("kwargs,why", [
+    ({"etc_conf": _conf("[zram0]\nzram-size = ram\n")}, "your own zram configuration"),
+    ({"swaps": ZRAM0, "generator": False}, "set up by something other than zram-generator"),
+    ({"zswap": "Y\n"}, "zswap is on"),
+])
+def test_zram_conflicts_skip_on_auto_and_fail_when_forced(kwargs, why):
+    auto = zram_plan(**kwargs)
+    assert auto["state"] == "skip" and auto["error"] == ""
+    assert any(why in n and "leaves it alone" in n for n in auto["notes"])
+    forced = zram_plan(True, **kwargs)
+    assert forced["state"] == "skip" and why in forced["error"]
+    assert forced["error"].startswith("zram: true cannot be applied")
+
+
+def test_zram_false_with_zswap_is_just_off():
+    assert zram_plan(False, zswap="Y")["state"] == "off"
+
+
+def test_zram_own_config_beats_false():
+    plan = zram_plan(False, etc_conf=_conf("[zram0]\n"))
+    assert plan["state"] == "skip" and plan["error"].startswith("zram: false cannot be applied")
+
+
+@pytest.mark.parametrize("swaps,hibernate,expected", [
+    ("", True, True),
+    (SWAPFILE, True, True),                       # 4 GiB < 32 GiB of RAM
+    (f"/swap/swapfile file {40 * GIB} -2", True, False),
+    (ZRAM0, True, True),                          # zram does not count
+    ("", False, False),
+])
+def test_zram_hibernate_reminder(swaps, hibernate, expected):
+    assert zram_plan(swaps=swaps, hibernate=hibernate)["hibernate_reminder"] is expected

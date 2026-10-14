@@ -305,6 +305,27 @@ Each of these becomes a feature or is guarded by the resolved package set.
 3. A `bootstrap.yml` written before this keeps working: `alpi_profile` is ignored by the playbook
    and dropped by the next `bootstrap.sh`.
 
+## Decisions (2026-10-14)
+
+1. **Swap on zram in its own role, `roles/memory`.** Neither AFPI nor AAPI handled it: Fedora
+   gets zram0 from `zram-generator-defaults` (min(RAM, 8 GiB)), AlmaLinux 10 does not install
+   it, and the work machine ran with no swap at all. zram is a block device in RAM, independent
+   of the filesystem (btrfs only matters for a disk swap file). The role installs
+   `zram-generator-defaults` on both, so both behave like Fedora; `zram_size` (a zram-generator
+   expression) goes into a drop-in only when set.
+2. **Read the machine first, and leave other setups alone.** `zram: auto` does nothing when zram
+   comes from another tool, when `/etc/systemd/zram-generator.conf` is the user's own, or when
+   zswap is on (zram plus zswap compresses every page twice); it says why. `true`/`false` stop
+   the run there instead of silently not doing what they say.
+3. **Disk swap is reported, never created or removed.** With disk swap present, zram (priority
+   100) is used first. A swap file is only needed to hibernate, and on btrfs it needs its own
+   subvolume; so `hibernate: true` gives a reminder when disk swap is smaller than RAM.
+4. **Off without uninstalling** (uninstalls stay explicit, `packages_absent`): an empty
+   `/etc/systemd/zram-generator.conf`, zram-generator's own documented switch, with ALPI's marker
+   so switching back on removes it.
+5. `vm.swappiness=180` and `vm.page-cluster=0` while zram is on (Fedora's and Pop!_OS's values for
+   swap on zram); the kernel defaults come back when it goes off.
+
 ## Decisions (2026-10-13)
 
 1. **Cedilla on XWayland, gated on the KWin version, not the distro** (ported from AAPI's

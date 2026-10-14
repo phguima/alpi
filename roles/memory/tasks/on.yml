@@ -1,0 +1,86 @@
+---
+# zram0 from zram-generator-defaults (the same file Fedora installs by default, which EL lacks),
+# its size from a drop-in when zram_size is set, and the sysctl values for swap on zram.
+
+- name: Memory | Install zram-generator and its default device
+  ansible.builtin.package:
+    name: zram-generator-defaults
+    state: present
+
+- name: Memory | Remove ALPI's switch-off file
+  ansible.builtin.file:
+    path: /etc/systemd/zram-generator.conf
+    state: absent
+  when: alpi_memory.own_mask
+
+# A drop-in, not /etc/systemd/zram-generator.conf: that one would replace the vendor file
+# instead of adding to it, and an empty one is the switch-off.
+- name: Memory | Drop-in directory for the size
+  ansible.builtin.file:
+    path: /etc/systemd/zram-generator.conf.d
+    state: directory
+    mode: "0755"
+  when: zram_size | length > 0
+
+- name: Memory | zram size
+  ansible.builtin.copy:
+    dest: /etc/systemd/zram-generator.conf.d/50-alpi.conf
+    content: |
+      # {{ zram_marker }}
+      [zram0]
+      zram-size = {{ zram_size }}
+    mode: "0644"
+  register: _memory_size
+  when: zram_size | length > 0
+
+- name: Memory | Default zram size
+  ansible.builtin.file:
+    path: /etc/systemd/zram-generator.conf.d/50-alpi.conf
+    state: absent
+  register: _memory_size_default
+  when: zram_size | length == 0
+
+# Missing only on a minimal system without procps-ng (a bare container)
+- name: Memory | sysctl.d directory
+  ansible.builtin.file:
+    path: /etc/sysctl.d
+    state: directory
+    mode: "0755"
+
+- name: Memory | Kernel settings for swap on zram
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/99-alpi-zram.conf
+    content: |
+      # {{ zram_marker }}
+      {% for key, value in zram_sysctl.items() %}
+      {{ key }} = {{ value.zram }}
+      {% endfor %}
+    mode: "0644"
+
+- name: Memory | Read the running kernel settings
+  ansible.builtin.command: "sysctl -n {{ zram_sysctl.keys() | join(' ') }}"
+  register: _memory_sysctl
+  changed_when: false
+  check_mode: false
+  tags: [zram_apply]
+
+- name: Memory | Apply the kernel settings
+  ansible.builtin.command: sysctl -q -p /etc/sysctl.d/99-alpi-zram.conf
+  when: _memory_sysctl.stdout_lines != zram_sysctl.values() | map(attribute='zram') | map('string') | list
+  tags: [zram_apply]
+
+# The generator runs at boot and on daemon-reload; the reload is only needed when the device is
+# not there yet (zram-generator just installed, or switched back on).
+- name: Memory | Start zram0
+  ansible.builtin.systemd_service:
+    name: systemd-zram-setup@zram0.service
+    state: started
+    daemon_reload: true
+  when: alpi_memory.zram | length == 0
+  tags: [zram_apply]
+
+# Restarting the device would first move everything in it back to RAM
+- name: Memory | A new size applies at the next boot
+  ansible.builtin.debug:
+    msg: "zram0 is in use; its new size ({{ zram_size or 'the default' }}) applies at the next boot."
+  when: alpi_memory.zram | length > 0 and (_memory_size is changed or _memory_size_default is changed)

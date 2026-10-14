@@ -1,0 +1,56 @@
+---
+- name: Prepare | Shared
+  ansible.builtin.import_playbook: ../shared/prepare.yml
+
+- name: Prepare | Scripted swap state and earlier configuration
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Prepare | Test settings directory
+      ansible.builtin.file:
+        path: /etc/alpi-test
+        state: directory
+        mode: "0755"
+
+    - name: Prepare | Swap devices and zswap
+      ansible.builtin.copy:
+        dest: "/etc/alpi-test/{{ item.name }}"
+        content: "{{ item.value }}"
+        mode: "0644"
+      loop:
+        - { name: swaps, value: "{{ _test_swaps }}" }
+        - { name: zswap, value: "{{ _test_zswap }}\n" }
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Prepare | swapon wrapper
+      ansible.builtin.copy:
+        dest: /usr/local/bin/swapon
+        content: |
+          #!/bin/sh
+          cat /etc/alpi-test/swaps
+        mode: "0755"
+
+    - name: Prepare | zram-generator already installed
+      ansible.builtin.package:
+        name: zram-generator-defaults
+        state: present
+      when: _test_preinstall | default(false)
+
+    - name: Prepare | Directories for earlier files
+      ansible.builtin.file:
+        path: "{{ item.path | dirname }}"
+        state: directory
+        mode: "0755"
+      loop: "{{ _test_files | default([]) }}"
+      loop_control:
+        label: "{{ item.path }}"
+
+    - name: Prepare | Files from an earlier run, or the user's own
+      ansible.builtin.copy:
+        dest: "{{ item.path }}"
+        content: "{{ item.content }}"
+        mode: "0644"
+      loop: "{{ _test_files | default([]) }}"
+      loop_control:
+        label: "{{ item.path }}"

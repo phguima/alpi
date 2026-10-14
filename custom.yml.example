@@ -50,3 +50,12 @@ flatpak_overrides: {}
 # Code, Antigravity, Slack, Spotify, Bitwarden) type "ć" on native Wayland, so ALPI runs them on
 # XWayland. auto follows the KWin version; true/false force it (KDE only). Undone when off.
 cedilla_xwayland: auto
+
+# Swap on compressed RAM (group_vars/all/memory.yml). zram: auto turns it on unless the machine
+# has its own zram setup or zswap is on; false switches it off. zram_size: a zram-generator
+# expression (MiB, 'ram' = RAM), empty = min(ram, 8192). hibernate: true reminds you when the
+# disk swap is smaller than RAM (ALPI never creates swap files).
+zram: auto
+zram_size: ""
+#zram_size: "ram / 2"
+hibernate: false

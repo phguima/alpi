@@ -1,0 +1,15 @@
+---
+_test_swaps: ""
+_test_zswap: "N"
+zram_zswap_param: /etc/alpi-test/zswap
+hibernate: true
+
+_expect_state: "on"
+_expect_reminder: true
+_expect_notes: []
+_expect_installed: true
+_expect_files:
+  /etc/sysctl.d/99-alpi-zram.conf: ["vm.swappiness = 180", "vm.page-cluster = 0"]
+_expect_absent:
+  - /etc/systemd/zram-generator.conf
+  - /etc/systemd/zram-generator.conf.d/50-alpi.conf

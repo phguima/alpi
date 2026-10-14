@@ -1,0 +1,18 @@
+---
+_test_swaps: "/dev/zram0 partition 4294967296 100\n"
+_test_zswap: "N"
+_test_preinstall: true
+_test_files:
+  - path: /etc/systemd/zram-generator.conf
+    content: "# mine\n[zram0]\nzram-size = 4096\ncompression-algorithm = lz4\n"
+zram_zswap_param: /etc/alpi-test/zswap
+
+_expect_state: skip
+_expect_reminder: false
+_expect_notes: ["your own zram configuration", "ALPI leaves it alone"]
+_expect_installed: true
+_expect_files:
+  /etc/systemd/zram-generator.conf: ["# mine\n[zram0]\nzram-size = 4096\ncompression-algorithm = lz4\n"]
+_expect_absent:
+  - /etc/sysctl.d/99-alpi-zram.conf
+  - /etc/systemd/zram-generator.conf.d/50-alpi.conf
