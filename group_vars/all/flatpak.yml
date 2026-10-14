@@ -33,7 +33,9 @@ flatpak_overrides_kde:
 # from AAPI). Flatpaks only see ~/.XCompose when it is granted. The Electron ones also lose the
 # Wayland socket; XDG_SESSION_TYPE=x11, or Slack still insists on Wayland and crashes. On X11, GTK
 # takes its theme from XSETTINGS (Breeze-Dark), which Flathub does not ship (only Breeze, dark
-# variant included), so the apps would turn light without GTK_THEME.
+# variant included), so the apps would turn light without GTK_THEME. Breeze itself comes from the
+# org.gtk.Gtk3theme.Breeze runtime (gtk3-theme-breeze in packages_kde); without it GTK drops the
+# variant and falls back to light Adwaita.
 cedilla_flatpak_gtk_theme: "Breeze:dark"
 cedilla_flatpak_x11_args:
   - --socket=x11

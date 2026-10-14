@@ -88,6 +88,9 @@ alpi_catalog:
   video-downloader:    {all: {flatpak: com.github.unrud.VideoDownloader}}
 
   # --- KDE ---
+  # Flatpaks only see the GTK themes Flathub ships as runtimes; the Breeze one (dark variant
+  # included) is what GTK_THEME=Breeze:dark in group_vars/all/flatpak.yml needs
+  gtk3-theme-breeze:   {all: {flatpak: org.gtk.Gtk3theme.Breeze}}
   kde-gtk-config:      {all: kde-gtk-config}
   kpat:                {fedora: kpat, el: {flatpak: org.kde.kpat}}   # Fedora KDE ships it already
   ktorrent:            {all: ktorrent}

@@ -69,6 +69,7 @@ packages_base:
   - zotero
 
 packages_kde:
+  - gtk3-theme-breeze
   - kde-gtk-config
   - kpat
   - ktorrent
