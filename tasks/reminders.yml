@@ -37,3 +37,13 @@
   vars:
     _ram_gib: "{{ (ansible_facts['memtotal_mb'] / 1024) | round(0, 'ceil') | int }}"
   when: alpi_memory is defined and alpi_memory.hibernate_reminder
+
+# Last task of the run (from AAPI). A run stopped by the reboot gate (end_host) never gets here.
+- name: ALPI | Final status
+  ansible.builtin.debug:
+    msg:
+      - "==========================================================="
+      - "  ALPI DEPLOYMENT COMPLETED SUCCESSFULLY!"
+      - "  Your {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }} workstation is now optimized and ready."
+      - "==========================================================="
+  register: alpi_final_status

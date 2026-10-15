@@ -232,6 +232,10 @@ goes through the portal and needs no grant.
 In ALPI:
 - The folders are the user's (`~/wks` is personal), so the map goes into `custom.yml`. The
   repository ships the map empty, with ZapZap in `custom.yml.example`.
+  (2026-10-15, changed) ALPI creates `~/wks` itself (`workspace_dir`), so ZapZap's read-only grant
+  to it is the repository's again, as in AAPI: `flatpak_overrides_common` in
+  `group_vars/all/flatpak.yml`, the first layer, for every desktop. `custom.yml`'s
+  `flatpak_filesystem_overrides` stays empty for the user's own folders.
 - The fixed Bitwarden and Zoom overrides (Wayland, cedilla) can become the same mechanism,
   generalized to `flatpak_overrides: {app: [flags]}` and applied only when the app is in the
   resolved set.

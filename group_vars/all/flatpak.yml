@@ -1,13 +1,21 @@
 ---
 # Flatpak overrides (flatpak override --user <flags> <app>), applied by roles/packages only to apps
 # in the resolved Flatpak sets: skipping an app (picker, packages_skip) skips its overrides too.
-# Layers, each with its own key: flatpak_overrides_kde here (KDE sessions only), replaced app by
-# app by cedilla_flatpak_overrides when the cedilla workaround is on (alpi_cedilla_xwayland), then
-# the user's flatpak_overrides and flatpak_filesystem_overrides (host_vars/127.0.0.1/custom.yml).
+# Layers, each with its own key: flatpak_overrides_common here (every desktop), then
+# flatpak_overrides_kde (KDE sessions only), replaced app by app by cedilla_flatpak_overrides when
+# the cedilla workaround is on (alpi_cedilla_xwayland), then the user's flatpak_overrides and
+# flatpak_filesystem_overrides (host_vars/127.0.0.1/custom.yml).
 # Flags of the same app add up across layers. Removing an entry does not undo it on the machine:
 # 'flatpak override --user --reset <app>' does. The exception is the cedilla workaround: when it
 # is off, the override file of each of its apps that still grants ~/.XCompose is reset, then
 # the remaining layers are applied again (anything else set by hand for that app goes too).
+
+flatpak_overrides_common:
+  # The sandbox only sees granted folders: a file dragged from anywhere else reaches the app as a
+  # path it cannot open (ZapZap says it "has no content"). ~/wks and everything under it,
+  # read-only (from AAPI; the file picker goes through the portal and needs no grant).
+  com.rtosta.zapzap:
+    - "--filesystem={{ workspace_dir }}:ro"
 
 flatpak_overrides_kde:
   # Bitwarden runs on native Wayland (the Flatpak wrapper picks the display mode from the granted

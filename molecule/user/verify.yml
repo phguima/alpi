@@ -298,6 +298,19 @@
       vars:
         _gh_expected: {GNOME: "False", KDE: "True", "": unset}
 
+    - name: Verify | Read the final status banner
+      ansible.builtin.command: cat /root/alpi-final-status
+      register: _final_status
+      changed_when: false
+
+    - name: Verify | Final status banner printed, naming the distro
+      ansible.builtin.assert:
+        that:
+          - "'ALPI DEPLOYMENT COMPLETED SUCCESSFULLY!' in _final_status.stdout"
+          - _final_status.stdout is search('Your (Fedora|AlmaLinux) [0-9.]+ workstation is now optimized and ready')
+        fail_msg: "{{ _final_status.stdout }}"
+        quiet: true
+
 - name: Verify | Cedilla on XWayland (KWin 6.6.4 on KDE, then 6.7.5 after side_effect.yml)
   hosts: all
   gather_facts: false
@@ -378,6 +391,7 @@
               - "'/home/alpi/.XCompose:ro' in _on['com.bitwarden.desktop']"
               - "_on['com.bitwarden.desktop'] is search('(?m)^sockets=(.*;)?x11;') and '!wayland;' in _on['com.bitwarden.desktop']"
               - "'QT_IM_MODULE=compose' in _on['com.rtosta.zapzap'] and '/home/alpi/.XCompose:ro' in _on['com.rtosta.zapzap']"
+              - "'/home/alpi/wks:ro' in _on['com.rtosta.zapzap']"
               - "'XCompose' not in _on['us.zoom.Zoom']"
             fail_msg: "{{ _on | to_json }}"
             quiet: true
@@ -404,6 +418,8 @@
               - _xw_now_text['com.bitwarden.desktop'] | regex_search('(?m)^sockets=(.*)$', '\\1') | first
                 | split(';') | select | sort == ['!x11', 'fallback-x11', 'wayland']
               - "'QT_IM_MODULE=compose' not in _xw_now_text['com.rtosta.zapzap']"
+              # the reset keeps the repository's ~/wks grant (applied again with the other layers)
+              - "'/home/alpi/wks:ro' in _xw_now_text['com.rtosta.zapzap']"
               - _xw_now_text['us.zoom.Zoom'] == _xw_on_zoom
             fail_msg: "{{ _xw_now_text | to_json }}"
             quiet: true

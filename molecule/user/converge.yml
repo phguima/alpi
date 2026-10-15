@@ -70,6 +70,12 @@
         dest: /root/alpi-gh-login-needed
         mode: "0644"
 
+    - name: User | Record the final status banner
+      ansible.builtin.copy:
+        content: "{{ alpi_final_status.msg | join('\n') }}\n"
+        dest: /root/alpi-final-status
+        mode: "0644"
+
     - name: User | Record the cedilla fact
       ansible.builtin.copy:
         content: "{{ alpi_cedilla_xwayland }} {{ kwin_version }} {{ alpi_cedilla_flipped }}\n"

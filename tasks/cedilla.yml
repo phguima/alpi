@@ -44,7 +44,8 @@
 - name: Cedilla | Select Flatpak overrides
   ansible.builtin.set_fact:
     _overrides: >-
-      {{ [(flatpak_overrides_kde | default({})) | combine(cedilla_flatpak_overrides if alpi_cedilla_xwayland else {})
+      {{ [flatpak_overrides_common | default({}),
+          (flatpak_overrides_kde | default({})) | combine(cedilla_flatpak_overrides if alpi_cedilla_xwayland else {})
           if is_kde else {},
           flatpak_overrides | default({})]
          | alpi_flatpak_overrides(flatpak_filesystem_overrides | default({}),

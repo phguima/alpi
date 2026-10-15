@@ -27,7 +27,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   then `tasks/reminders.yml` in `post_tasks` (tag `reminders`, not `always`, so `--tags resolve`
   stays quiet): the `gh auth login` reminder when `gh` is selected and `~/.config/gh/hosts.yml`
   has no `github.com:` (sets `alpi_gh_login_needed`), and the disk swap reminder when
-  `hibernate` is on and disk swap is smaller than RAM (`alpi_memory.hibernate_reminder`).
+  `hibernate` is on and disk swap is smaller than RAM (`alpi_memory.hibernate_reminder`), then
+  AAPI's final status banner (`alpi_final_status`; a run stopped by the reboot gate never gets
+  there).
 - `tasks/resolve.yml` + `filter_plugins/alpi.py`: catalog lookup, merge of the package/feature
   layers, all validation (fails before anything changes). Keep logic in the filter plugin, not in
   long Jinja expressions.
@@ -55,7 +57,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   then replacements (catalog `swap: true`, installed with `allowerasing`: `ffmpeg`,
   `mesa-va-drivers-freeworld`), base, user extras, explicit uninstalls. Needs the `repos` role
   before it (section 2). Native names may be dnf groups (`@multimedia`).
-- Flatpak overrides: `group_vars/all/flatpak.yml` (`flatpak_overrides_kde`: Bitwarden, Zoom) plus
+- Flatpak overrides: `group_vars/all/flatpak.yml` (`flatpak_overrides_common`: ZapZap reads
+  `~/wks`, every desktop; `flatpak_overrides_kde`: Bitwarden, Zoom) plus
   the user's `flatpak_overrides` and `flatpak_filesystem_overrides` (`custom.yml`), merged by
   `alpi_flatpak_overrides` in `resolve.yml` into `alpi_flatpak_overrides`, only for apps in the
   resolved Flatpak sets; applied at the end of `roles/packages` with `flatpak override --user`

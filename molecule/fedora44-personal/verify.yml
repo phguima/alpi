@@ -45,8 +45,10 @@
     - name: Verify | Overrides applied to installed apps only
       ansible.builtin.assert:
         that:
-          - "alpi_flatpak_overrides | map(attribute='app') | list == ['com.bitwarden.desktop', 'com.rtosta.zapzap']"
-          - "'filesystems=/srv/wks:ro;' in _files['com.rtosta.zapzap']"
+          - "alpi_flatpak_overrides | map(attribute='app') | list == ['com.rtosta.zapzap', 'com.bitwarden.desktop']"
+          # the repository's ~/wks (root runs here) and custom.yml's folder, in flatpak's own order
+          - _files['com.rtosta.zapzap'] | regex_search('(?m)^filesystems=(.*)$', '\\1') | first
+            | split(';') | select | sort == ['/root/wks:ro', '/srv/wks:ro']
           - "'ALPI_TEST=1' in _files['com.bitwarden.desktop']"
           - not _zoom_override.stat.exists
         fail_msg: "{{ _files | to_json }}"

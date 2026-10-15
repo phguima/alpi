@@ -38,9 +38,10 @@ zsh_aliases_custom: ""
 # Flatpak overrides, applied only to apps being installed (group_vars/all/flatpak.yml).
 # Extra host folders an app may read: a file dragged from a folder the sandbox was not granted
 # reaches the app as a path it cannot open (ZapZap: "the file has no content"). ':ro' = read-only.
+# ZapZap already gets ~/wks read-only from the repository (flatpak_overrides_common).
 flatpak_filesystem_overrides: {}
 #  com.rtosta.zapzap:
-#    - "{{ user_home }}/wks:ro"
+#    - "{{ user_home }}/Downloads:ro"
 # Any other 'flatpak override' flags, added to the repository's (e.g. the KDE ones for Bitwarden).
 flatpak_overrides: {}
 #  com.spotify.Client:
