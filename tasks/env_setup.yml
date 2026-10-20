@@ -104,7 +104,7 @@
   failed_when: false
   changed_when: false
   check_mode: false
-  when: is_nvidia
+  when: is_nvidia | bool
   tags: [always, hardware, detection, nvidia]
 
 - name: Env Setup | Set NVIDIA driver fact
