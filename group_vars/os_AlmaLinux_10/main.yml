@@ -21,10 +21,10 @@ alpi_repos_os:
     name: epel-release
   rpmfusion-free:
     type: rpm
-    url: "https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
+    url: "https://download1.rpmfusion.org/free/el/rpmfusion-free-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
   rpmfusion-nonfree:
     type: rpm
-    url: "https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
+    url: "https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
   # VirtualBox is not packaged for EL10 (catalog: virtualbox)
   virtualbox:
     type: yum

@@ -32,7 +32,8 @@
     name: "{{ item.url }}"
     state: present
     disable_gpg_check: true
-  # mirrors.rpmfusion.org redirects to a random mirror, and a dead one fails the download
+  # Release RPMs come from download1.rpmfusion.org, not mirrors.rpmfusion.org: the redirector
+  # sends each file to the same mirror every time, so a dead one fails every retry
   register: _release_rpm
   until: _release_rpm is succeeded
   retries: 3
