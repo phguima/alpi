@@ -10,7 +10,8 @@ Two VMs in VirtualBox, both EFI + Secure Boot:
 | `el10-alpi`, AlmaLinux 10 **Workstation (GNOME)** | work machine | Oracle VirtualBox's own key, Roboto from upstream, Ptyxis in a real session (AAPI's VM was KDE) |
 
 Tick each step and note any failure under it. Send results as screenshots
-(`~/Pictures/Screenshots`); each step says what to capture.
+(`~/Pictures/Screenshots`); each step says what to capture. To copy logs or files in and out of a VM with no
+clipboard, see [vm-file-transfer.md](vm-file-transfer.md).
 
 ## Step 0: create the VMs (on the host, VirtualBox 7.2)
 
