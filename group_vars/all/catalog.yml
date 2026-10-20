@@ -55,6 +55,8 @@ alpi_catalog:
   drawy:         {fedora: drawy, el: {flatpak: org.kde.drawy}}
   gh:            {all: gh, repo: gh-cli}
   inkscape:      {fedora: inkscape, el: {flatpak: org.inkscape.Inkscape}}
+  # Fedora Workstation ships it; dropped from EL10, so a default there only (packages_os)
+  libreoffice:   {fedora: libreoffice, el: {flatpak: org.libreoffice.LibreOffice}}
   steam:         {fedora: steam, el: ~}
   telegram:      {fedora: telegram-desktop, el: {flatpak: org.telegram.desktop}}
   vscode:        {all: code, repo: code}

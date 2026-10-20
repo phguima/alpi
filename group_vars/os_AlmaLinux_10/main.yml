@@ -1,6 +1,7 @@
 ---
 alpi_catalog_keys: [el10, el, all]
-packages_os: []
+# LibreOffice was dropped from EL10 (Flathub there, see the catalog)
+packages_os: [libreoffice]
 
 # dnf4: without -r, needs-restarting lists processes instead of saying whether to reboot
 zsh_aliases_os: |
