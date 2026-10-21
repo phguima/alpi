@@ -2,12 +2,13 @@
 
 What containers cannot cover: real Secure Boot and MOK enrollment, module builds and signing,
 `dracut`, the reboot gate on a real kernel, GRUB, the transient hostname, and desktop sessions.
-Two VMs in VirtualBox, both EFI + Secure Boot:
+Three VMs in VirtualBox, all EFI + Secure Boot:
 
 | VM | Like | Covers |
 |---|---|---|
 | `fedora44-alpi`, Fedora 44 **KDE** | noir | akmods key, `akmod-VirtualBox` signed, NVIDIA akmod build + `dracut` (forced on), Steam launcher, Konsole |
 | `el10-alpi`, AlmaLinux 10 **Workstation (GNOME)** | work machine | Oracle VirtualBox's own key, Roboto from upstream, Ptyxis in a real session (AAPI's VM was KDE) |
+| `el10-kde-alpi`, AlmaLinux 10 **KDE** | | KDE on EL (EPEL's Plasma): Konsole, the cedilla on XWayland with EL10's KWin, the KDE flatpaks |
 
 Tick each step and note any failure under it. Send results as screenshots
 (`~/Pictures/Screenshots`); each step says what to capture. To copy logs or files in and out of a VM with no
@@ -31,15 +32,16 @@ mkvm() {  # mkvm <name> <ostype> <iso>
 }
 mkvm fedora44-alpi Fedora_64 "$HOME/Downloads/Fedora-KDE-Desktop-Live-44-x86_64.iso"   # adjust ISO names
 mkvm el10-alpi Oracle10_64 "$HOME/Downloads/AlmaLinux-10-latest-x86_64-dvd.iso"
+mkvm el10-kde-alpi Oracle10_64 "$HOME/Downloads/AlmaLinux-10-latest-x86_64-KDE.iso"   # AlmaLinux KDE live
 ```
 
-- [ ] Install: Fedora KDE live; AlmaLinux with the **Workstation** environment (GNOME). An admin
-      user (`wheel`) on both.
+- [ ] Install: Fedora KDE live; AlmaLinux with the **Workstation** environment (GNOME); AlmaLinux
+      KDE live. An admin user (`wheel`) on each.
 - [ ] In each VM: `mokutil --sb-state` → `SecureBoot enabled`; note `hostname` and `uname -r`.
       📸 both.
 - [ ] VM off, clean snapshot: `VBoxManage snapshot <vm> take clean`.
 
-## Step 1: bootstrap (both VMs)
+## Step 1: bootstrap (every VM)
 
 ```bash
 sudo dnf install -y git && git clone https://github.com/phguima/alpi && cd alpi && ./bootstrap.sh
@@ -47,7 +49,7 @@ sudo dnf install -y git && git clone https://github.com/phguima/alpi && cd alpi 
 
 - [ ] Installs `ansible-core`, `pciutils`, PyYAML, whiptail and `community.general` (11.x on EL)
       without errors.
-- [ ] Asks the hostname (give a **new** one, e.g. `fedora-alpi` / `alma-alpi`) and the git
+- [ ] Asks the hostname (give a **new** one, e.g. `fedora-alpi` / `alma-alpi` / `alma-kde-alpi`) and the git
       identity, then opens the picker: keep the defaults (OK). 📸 the end of the bootstrap output.
 - [ ] Fedora only: add `-e is_nvidia=true` to every `ansible-playbook` command below, so the
       NVIDIA path (akmod build, `dracut`, Steam launcher) runs without an NVIDIA GPU. Extra vars
