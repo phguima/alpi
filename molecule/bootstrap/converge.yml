@@ -64,7 +64,7 @@
     - name: Bootstrap | First run
       ansible.builtin.shell:
         cmd: >-
-          printf 'bad_name\n-\nTest User\nnot-an-email\nt@example.com\n-steam\n\n-tmux nope\n-tmux\n\n'
+          printf 'bad_name\n-\nTest User\nnot-an-email\nt@example.com\n-steam\n-tmux nope\n-tmux\n\n'
           | script -qec ./bootstrap.sh /dev/null
         chdir: "{{ _dir }}"
       environment: "{{ _env }}"
@@ -94,7 +94,7 @@
     # Enter keeps the saved git identity and the saved selection (Steam stays off); one more skip.
     - name: Bootstrap | Second run
       ansible.builtin.shell:
-        cmd: printf 'noir\n\n\n\n-chkrootkit\n\n' | script -qec ./bootstrap.sh /dev/null
+        cmd: printf 'noir\n\n\n-chkrootkit\n\n' | script -qec ./bootstrap.sh /dev/null
         chdir: "{{ _dir }}"
       environment: "{{ _env }}"
       register: _run2

@@ -45,7 +45,11 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - `pick.py`: the package picker (whiptail, or text prompts with `ALPI_PICKER=text`). Reads the
   catalog files and reuses `filter_plugins/alpi.py`, so it lists exactly what the playbook would
   resolve on the running distro/desktop; hardware features are not listed (vetoes in
-  `custom.yml`). Unit tests in `tests/unit/test_pick.py` (fake `/etc/os-release`).
+  `custom.yml`). Groups by purpose and labels in `group_vars/all/picker.yml` (`picker_groups`,
+  `picker_descriptions`): a new catalog id or feature goes in a group there with a description
+  (a unit test fails otherwise). whiptail: menu of groups, a checklist per group, a review before
+  saving; text mode: one numbered list with group headers. Unit tests in
+  `tests/unit/test_pick.py` (fake `/etc/os-release`; whiptail replaced by scripted answers).
 - `roles/repos` (before `packages`): enables `alpi_repos_enabled` from `resolve.yml` (the distro's
   always-on repos, then the ones the selected catalog entries name with `repo:`). Repositories with
   `repo_gpgcheck` get `dnf -y makecache` so their metadata key is imported; otherwise every
@@ -154,8 +158,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   manifest via `alpi_appimage_release`: base64 sha512 to hex; icon extracted with
   `--appimage-extract`, menu entry, handler `update-desktop-database` for `antigravity://`).
   Installs its own deps (`curl`, `fuse-libs`, `desktop-file-utils`). URLs in
-  `group_vars/all/ai_tools.yml`; the picker labels features without packages from
-  `feature_descriptions`. `tasks/check.yml` (run by `catalog`) checks the upstream URLs without
+  `group_vars/all/ai_tools.yml`; the picker's labels come from
+  `picker_descriptions` (`group_vars/all/picker.yml`). `tasks/check.yml` (run by `catalog`) checks the upstream URLs without
   downloading. The alias is `antigravity-ide` because `agy install` deletes `alias antigravity=`.
 - `roles/upstream` (after `packages`): catalog values `{upstream: <source id>}` (Roboto on EL),
   sources in `group_vars/all/upstream.yml` (`upstream_sources`, each with a `type` handled by

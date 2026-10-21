@@ -1,0 +1,117 @@
+---
+# What pick.py shows: groups by purpose, in menu order, and a short description per catalog id or
+# feature. Only pick.py reads this file; the playbook resolves from catalog.yml, packages.yml and
+# features.yml. A group lists catalog ids and non-hardware features (a feature's own packages are
+# never listed); ids the running distro or desktop cannot install are hidden, and so is a group
+# left empty. An id missing here still shows up, under "Other" (tests/unit/test_pick.py keeps
+# that group empty for the repository's own ids).
+picker_groups:
+  - title: System tools
+    ids: [7zip, curl, fastfetch, htop, hwinfo, lm-sensors, nvtop, testdisk, tmux, tuptime, unrar,
+          unzip, vim, zsh]
+  - title: Security
+    ids: [clamav, chkrootkit, lynis, rkhunter, unhide]
+  - title: Internet & chat
+    ids: [brave, chromium, discord, telegram, slack, zapzap, zoom]
+  - title: Office & productivity
+    ids: [libreoffice, zotero, bitwarden, markitdown, pdf2docx, notebooklm-py]
+  - title: Graphics & media
+    ids: [inkscape, drawy, imagemagick, potrace, argyllcms, displaycal, gpu-screen-recorder,
+          spotify]
+  - title: Development
+    ids: [git, gh, vscode, nodejs, python3-pip, pipx, uv, shellcheck, claude_code, antigravity_cli,
+          antigravity_ide]
+  - title: Gaming & virtualization
+    ids: [steam, virtualbox]
+  # Only the running desktop's ids are listed
+  - title: Desktop extras
+    ids: [extension-manager, flatseal, fragments, gnome-tweaks, video-downloader,
+          gtk3-theme-breeze, kde-gtk-config, kpat, ktorrent, media-downloader, plasma-sdk]
+  - title: Fonts & codecs
+    ids: [fira-code-fonts, google-roboto-fonts, ffmpeg, multimedia,
+          gstreamer1-plugins-bad-free-extras, gstreamer1-plugins-bad-freeworld,
+          gstreamer1-plugins-ugly, gstreamer1-plugin-libav]
+
+picker_descriptions:
+  # System tools
+  7zip: 7-Zip archiver
+  curl: Transfer data from URLs
+  fastfetch: System information summary
+  htop: Process viewer
+  hwinfo: Hardware information
+  lm-sensors: Temperature and fan sensors
+  nvtop: GPU process viewer
+  testdisk: Partition and file recovery
+  tmux: Terminal multiplexer
+  tuptime: Uptime history
+  unrar: RAR extractor
+  unzip: ZIP extractor
+  vim: Vim editor
+  zsh: Z shell, with Oh My Zsh
+  # Security
+  clamav: ClamAV antivirus, with signature updates
+  chkrootkit: Rootkit scanner
+  lynis: Security audit
+  rkhunter: Rootkit Hunter
+  unhide: Hidden process and port finder
+  # Internet & chat
+  brave: Brave browser
+  chromium: Chromium browser
+  discord: Discord chat
+  telegram: Telegram messaging
+  slack: Slack chat
+  zapzap: ZapZap, WhatsApp client
+  zoom: Zoom meetings
+  # Office & productivity
+  libreoffice: LibreOffice office suite
+  zotero: Zotero reference manager
+  bitwarden: Bitwarden password manager
+  markitdown: markitdown, documents to Markdown
+  pdf2docx: PDF to Word converter
+  notebooklm-py: NotebookLM command line, with a browser
+  # Graphics & media
+  inkscape: Inkscape vector editor
+  drawy: Drawy whiteboard
+  imagemagick: ImageMagick image tools
+  potrace: Bitmap to vector tracing
+  argyllcms: ArgyllCMS color calibration
+  displaycal: DisplayCAL monitor calibration
+  gpu-screen-recorder: GPU screen recorder
+  spotify: Spotify music
+  # Development
+  git: Git version control
+  gh: GitHub CLI
+  vscode: Visual Studio Code
+  nodejs: Node.js
+  python3-pip: pip, Python package installer
+  pipx: pipx, Python apps in their own environments
+  uv: uv, Python package and project manager
+  shellcheck: Shell script linter
+  claude_code: Claude Code CLI (native installer, ~/.local/bin/claude)
+  antigravity_cli: Antigravity CLI (native installer, ~/.local/bin/agy)
+  antigravity_ide: Antigravity IDE (AppImage in ~/wks/tools/antigravity, menu entry)
+  # Gaming & virtualization
+  steam: Steam games
+  virtualbox: VirtualBox, with Secure Boot signing
+  # Desktop extras: GNOME
+  extension-manager: GNOME extension manager
+  flatseal: Flatpak permissions editor
+  fragments: Fragments BitTorrent client
+  gnome-tweaks: GNOME Tweaks
+  video-downloader: Video downloader
+  # Desktop extras: KDE
+  gtk3-theme-breeze: Breeze theme for GTK flatpaks
+  kde-gtk-config: Breeze settings for GTK apps
+  kpat: KPatience card games
+  ktorrent: KTorrent BitTorrent client
+  media-downloader: Media downloader
+  plasma-sdk: Plasma development tools
+  # Fonts & codecs
+  fira-code-fonts: Fira Code font
+  google-roboto-fonts: Roboto font
+  ffmpeg: FFmpeg, full codecs (replaces ffmpeg-free)
+  multimedia: RPM Fusion multimedia group
+  gstreamer1-plugins-bad-free-extras: GStreamer extra plugins
+  gstreamer1-plugins-bad-freeworld: GStreamer non-free plugins (bad)
+  gstreamer1-plugins-ugly: GStreamer non-free plugins (ugly)
+  gstreamer1-plugin-libav: GStreamer FFmpeg plugin

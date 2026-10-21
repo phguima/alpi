@@ -44,13 +44,12 @@ def test_fedora_lists_everything_but_hardware_and_feature_packages():
 
 def test_features_without_packages_are_listed_with_their_description():
     # The AI tools install no catalog packages: listed everywhere, labelled from
-    # feature_descriptions; features with packages keep listing them
+    # picker_descriptions like the rest
     for distro, major in (("Fedora", "44"), ("AlmaLinux", "10")):
         data, (features, _) = real_choices(distro, major)
         labels = {c.id: c.label for c in features}
-        for name in ("claude_code", "antigravity_cli", "antigravity_ide"):
-            assert labels[name] == data["feature_descriptions"][name]
-        assert "clamav" in labels["clamav"]
+        for name in ("claude_code", "antigravity_cli", "antigravity_ide", "clamav"):
+            assert labels[name] == data["picker_descriptions"][name]
 
 
 def test_el10_hides_unavailable_ids_and_empty_features():
@@ -58,10 +57,10 @@ def test_el10_hides_unavailable_ids_and_empty_features():
     assert "steam" not in ids(features)
     assert not {"chkrootkit", "unhide", "argyllcms", "multimedia"} & set(ids(packages))
     labels = {c.id: c.label for c in packages}
-    # Not packaged for EL, installed from upstream instead: listed, and labelled so
-    assert labels["google-roboto-fonts"].endswith("upstream roboto")
-    assert labels["telegram"].endswith("flatpak org.telegram.desktop")
-    assert labels["vim"].endswith("vim-enhanced")
+    # Not packaged for EL, installed from Flathub or upstream instead: listed, and labelled so
+    assert labels["google-roboto-fonts"] == "Roboto font (upstream release)"
+    assert labels["telegram"] == "Telegram messaging (Flathub)"
+    assert labels["vim"] == "Vim editor"
 
 
 @pytest.mark.parametrize("xdg, shown, hidden", [
@@ -82,16 +81,52 @@ def test_defaults_match_the_playbook_lists():
     assert {c.id for c in packages if c.default} == expected
 
 
-def test_sections_come_from_the_catalog_comments():
-    sections = pick.catalog_sections(ROOT / "group_vars" / "all" / "catalog.yml")
-    assert sections["vim"] == "Command line and system tools"
-    assert sections["zoom"] == "Flatpaks"
+def test_an_id_without_a_description_lists_its_packages():
+    data = {"alpi_catalog": {"gimp": {"all": "gimp"}}, "alpi_catalog_keys": ["all"]}
+    _, packages = pick.choices(data, set(), filters)
+    assert packages[0].label == "gimp"
+
+
+# --- Groups ---------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("distro, major, des", [
+    ("Fedora", "44", {"gnome"}), ("Fedora", "44", {"kde"}),
+    ("AlmaLinux", "10", {"gnome"}), ("AlmaLinux", "10", {"kde"}),
+])
+def test_every_listed_id_has_a_group_and_a_description(distro, major, des):
+    data, (features, packages) = real_choices(distro, major, des)
+    grouped = pick.groups(data, features + packages)
+    assert "Other" not in dict(grouped)
+    assert all(members for _, members in grouped)
+    for c in features + packages:
+        assert c.id in data["picker_descriptions"], c.id
+
+
+def test_picker_names_only_known_ids():
+    data = pick.load_data(ROOT, "Fedora", "44")
+    known = set(data["alpi_catalog"]) | set(data["features_default"])
+    named = [i for g in data["picker_groups"] for i in g["ids"]]
+    assert len(named) == len(set(named))
+    assert set(named) <= known
+    assert set(data["picker_descriptions"]) <= known
+
+
+def test_groups_keep_the_order_and_put_unknown_ids_last():
+    data = {"picker_groups": [{"title": "Editors", "ids": ["vim", "nope"]},
+                              {"title": "Empty", "ids": ["nope"]}]}
+    grouped = pick.groups(data, PACKAGES)
+    assert [(t, [c.id for c in m]) for t, m in grouped] == [("Editors", ["vim"]), ("Other", ["git", "gimp"])]
+
+
+def test_changes_lists_additions_then_removals():
+    assert pick.changes(PACKAGES, {"git", "gimp"}) == ["+ gimp: GIMP", "- vim: Vim"]
 
 
 # --- Selection as differences from the defaults ---------------------------------------------
 
 FEATURES = [pick.Choice("steam", "", True), pick.Choice("extra", "", False)]
-PACKAGES = [pick.Choice("vim", "", True), pick.Choice("git", "", True), pick.Choice("gimp", "", False)]
+PACKAGES = [pick.Choice("vim", "Vim", True), pick.Choice("git", "Git", True), pick.Choice("gimp", "GIMP", False)]
 CATALOG = {"vim": {}, "git": {}, "gimp": {}, "ktorrent": {}}
 
 
@@ -152,9 +187,60 @@ def test_parse_toggles_applies_nothing_when_a_token_is_unknown():
 def test_text_pick_asks_again_after_unknown_ids():
     answers = iter(["-vim nope", "-vim", ""])
     out = []
-    result = pick.text_pick("T", PACKAGES, {"vim", "git"}, read=lambda _: next(answers), write=out.append)
+    result = pick.text_pick("T", [("G", PACKAGES)], {"vim", "git"}, read=lambda _: next(answers),
+                            write=out.append)
     assert result == {"git"}
     assert "Unknown: nope. Nothing changed." in out
+    assert "    - vim: Vim" in out  # the review, on accepting
+
+
+def test_text_pick_numbers_run_across_groups():
+    answers = iter(["3", ""])
+    out = []
+    grouped = [("A", PACKAGES[:2]), ("B", PACKAGES[2:])]
+    result = pick.text_pick("T", grouped, {"vim", "git"}, read=lambda _: next(answers), write=out.append)
+    assert result == {"vim", "git", "gimp"}
+    assert "\n  B" in out
+
+
+# --- whiptail interface (whiptail itself replaced by scripted answers) ----------------------
+
+
+def scripted_whiptail(monkeypatch, answers):
+    """Replaces whiptail: each call pops the next answer (None = Cancel/Back/No); records the
+    calls' arguments."""
+    feed, calls = iter(answers), []
+    def fake(*args):
+        calls.append(args)
+        return next(feed)
+    monkeypatch.setattr(pick, "_whiptail", fake)
+    return calls
+
+
+GROUPED = [("Editors", PACKAGES[:1]), ("Tools", PACKAGES[1:])]
+
+
+def test_whiptail_opens_a_group_reviews_and_saves(monkeypatch):
+    # Tools: git off, gimp on; review: Back; review again: Save
+    calls = scripted_whiptail(monkeypatch, ["Tools", "gimp\n", "Review and save", None,
+                                            "Review and save", ""])
+    assert pick.whiptail_pick("T", GROUPED, {"vim", "git"}) == {"vim", "gimp"}
+    menu = calls[0]
+    assert "Editors" in menu and "1/1 selected" in menu and "1/2 selected" in menu
+    assert "--default-item" not in menu
+    assert calls[2][calls[2].index("--default-item") + 1] == "Tools"
+    assert "2 changes from the defaults" in calls[2]
+    assert "+ gimp: GIMP\n- git: Git" in calls[3][-3]
+
+
+def test_whiptail_back_in_a_group_keeps_its_choice(monkeypatch):
+    scripted_whiptail(monkeypatch, ["Editors", None, "Review and save", ""])
+    assert pick.whiptail_pick("T", GROUPED, {"vim", "git"}) == {"vim", "git"}
+
+
+def test_whiptail_cancel_in_the_menu_cancels(monkeypatch):
+    scripted_whiptail(monkeypatch, ["Tools", "\n", None])
+    assert pick.whiptail_pick("T", GROUPED, {"vim", "git"}) is None
 
 
 # --- End to end -----------------------------------------------------------------------------
@@ -171,12 +257,12 @@ def run_main(tmp_path, monkeypatch, distro, answers, xdg=""):
 
 
 def test_main_writes_the_selection_and_keeps_it_on_the_next_run(tmp_path, monkeypatch):
-    rc, sel = run_main(tmp_path, monkeypatch, "fedora", ["-steam", "", "-tmux +chkrootkit", ""])
+    rc, sel = run_main(tmp_path, monkeypatch, "fedora", ["-steam -tmux +chkrootkit", ""])
     assert rc == 0
     assert sel == {"packages_selection_add": [], "packages_selection_skip": ["tmux"],
                    "features_selection": {"steam": False}}
     # Second run, on EL with KDE: Steam is not listed there, its saved veto stays
-    rc, sel = run_main(tmp_path, monkeypatch, "el10", ["", "-ktorrent", ""], xdg="KDE")
+    rc, sel = run_main(tmp_path, monkeypatch, "el10", ["-ktorrent", ""], xdg="KDE")
     assert sel == {"packages_selection_add": [], "packages_selection_skip": ["tmux", "ktorrent"],
                    "features_selection": {"steam": False}}
 

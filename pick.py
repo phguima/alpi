@@ -2,10 +2,11 @@
 """ALPI package picker: choose the features and packages for this machine.
 
 Lists only what the running distro can install (catalog entries marked ~ are hidden, so are the
-other desktop's packages and features whose packages are all unavailable). The repository
-defaults start checked. The choice is saved to host_vars/127.0.0.1/selection.yml as differences
-from the defaults (packages_selection_add/_skip, features_selection), so defaults added to the
-repository later still arrive with git pull. Hardware features (NVIDIA, ASUS…) follow detection
+other desktop's packages and features whose packages are all unavailable), in groups by purpose
+(group_vars/all/picker.yml): a menu of groups, each opened as a checklist, then a review of the
+changes before saving. The repository defaults start checked. The choice is saved to
+host_vars/127.0.0.1/selection.yml as differences from the defaults (packages_selection_add/_skip,
+features_selection), so defaults added to the repository later still arrive with git pull. Hardware features (NVIDIA, ASUS…) follow detection
 and are not listed; veto them in custom.yml.
 
 ./bootstrap.sh runs it; run it again at any time to change the choice. ALPI_PICKER=text (or
@@ -15,7 +16,6 @@ and are not listed; veto them in custom.yml.
 import argparse
 import importlib.util
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -64,31 +64,16 @@ def os_release(path="/etc/os-release"):
     return out
 
 
-def catalog_sections(path):
-    """Catalog id -> section title, from the '# --- Title ---' comments in catalog.yml."""
-    sections, current = {}, ""
-    for line in Path(path).read_text().splitlines():
-        m = re.match(r"\s*# --- (.+?) ---", line)
-        if m:
-            current = m.group(1)
-            continue
-        m = re.match(r"  ([A-Za-z0-9][\w.+-]*):", line)
-        if m:
-            sections[m.group(1)] = current
-    return sections
-
-
 def load_data(root, distro, major):
     """The repository data the playbook would use on this distro."""
     gv = root / "group_vars"
     data = {}
-    for name in ("catalog", "packages", "features"):
+    for name in ("catalog", "packages", "features", "picker"):
         data.update(load_yaml(gv / "all" / f"{name}.yml"))
     # Same layering as group_by in env_setup: os_<distro>, then os_<distro>_<major>
     for group in (f"os_{distro}", f"os_{distro}_{major}"):
         for path in sorted((gv / group).glob("*.yml")) if (gv / group).is_dir() else []:
             data.update(load_yaml(path))
-    data["sections"] = catalog_sections(gv / "all" / "catalog.yml")
     return data
 
 
@@ -104,13 +89,23 @@ def _names(res):
                      + [f"upstream {n}" for n in res.get("upstream", [])])
 
 
+def _label(cid, res, descriptions):
+    """The id's description, with where it comes from when that is not the distro's packages;
+    the package names when there is no description."""
+    if cid not in descriptions:
+        return _names(res)
+    source = ("Flathub" if res["flatpak"] else "pipx" if res.get("pipx")
+              else "upstream release" if res.get("upstream") else "")
+    return f"{descriptions[cid]} ({source})" if source and not res["native"] else descriptions[cid]
+
+
 def choices(data, des, filters):
     """(features, packages) the user can choose on this distro, as Choice lists."""
     resolve = lambda ids: filters.alpi_resolve(ids, data["alpi_catalog"], data["alpi_catalog_keys"],
                                                data.get("alpi_catalog_aliases"))
     feature_packages = data.get("feature_packages") or {}
     hardware = set(data.get("alpi_hardware_features") or [])
-    descriptions = data.get("feature_descriptions") or {}
+    descriptions = data.get("picker_descriptions") or {}
 
     features = []
     for name, value in (data.get("features_default") or {}).items():
@@ -120,7 +115,7 @@ def choices(data, des, filters):
         if feature_packages.get(name) and not (res["native"] or res["flatpak"] or res.get("pipx")
                                                or res.get("upstream")):
             continue  # nothing to install here (Steam on EL)
-        features.append(Choice(name, descriptions.get(name) or _names(res), bool(value)))
+        features.append(Choice(name, _label(name, res, descriptions), bool(value)))
 
     desktop_lists = {"kde": data.get("packages_kde") or [], "gnome": data.get("packages_gnome") or []}
     defaults = list(data.get("packages_base") or []) + list(data.get("packages_os") or [])
@@ -136,9 +131,30 @@ def choices(data, des, filters):
         res = resolve([pid])
         if res["unavailable"] or res["missing"]:
             continue
-        section = data["sections"].get(pid, "")
-        packages.append(Choice(pid, f"{section}: {_names(res)}" if section else _names(res), pid in defaults))
+        packages.append(Choice(pid, _label(pid, res, descriptions), pid in defaults))
     return features, packages
+
+
+def groups(data, items):
+    """[(title, choices)] in picker.yml's order, empty groups left out; ids no group names go
+    last, under "Other"."""
+    by_id = {c.id: c for c in items}
+    out, placed = [], set()
+    for group in data.get("picker_groups") or []:
+        members = [by_id[i] for i in group.get("ids") or [] if i in by_id and i not in placed]
+        placed.update(c.id for c in members)
+        if members:
+            out.append((group["title"], members))
+    rest = [c for c in items if c.id not in placed]
+    if rest:
+        out.append(("Other", rest))
+    return out
+
+
+def changes(items, checked):
+    """Lines describing the choice's differences from the defaults, for the review."""
+    return ([f"+ {c.id}: {c.label}" for c in items if c.id in checked and not c.default]
+            + [f"- {c.id}: {c.label}" for c in items if c.default and c.id not in checked])
 
 
 def initial(features, packages, saved, aliases=None):
@@ -202,12 +218,18 @@ def parse_toggles(line, items, checked):
     return (set(checked), unknown) if unknown else (new, [])
 
 
-def text_pick(title, items, checked, read=None, write=print):
+def text_pick(title, grouped, checked, read=None, write=print):
+    """Every group in one numbered list; toggles by id or number until an empty line."""
     read = read or input  # looked up at call time, so tests can replace it
+    items = [c for _, members in grouped for c in members]
     def show():
         write(f"\n{title}")
-        for n, c in enumerate(items, 1):
-            write(f"{n:3} [{'x' if c.id in checked else ' '}] {c.id:<26} {c.label}")
+        n = 0
+        for group, members in grouped:
+            write(f"\n  {group}")
+            for c in members:
+                n += 1
+                write(f"{n:3} [{'x' if c.id in checked else ' '}] {c.id:<26} {c.label}")
     show()
     while True:
         try:
@@ -215,6 +237,8 @@ def text_pick(title, items, checked, read=None, write=print):
         except EOFError:
             return checked
         if not line.strip():
+            for change in changes(items, checked):
+                write(f"    {change}")
             return checked
         if line.strip() == "?":
             show()
@@ -229,17 +253,59 @@ def text_pick(title, items, checked, read=None, write=print):
         checked = new
 
 
-def whiptail_pick(title, items, checked):
-    """Checked ids, or None when cancelled."""
+# Stand-ins for whiptail's box height, width and list height, filled in from the terminal's size
+HEIGHT, WIDTH, LIST = object(), object(), object()
+
+
+def _whiptail(*args):
+    """whiptail's answer (stderr), or None when cancelled (Esc, Cancel or No)."""
     size = shutil.get_terminal_size((100, 30))
     height = max(size.lines - 2, 15)
-    cmd = ["whiptail", "--title", "ALPI", "--separate-output", "--checklist",
-           f"{title}\nSpace toggles, Enter accepts.", str(height), str(min(size.columns - 4, 110)),
-           str(height - 8)]
-    for c in items:
-        cmd += [c.id, c.label[:70], "ON" if c.id in checked else "OFF"]
+    sizes = {HEIGHT: str(height), WIDTH: str(min(size.columns - 4, 110)), LIST: str(height - 8)}
+    cmd = ["whiptail", "--title", "ALPI"] + [sizes.get(a, a) for a in args]
     r = subprocess.run(cmd, stderr=subprocess.PIPE, text=True)
-    return set(r.stderr.split()) if r.returncode == 0 else None
+    return r.stderr if r.returncode == 0 else None
+
+
+def whiptail_checklist(title, items, checked):
+    """The group's checked ids, or None when cancelled."""
+    args = ["--separate-output", "--ok-button", "Done", "--cancel-button", "Back", "--checklist",
+            f"{title}\nSpace toggles, Enter goes back to the groups.", HEIGHT, WIDTH, LIST]
+    for c in items:
+        args += [c.id, c.label[:70], "ON" if c.id in checked else "OFF"]
+    answer = _whiptail(*args)
+    return None if answer is None else set(answer.split())
+
+
+def whiptail_pick(title, grouped, checked):
+    """Menu of groups, each a checklist, then a review of the changes. Checked ids, or None when
+    cancelled."""
+    save, current = "Review and save", None
+    items = [c for _, members in grouped for c in members]
+    while True:
+        args = ["--ok-button", "Open", "--cancel-button", "Cancel"]
+        if current:
+            args += ["--default-item", current]
+        args += ["--menu", f"{title}\nOpen a group to change it. Defaults are checked.", HEIGHT, WIDTH, LIST]
+        for group, members in grouped:
+            args += [group, f"{sum(c.id in checked for c in members)}/{len(members)} selected"]
+        n = len(changes(items, checked))
+        args += [save, f"{n} change{'' if n == 1 else 's'} from the defaults"]
+        current = _whiptail(*args)
+        if current is None:
+            return None
+        if current == save:
+            lines = changes(items, checked) or ["No changes: the defaults."]
+            # A scroll box takes the keyboard focus (Tab to reach Save): only when it must scroll
+            scroll = ["--scrolltext"] if len(lines) > shutil.get_terminal_size((100, 30)).lines - 12 else []
+            if _whiptail(*scroll, "--yes-button", "Save", "--no-button", "Back", "--yesno",
+                         "Changes from the defaults:\n\n" + "\n".join(lines), HEIGHT, WIDTH) is not None:
+                return checked
+            continue
+        members = dict(grouped)[current]
+        picked = whiptail_checklist(f"{title}: {current}", members, checked)
+        if picked is not None:
+            checked = (checked - {c.id for c in members}) | picked
 
 
 def main(argv=None):
@@ -269,12 +335,12 @@ def main(argv=None):
     pick = whiptail_pick if ui == "whiptail" else text_pick
     where = f"{rel.get('PRETTY_NAME', distro)}, desktop: {'/'.join(sorted(des)).upper() or 'none detected'}"
     print(f"==> Package picker ({where}). Hardware features follow detection; veto them in custom.yml.")
-    feats_on = pick(f"Features ({where})", features, feats_on)
-    if feats_on is not None:
-        pkgs_on = pick(f"Packages ({where})", packages, pkgs_on)
-    if feats_on is None or pkgs_on is None:
+    checked = pick(where, groups(data, features + packages), feats_on | pkgs_on)
+    if checked is None:
         print(f"Cancelled: {output} left unchanged.")
         return 0
+    feats_on = {c.id for c in features if c.id in checked}
+    pkgs_on = {c.id for c in packages if c.id in checked}
 
     sel, dropped = selection(features, packages, feats_on, pkgs_on, saved, data["alpi_catalog"], aliases)
     for raw in dropped:

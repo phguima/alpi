@@ -151,7 +151,7 @@ aliases:  {p7zip: 7zip}                  # renamed ids still resolve
   once (only when the binary is missing) and lets the tool update itself; the IDE's AppImage comes
   from the manifest the app polls, checked against its sha512. AFPI's `antigravity_ide_install`
   flag is replaced by the feature. A feature without packages is the one case where a role gates
-  on the flag itself; the picker labels it from `feature_descriptions`.
+  on the flag itself; the picker labels it from `picker_descriptions`.
 
 ### User file (outside git)
 
@@ -210,7 +210,14 @@ would resolve.
   Saved entries for ids the picker does not list this time (another desktop's packages) are kept;
   ids no longer in the catalog are dropped with a warning (the playbook fails on them until then).
 - **Interface:** `whiptail` checklists (bootstrap installs `newt`), plain prompts otherwise or with
-  `ALPI_PICKER=text`. Cancel leaves `selection.yml` as it was. No terminal, no picker: the
+  `ALPI_PICKER=text`. Cancel leaves `selection.yml` as it was.
+- **Groups by purpose (2026-10-21):** a single list of ~60 ids grouped by install method (the
+  catalog's sections) was confusing, with features on a screen of their own. Now a menu of groups
+  (`picker_groups` in `group_vars/all/picker.yml`: System tools, Security, Internet & chat, …), each
+  opened as a checklist of packages and features together, labelled from `picker_descriptions`
+  with the source when it is not the distro's packages (Flathub, pipx, upstream release), and a
+  review of the changes from the defaults before saving. The text mode lists every group in one
+  numbered list. Only the picker reads `picker.yml`; ids it does not name fall under "Other". No terminal, no picker: the
   playbook uses the defaults (and Molecule never runs it).
 
 ### Flatpak permissions (already in AFPI/AAPI)

@@ -13,7 +13,7 @@ ALPI is a single Ansible post-install for Linux workstations. It detects the run
 ## 🧭 Design in short
 
 *   **Three independent axes:** distribution (detected), hardware (detected, can be vetoed) and machine/user settings (`host_vars`, never committed). No profiles: each machine picks its own packages.
-*   **Package picker:** `pick.py` lists only what the running distro offers (and the running desktop's packages), with the defaults checked, and saves the differences to `host_vars/127.0.0.1/selection.yml`.
+*   **Package picker:** `pick.py` lists only what the running distro offers (and the running desktop's packages) in groups by purpose (system tools, internet & chat, development…), with the defaults checked, shows the changes before saving, and saves the differences to `host_vars/127.0.0.1/selection.yml`.
 *   **Package catalog:** logical package ids mapped to each distribution's package, Flatpak or upstream source, so one list works everywhere.
 *   **User customization:** a git-ignored `host_vars/127.0.0.1/custom.yml` adds packages outside the catalog, uninstalls and vetoes hardware features, so `git pull` never conflicts with local changes.
 *   **Explicit support matrix:** the playbook stops right away on an unsupported distribution or version.

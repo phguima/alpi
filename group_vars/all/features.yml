@@ -29,8 +29,3 @@ feature_packages:
   amd: [mesa-va-drivers-freeworld, libva-utils, vdpauinfo]
   nvidia: [nvidia-driver, nvidia-build, nvidia-vulkan, nvidia-vaapi]
 
-# What the picker shows for features that install no catalog packages (the others list theirs)
-feature_descriptions:
-  claude_code: Claude Code CLI (native installer, ~/.local/bin/claude)
-  antigravity_cli: Antigravity CLI (native installer, ~/.local/bin/agy)
-  antigravity_ide: Antigravity IDE (AppImage in ~/wks/tools/antigravity, menu entry)
