@@ -12,8 +12,8 @@
 set -u
 cd "$(dirname "$0")/.." || exit 1
 
-QUICK=(catalog failures services asus secureboot common unsupported boot memory user upstream)
-FULL=(catalog failures services asus secureboot common unsupported update boot memory user upstream el10-work fedora44-personal bootstrap)
+QUICK=(catalog failures flags services asus secureboot common unsupported boot memory user upstream)
+FULL=(catalog failures flags services asus secureboot common unsupported update boot memory user upstream el10-work fedora44-personal bootstrap)
 
 case "${1:-quick}" in
     quick) scenarios=("${QUICK[@]}") ;;

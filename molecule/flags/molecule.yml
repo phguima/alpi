@@ -1,0 +1,17 @@
+---
+# Hardware flags given on the command line as key=value (`-e is_nvidia=true`) arrive as strings
+# and win over env_setup's set_fact. "true" must turn NVIDIA on (and `when: is_nvidia` must not
+# trip ansible-core 2.19+'s string conditionals); "false" must keep ASUS, Intel and AMD off
+# (bool("false") is True). Resolution only (env_setup), nothing installed.
+platforms:
+  - name: alpi-flags-fedora44
+    image: registry.fedoraproject.org/fedora:44
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-flags-fedora44:/var/cache/libdnf5"]
+provisioner:
+  options:
+    # key=value on purpose (strings), not the JSON booleans of the base config
+    extra-vars: "is_nvidia=true is_asus=false is_intel=false is_amd=false"
+  playbooks:
+    converge: converge.yml

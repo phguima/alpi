@@ -1,0 +1,22 @@
+---
+- name: Verify | Hardware flags given as key=value
+  hosts: all
+  tasks:
+    - name: Verify | Resolve again
+      ansible.builtin.include_tasks: ../../tasks/env_setup.yml
+
+    - name: Verify | "true" turns NVIDIA on, "false" keeps the others off
+      ansible.builtin.assert:
+        that:
+          - is_nvidia is string
+          - alpi_feature.nvidia is true
+          - alpi_feature.asus is false
+          - alpi_feature.intel is false
+          - alpi_feature.amd is false
+          - nvidia_smi_check_raw is not skipped
+          - "'akmod-nvidia' in alpi_pkgs.native"
+          - "'asusctl' not in alpi_pkgs.native"
+        fail_msg: >-
+          is_nvidia={{ is_nvidia | string }} ({{ is_nvidia | type_debug }}),
+          features={{ alpi_feature }}, native={{ alpi_pkgs.native }}
+        quiet: true

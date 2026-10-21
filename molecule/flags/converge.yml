@@ -1,0 +1,6 @@
+---
+- name: Flags | Resolution with the hardware flags as strings
+  hosts: all
+  tasks:
+    - name: Flags | Environment setup
+      ansible.builtin.import_tasks: ../../tasks/env_setup.yml

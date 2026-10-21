@@ -240,7 +240,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `host_vars/<instance>/{custom,selection}.yml`, like a real machine, and check that both
     files' layers apply), `failures` (every validation must fail with its message,
     `shared/expect_failure.yml`; Fedora + Alma; a case's `upstream_sources` goes through
-    set_fact, saved and restored), `unsupported` (Debian 13), `upstream` (`roles/upstream` on
+    set_fact, saved and restored), `flags` (env_setup on Fedora 44 with the hardware flags as
+    key=value extra vars, i.e. strings: `is_nvidia=true` turns NVIDIA on, `=false` keeps the
+    others off), `unsupported` (Debian 13), `upstream` (`roles/upstream` on
     AlmaLinux 10 against a stand-in GitHub served by `http.server` on 127.0.0.1:8766: install v1,
     `side_effect.yml` publishes v2 and runs again (Molecule's side_effect step, added to the
     scenario's test_sequence), GitHub unreachable keeps v0, `packages_absent` removes it;
