@@ -41,7 +41,7 @@
           - is_secure_boot and not alpi_feature.nvidia
           - _akmods_key and not _oracle_key and not _nvidia_conf
           - _imports == ['--import /etc/pki/akmods/certs/public_key.der']
-          - "'password: test-mok-pw / test-mok-pw' in _mok_log.stdout_lines"
+          - "'password: fedora-alpi / fedora-alpi' in _mok_log.stdout_lines"
         fail_msg: "mokutil log: {{ _mok_log.stdout_lines | default([]) }}"
         quiet: true
       when: inventory_hostname == 'alpi-sb-fedora44'
@@ -61,7 +61,7 @@
           - is_secure_boot
           - _oracle_key and _oracle_priv_mode == '0600' and not _akmods_key and not _nvidia_conf
           - _imports == ['--import /var/lib/shim-signed/mok/MOK.der']
-          - "'password: test-mok-pw / test-mok-pw' in _mok_log.stdout_lines"
+          - "'password: alma-alpi / alma-alpi' in _mok_log.stdout_lines"
         fail_msg: "mokutil log: {{ _mok_log.stdout_lines | default([]) }}"
         quiet: true
       when: inventory_hostname == 'alpi-sb-el10'

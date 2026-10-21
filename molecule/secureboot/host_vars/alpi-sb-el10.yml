@@ -1,2 +1,2 @@
 ---
-mok_password: test-mok-pw
+# The distro's default mok_password (group_vars/os_AlmaLinux_10)

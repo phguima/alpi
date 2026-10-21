@@ -2,6 +2,9 @@
 alpi_catalog_keys: [fedora, all]
 packages_os: [multimedia]
 
+# MOK enrollment password (see group_vars/all/secureboot.yml)
+mok_password: "fedora-alpi"
+
 # dnf5's needs-restarting says whether to reboot by default
 zsh_aliases_os: |
   alias full-update="flatpak update -y; sudo npm update -g; sudo dnf upgrade --refresh -y; dnf needs-restarting"

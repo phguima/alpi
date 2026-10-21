@@ -6,7 +6,7 @@
 - name: MOK | Require mok_password
   ansible.builtin.assert:
     that: mok_password is defined and mok_password | length > 0
-    fail_msg: "Secure Boot is enabled: set mok_password (group_vars/all/secureboot.yml or custom.yml)."
+    fail_msg: "Secure Boot is enabled: set mok_password (group_vars/os_<distro> or custom.yml)."
     quiet: true
 
 # "is already enrolled" / "is already in the enrollment request" -> nothing to do

@@ -110,7 +110,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   `zram_apply`.
 - `roles/akmods_mok` (before `packages`): Secure Boot signing key + MOK enrollment request, only
   when Secure Boot is on and an `akmod-*` package was resolved (akmods signs at build time, so the
-  key must exist first). `mok_password` in `group_vars/all/secureboot.yml`. `tasks/enroll.yml`
+  key must exist first). `mok_password` per distro (`fedora-alpi` in `group_vars/os_Fedora`,
+  `alma-alpi` in `group_vars/os_AlmaLinux_10`; notes in `group_vars/all/secureboot.yml`). `tasks/enroll.yml`
   (MOK enrollment of one key) is shared with `roles/virtualbox`.
 - `roles/virtualbox` (before `packages`): on a non-akmod build (Oracle, EL) with Secure Boot, its
   own key in `/var/lib/shim-signed/mok` (vboxdrv.sh signs with it); `vboxusers`/`vboxsf` groups.

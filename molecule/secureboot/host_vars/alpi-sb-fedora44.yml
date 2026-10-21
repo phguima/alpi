@@ -1,4 +1,4 @@
 ---
-mok_password: test-mok-pw
+# The distro's default mok_password (group_vars/os_Fedora)
 # NVIDIA vetoed: the akmods key must come from akmod-VirtualBox alone
 features: {nvidia: false}

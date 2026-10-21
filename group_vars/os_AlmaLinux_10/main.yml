@@ -3,6 +3,9 @@ alpi_catalog_keys: [el10, el, all]
 # LibreOffice was dropped from EL10 (Flathub there, see the catalog)
 packages_os: [libreoffice]
 
+# MOK enrollment password (see group_vars/all/secureboot.yml)
+mok_password: "alma-alpi"
+
 # dnf4: without -r, needs-restarting lists processes instead of saying whether to reboot
 zsh_aliases_os: |
   alias full-update="flatpak update -y; sudo npm update -g; sudo dnf upgrade --refresh -y; dnf needs-restarting -r"

@@ -1,6 +1,7 @@
 ---
 # MOK enrollment password, used only with Secure Boot (roles/akmods_mok signs the akmod-built
 # modules, e.g. NVIDIA). One-time: typed once in the blue MokManager screen on the next boot.
-# MokManager uses a US keyboard layout, so stick to plain letters, digits and '-'. Override it in
+# MokManager uses a US keyboard layout, so stick to plain letters, digits and '-'. Set per distro,
+# so the screen's password names the system being installed: mok_password is "fedora-alpi" in
+# group_vars/os_Fedora and "alma-alpi" in group_vars/os_AlmaLinux_10. Override it in
 # host_vars/127.0.0.1/custom.yml.
-mok_password: "fedora-alpi"

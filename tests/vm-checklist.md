@@ -77,8 +77,8 @@ ansible-playbook site.yml -K 2>&1 | tee run1.log
 - [ ] Ends with `failed=0`. The MOK reminder appears (Fedora: label `akmods`; EL: the VirtualBox
       key), and on Fedora the NVIDIA "REBOOT is REQUIRED" message. 📸 the recap and the messages.
 - [ ] `sudo mokutil --list-new` lists the pending key.
-- [ ] Reboot → blue MokManager → **Enroll MOK** → Continue → password (`fedora-alpi` unless you
-      changed `mok_password`) → Reboot. 📸 (phone photo) if anything looks off.
+- [ ] Reboot → blue MokManager → **Enroll MOK** → Continue → password (`fedora-alpi` on Fedora,
+      `alma-alpi` on AlmaLinux, unless you changed `mok_password`) → Reboot. 📸 (phone photo) if anything looks off.
 - [ ] Key enrolled:
       - Fedora: `sudo mokutil --test-key /etc/pki/akmods/certs/public_key.der` → "is already enrolled".
       - EL: `sudo mokutil --test-key /var/lib/shim-signed/mok/MOK.der` → "is already enrolled".
