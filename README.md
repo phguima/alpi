@@ -21,12 +21,18 @@ ALPI is a single Ansible post-install for Linux workstations. It detects the run
 ## 🚀 Usage
 
 ```bash
+git clone https://github.com/phguima/alpi && cd alpi
+./update.sh                                      # the latest release (run it again before each update)
 ./bootstrap.sh                                   # installs Ansible, asks hostname/git identity, runs the picker
 ./pick.py                                        # optional: change the package/feature choice later
 cp custom.yml.example host_vars/127.0.0.1/custom.yml   # optional: packages outside the catalog, vetoes
 ansible-playbook site.yml -K --tags resolve      # preview: prints what would be installed
 ansible-playbook site.yml -K
 ```
+
+### Releases
+
+Real machines run releases: `v*` tags, each cut from `main` after the full test suite passes. `./update.sh` puts the clone on the newest one; `./update.sh main` follows the development line instead (the latest commits, tested in containers but not yet released). Your settings in `host_vars/` are git-ignored, so switching keeps them.
 
 ## 🔐 API keys (optional)
 

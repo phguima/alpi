@@ -190,6 +190,11 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - Start with `git fetch` + `git pull --ff-only`: the user also commits from other machines.
 - Commit and push **only when the user asks**. Commits in English, Conventional Commits with scope
   (`feat(apps): …`, `docs(todo): …`).
+- One branch, `main` (the development line); releases are annotated `vX.Y.Z` tags on it, which
+  real machines follow through `./update.sh` (newest `v*` tag by version; `./update.sh main` for
+  the latest commits). Tag only after `tests/run.sh full` passes on that exact commit; VM tests
+  are not required per release (yet). Minor version for features, patch for fixes. Tests of
+  `update.sh`: `tests/unit/test_update_sh.py` (throwaway origin and clone in `tmp_path`).
 
 ## Tests — Molecule (mandatory)
 

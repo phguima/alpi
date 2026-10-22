@@ -47,6 +47,9 @@ mkvm el10-kde-alpi Oracle10_64 "$HOME/Downloads/AlmaLinux-10-latest-x86_64-KDE.i
 sudo dnf install -y git && git clone https://github.com/phguima/alpi && cd alpi && ./bootstrap.sh
 ```
 
+The clone stays on `main`: the VMs test what is not released yet. A real machine runs
+`./update.sh` first (the latest release).
+
 - [ ] Installs `ansible-core`, `pciutils`, PyYAML, whiptail and `community.general` (11.x on EL)
       without errors.
 - [ ] Asks the hostname (give a **new** one, e.g. `fedora-alpi` / `alma-alpi` / `alma-kde-alpi`) and the git
