@@ -123,7 +123,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   feature flag alone.
 - `roles/zsh`: Oh My Zsh, theme (`files/kali-like-alt.zsh-theme`), plugins, login shell and the
   managed aliases block for `zsh_users` (root + the user); only when `zsh` is selected. Alias
-  layers in `group_vars/all/zsh.yml` (common for root; user, `zsh_aliases_os` per distro,
+  layers in `group_vars/all/zsh.yml` (common for root; user, `zsh_aliases_os` per distro (its
+  `full-update` runs `zsh_full_update_tools`: each update in `zsh_full_update_cmds` (npm, claude,
+  agy) whose command is in `PATH` when it runs),
   `zsh_aliases_nvidia` when `nvidia-driver` is selected, and the machine's `luks_volumes` +
   `zsh_aliases_custom` from `custom.yml` for the user), joined in a double-quoted scalar: in a
   folded one (`>-`) `join('\n')` gets a literal backslash-n. API keys block (`api_keys`, from the

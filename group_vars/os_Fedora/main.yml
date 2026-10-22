@@ -5,9 +5,9 @@ packages_os: [multimedia]
 # MOK enrollment password (see group_vars/all/secureboot.yml)
 mok_password: "fedora-alpi"
 
-# dnf5's needs-restarting says whether to reboot by default
+# dnf5's needs-restarting says whether to reboot by default (-r is accepted but does nothing)
 zsh_aliases_os: |
-  alias full-update="flatpak update -y; sudo npm update -g; sudo dnf upgrade --refresh -y; dnf needs-restarting"
+  alias full-update="flatpak update -y; {{ zsh_full_update_tools }}sudo dnf upgrade --refresh -y; dnf needs-restarting"
 
 # DNF plugins (config-manager, copr, needs-restarting), installed first by roles/repos
 alpi_dnf_plugins: [dnf-plugins-core, dnf5-plugins]

@@ -118,6 +118,39 @@
       vars:
         _user: "{{ _zshrc.results[1].stdout }}"
 
+    # Checked when it runs, not at install time: the same alias everywhere (KDE has no Claude Code)
+    - name: Verify | full-update runs each updater when its command is in PATH
+      ansible.builtin.assert:
+        that:
+          - _line | length == 1
+          - _line[0].startswith(_expected)
+        fail_msg: "{{ _line }}"
+        quiet: true
+      vars:
+        _line: "{{ _zshrc.results[1].stdout_lines | select('match', '^alias full-update=') | list }}"
+        _expected: >-
+          alias full-update="flatpak update -y; command -v npm >/dev/null && sudo npm update -g;
+          command -v claude >/dev/null && claude update; command -v agy >/dev/null && agy update;
+          sudo dnf upgrade
+
+    # The guards as the alias runs them, in alpi's zsh (PATH pinned to the user's ~/.local/bin):
+    # on KDE the stand-in agy runs, the missing npm and claude are skipped without stopping the chain
+    - name: Verify | Run the alias's updaters as alpi on KDE
+      ansible.builtin.command:
+        argv: [sudo, -u, alpi, env, "PATH=/home/alpi/.local/bin:/usr/bin:/bin", zsh, -fc,
+               "{{ zsh_full_update_tools }}echo done"]
+      register: _fu
+      changed_when: false
+      when: _desktop == 'KDE'
+
+    - name: Verify | agy updated, npm and claude skipped, the chain went on
+      ansible.builtin.assert:
+        that:
+          - _fu.stdout_lines == ['agy stand-in', 'done']
+        fail_msg: "{{ _fu.stdout_lines }} {{ _fu.stderr }}"
+        quiet: true
+      when: _desktop == 'KDE'
+
 - name: Verify | roles/ai_tools, for alpi only
   hosts: all
   gather_facts: false

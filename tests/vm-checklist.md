@@ -117,7 +117,7 @@ ansible-playbook site.yml -K 2>&1 | tee run2.log
       the GNOME ones).
 - [ ] **Fonts (EL):** `cat /usr/local/share/fonts/roboto/.version`; `fc-list : family | grep -c '^Roboto'`.
 - [ ] **Shell** (new login): `echo $SHELL` → zsh; kali-like-alt prompt; `alias | grep -E
-      'full-update|claudecli'`; EL: `full-update` ends with `needs-restarting -r`; Fedora:
+      'full-update|claudecli'`; `full-update` runs npm's, `claude`'s and `agy`'s updates (each guarded by `command -v`) before dnf; EL: it ends with `needs-restarting -r`; Fedora:
       `nvidia-run` alias present. 📸
 - [ ] **Terminal:** Fedora: Konsole opens with the kali-like-alt profile. EL: **Ptyxis** opens at
       120x35, underline cursor, Fira Code 10, opacity 0.95. 📸 each.

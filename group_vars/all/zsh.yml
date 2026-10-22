@@ -31,6 +31,15 @@ zsh_aliases_user: |
   alias code='code {{ cedilla_ozone_flag }}'
   {% endif %}
 
+# Updaters that full-update (zsh_aliases_os) runs between Flatpak and dnf, in this order: command
+# -> its update, each only when the command is in PATH at that moment (installed by ALPI or not,
+# removed later; nodejs can be skipped). The Antigravity IDE has no updater outside the app.
+zsh_full_update_cmds:
+  npm: sudo npm update -g
+  claude: claude update
+  agy: agy update
+zsh_full_update_tools: "{% for cmd, update in zsh_full_update_cmds.items() %}command -v {{ cmd }} >/dev/null && {{ update }}; {% endfor %}"
+
 zsh_aliases_nvidia: |
   alias nvidia-run="{{ nvidia_prime_env }}"
 
