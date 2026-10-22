@@ -29,16 +29,6 @@ scenarios / unit tests (see `CLAUDE.md`).
 - [ ] Debian 13.
 - [ ] Ubuntu 26.04 LTS.
 
-## 6. Swap (zram)
-
-- [x] `roles/memory`: zram through zram-generator on Fedora and EL, decided from the machine's
-      swap, zswap and zram-generator setup; hibernation reminder (`feat(memory): swap on zram,
-      decided from the machine's current swap`).
-- [ ] On the AlmaLinux 10 work machine (no swap on 2026-10-14) and on noir (Fedora's zram0): the
-      `zram_apply` steps containers skip. After a run, `zramctl` shows zram0 (zstd or lzo-rle,
-      min(RAM, 8 GiB)), `swapon --show` gives it priority 100 and `sysctl vm.swappiness
-      vm.page-cluster` says 180 and 0; a second run reports no changes.
-
 ## Maintenance
 
 - [ ] After upgrading Molecule (and with it the venv's `ansible-core`, which `tests/run.sh`
