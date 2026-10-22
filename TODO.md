@@ -6,9 +6,12 @@ scenarios / unit tests (see `CLAUDE.md`).
 
 ## 4. Parity
 
-- [ ] Golden test: resolved sets per (distro, DE) compared with AFPI and AAPI.
-- [ ] `fedora:44` and `almalinux:10` containers, twice (idempotency).
-- [ ] VM with EFI + Secure Boot, steps in `tests/vm-checklist.md` (also: the transient hostname, which containers cannot change; the
+- [x] Golden test: resolved sets per (distro, DE) compared with AFPI and AAPI (reviewed
+      golden values in the `catalog` scenario; confirmed 2026-10-22).
+- [x] `fedora:44` and `almalinux:10` containers, twice (idempotency): Molecule's idempotence
+      step in every scenario; `tests/run.sh full` green on 2026-10-21.
+- [x] VM with EFI + Secure Boot, steps in `tests/vm-checklist.md` (Fedora 44 GNOME and KDE,
+      AlmaLinux 10 GNOME and KDE, all ok on 2026-10-21/22) (also: the transient hostname, which containers cannot change; the
       NVIDIA akmod build, `dracut` and MOK enrollment, which containers only fake; `e` on a GRUB
       entry shows `set gfxpayload=keep` without `GRUB_GFXPAYLOAD`).
 - [ ] On noir: does Steam run on the NVIDIA GPU from its own launcher (`PrefersNonDefaultGPU`,
@@ -19,7 +22,7 @@ scenarios / unit tests (see `CLAUDE.md`).
       (`cedilla_xwayland: auto`, KWin < 6.7; EL10 has 6.6.4, the version Fedora 44 shipped with)
       and undone when it no longer applies (`c254add`); decided again after `roles/update`'s
       upgrade (`feat(desktop): decide the cedilla workaround again after the upgrade`).
-- [ ] Freeze AAPI and AFPI with a README pointing to ALPI.
+- [x] Freeze AAPI and AFPI with a README pointing to ALPI (2026-10-22).
 
 ## 5. New distros (after parity, only with a test VM)
 
