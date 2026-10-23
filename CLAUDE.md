@@ -219,9 +219,14 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   reboot) stay in the user's VM.
 - ALPI setup (2026-10-05):
   - Run with `tests/run.sh quick` while working (no real installs, a few minutes), `tests/run.sh
-    full` before a commit, or `tests/run.sh <scenario>…`: pytest first, then one scenario at a
-    time (a failure does not stop the rest), logs in `~/.cache/alpi-molecule/logs/`, timed summary.
-    Speed-ups: each container has its own dnf cache volume (`alpi-dnf-<instance>`, `keepcache`,
+    full` before a commit, or `tests/run.sh <scenario>…`: pytest first, then the scenarios
+    `ALPI_JOBS` at a time (default 4, longest first; `ALPI_JOBS=1` for one at a time; a failure
+    does not stop the rest), logs in `~/.cache/alpi-molecule/logs/`, timed summary. Scenarios run
+    side by side because they share nothing: their own container names, dnf volumes and network
+    namespaces (the stand-in servers on 127.0.0.1 do not clash); keep it that way (no host
+    network, no fixed host ports, no shared files on the controller other than the per-spec
+    collections cache). Speed-ups: pipelining (`config_options` in `.config/molecule/config.yml`:
+    Molecule writes its own `ansible.cfg`, so the repo's is never read in the scenarios); each container has its own dnf cache volume (`alpi-dnf-<instance>`, `keepcache`,
     set in `shared/prepare.yml`); collections come from `~/.cache/alpi-molecule/collections`
     (`shared/collections.yml`, downloaded once on the controller) instead of Galaxy. Cleanup:
     `podman volume rm $(podman volume ls -q --filter name=alpi-dnf-); rm -rf ~/.cache/alpi-molecule`.

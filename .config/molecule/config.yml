@@ -5,6 +5,13 @@ driver:
   name: podman
 provisioner:
   name: ansible
+  # Molecule writes its own ansible.cfg (ANSIBLE_CONFIG), so the repo's is not read here, and its
+  # pipelining sits under [ssh_connection], which the podman connection ignores. Pipelining sends
+  # each module through podman exec's stdin instead of copying it in first: about a third faster
+  # (memory: 3m25s -> 2m15s, 2026-10-23).
+  config_options:
+    connection:
+      pipelining: true
   options:
     # Hardware is pinned, never detected: lspci in a rootless container sees the host's PCI
     # devices once pciutils gets installed. Extra vars win over set_fact. A scenario that sets its
