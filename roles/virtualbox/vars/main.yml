@@ -5,3 +5,5 @@ virtualbox_selected: "{{ (alpi_pkgs.native + alpi_pkgs_extra.native) | select('m
 virtualbox_akmod: "{{ 'akmod-VirtualBox' in (alpi_pkgs.native + alpi_pkgs_extra.native) }}"
 # Oracle's vboxdrv.sh signs its modules with this key pair when Secure Boot is on
 virtualbox_mok_dir: /var/lib/shim-signed/mok
+# kvm module options for VirtualBox (VT-x sharing); removed when VirtualBox is not selected
+virtualbox_kvm_conf: /etc/modprobe.d/alpi-kvm.conf

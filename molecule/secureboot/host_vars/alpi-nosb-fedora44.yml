@@ -1,2 +1,4 @@
 ---
 mok_password: test-mok-pw
+# VirtualBox off: prepare plants a stale kvm setting, which the role must remove
+features: {virtualbox: false}

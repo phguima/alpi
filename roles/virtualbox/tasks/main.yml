@@ -59,3 +59,40 @@
         groups: [vboxusers, vboxsf]
         append: true
       when: user_name != 'root'
+
+    # Since kernel 6.12 kvm turns VT-x/AMD-V on when it loads (enable_virt_at_load=Y), even with
+    # no KVM guest, and VirtualBox then fails (VERR_VMX_IN_VMX_ROOT_MODE, VERR_SVM_IN_USE on AMD).
+    # With 0, KVM still works and holds it only while a guest runs. VirtualBox 7.2 shares VT-x
+    # with KVM only on kernels 6.16+ (not EL10's 6.12) and not AMD-V, so it is set everywhere.
+    # Installed systems have /etc/modprobe.d (kmod); a minimal one may not yet.
+    - name: VirtualBox | Ensure /etc/modprobe.d exists
+      ansible.builtin.file:
+        path: "{{ virtualbox_kvm_conf | dirname }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: VirtualBox | Let kvm leave VMX off until a KVM guest runs
+      ansible.builtin.copy:
+        dest: "{{ virtualbox_kvm_conf }}"
+        content: |
+          # Managed by ALPI (roles/virtualbox): VirtualBox and KVM share VT-x
+          options kvm enable_virt_at_load=0
+        owner: root
+        group: root
+        mode: '0644'
+      register: _virtualbox_kvm_conf
+
+    - name: VirtualBox | Note when the kvm setting applies
+      ansible.builtin.debug:
+        msg: >-
+          {{ virtualbox_kvm_conf }} applies when kvm is next loaded: reboot, or with no KVM guest
+          running, 'sudo modprobe -r kvm_intel kvm'.
+      when: _virtualbox_kvm_conf is changed
+
+- name: VirtualBox | Remove the kvm setting
+  ansible.builtin.file:
+    path: "{{ virtualbox_kvm_conf }}"
+    state: absent
+  when: not virtualbox_selected

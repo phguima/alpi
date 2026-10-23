@@ -12,3 +12,18 @@
         src: files/mokutil
         dest: /usr/local/bin/mokutil
         mode: "0755"
+
+    - name: Prepare | Plant a stale kvm setting where VirtualBox is off
+      when: inventory_hostname == 'alpi-nosb-fedora44'
+      block:
+        - name: Prepare | Create /etc/modprobe.d
+          ansible.builtin.file:
+            path: /etc/modprobe.d
+            state: directory
+            mode: "0755"
+
+        - name: Prepare | Write the stale kvm setting
+          ansible.builtin.copy:
+            content: "options kvm enable_virt_at_load=0\n"
+            dest: /etc/modprobe.d/alpi-kvm.conf
+            mode: "0644"

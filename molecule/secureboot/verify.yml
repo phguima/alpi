@@ -1,5 +1,5 @@
 ---
-- name: Verify | Module signing keys, VirtualBox groups, NVIDIA settings
+- name: Verify | Module signing keys, VirtualBox groups and kvm setting, NVIDIA settings
   hosts: all
   tasks:
     - name: Verify | Resolve again
@@ -13,7 +13,14 @@
         - /etc/pki/akmods/certs/public_key.der
         - /var/lib/shim-signed/mok/MOK.der
         - /var/lib/shim-signed/mok/MOK.priv
+        - /etc/modprobe.d/alpi-kvm.conf
       register: _files
+
+    - name: Verify | Read the kvm setting
+      ansible.builtin.slurp:
+        src: /etc/modprobe.d/alpi-kvm.conf
+      register: _kvm_conf
+      when: _files.results[4].stat.exists
 
     - name: Verify | Read the fake mokutil log
       ansible.builtin.command: cat /var/log/fake-mokutil.log
@@ -26,6 +33,7 @@
         database: group
         key: "{{ item }}"
       loop: [vboxusers, vboxsf]
+      when: inventory_hostname != 'alpi-nosb-fedora44'
 
     - name: Verify | Set the results
       ansible.builtin.set_fact:
@@ -34,6 +42,15 @@
         _oracle_key: "{{ _files.results[2].stat.exists }}"
         _oracle_priv_mode: "{{ _files.results[3].stat.mode | default('') }}"
         _imports: "{{ _mok_log.stdout_lines | default([]) | select('match', '--import ') | list }}"
+        _kvm_options: "{{ (_kvm_conf.content | default('') | b64decode).splitlines() | select('match', 'options ') | list }}"
+
+    - name: Verify | kvm leaves VMX off where VirtualBox is on, setting removed where it is off
+      ansible.builtin.assert:
+        that: >-
+          _kvm_options == ['options kvm enable_virt_at_load=0']
+          if inventory_hostname != 'alpi-nosb-fedora44' else not _files.results[4].stat.exists
+        fail_msg: "alpi-kvm.conf options: {{ _kvm_options }}"
+        quiet: true
 
     - name: Verify | Secure Boot on Fedora, NVIDIA vetoed - akmods key from akmod-VirtualBox
       ansible.builtin.assert:

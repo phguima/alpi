@@ -114,7 +114,11 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   `alma-alpi` in `group_vars/os_AlmaLinux_10`; notes in `group_vars/all/secureboot.yml`). `tasks/enroll.yml`
   (MOK enrollment of one key) is shared with `roles/virtualbox`.
 - `roles/virtualbox` (before `packages`): on a non-akmod build (Oracle, EL) with Secure Boot, its
-  own key in `/var/lib/shim-signed/mok` (vboxdrv.sh signs with it); `vboxusers`/`vboxsf` groups.
+  own key in `/var/lib/shim-signed/mok` (vboxdrv.sh signs with it); `vboxusers`/`vboxsf` groups;
+  `/etc/modprobe.d/alpi-kvm.conf` (`options kvm enable_virt_at_load=0`: since kernel 6.12 kvm
+  holds VT-x/AMD-V from load and VirtualBox fails with `VERR_VMX_IN_VMX_ROOT_MODE`; VirtualBox
+  7.2 shares VT-x with KVM only on kernels 6.16+, so Fedora on Intel does not need it, but EL10
+  (6.12) and AMD hosts do; set on every distro), removed when VirtualBox is not selected.
 - `roles/clamav` (after `packages`): enables `clamav-freshclam.service` only when the
   `clamav-freshclam` catalog id was resolved (feature on, not skipped). Gate service roles on the
   resolved ids, never on the feature flag alone.
@@ -263,7 +267,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `roles/common` on `almalinux/10-init` with systemd: static hostname via hostnamectl, git),
     `secureboot` (env_setup + `akmods_mok`, `virtualbox`, `nvidia`, nothing downloaded; Secure Boot
     detected from a fake EFI variable mounted over `/sys/firmware`: Fedora with Secure Boot and
-    NVIDIA vetoed, Fedora without, EL with; fake `mokutil` in `files/`, real `kmodgenca`/openssl),
+    NVIDIA vetoed, Fedora without (and VirtualBox off: a stale `alpi-kvm.conf` removed), EL with;
+    fake `mokutil` in `files/`, real `kmodgenca`/openssl),
     `services` (env_setup + service roles on `almalinux/10-init` with systemd; prepare installs
     the packages: freshclam enabled and running, and skipped cleanly when its id is skipped),
     `asus` (env_setup + `roles/asus` on Fedora 44 with systemd, built from the scenario's
