@@ -158,7 +158,7 @@ aliases:  {p7zip: 7zip}                  # renamed ids still resolve
 ```yaml
 # host_vars/127.0.0.1/custom.yml
 features:      {virtualbox: false, clamav: false}
-packages_add:  [vim, "rpm:sqlitebrowser", "flatpak:org.gimp.GIMP"]   # prefix = raw name, bypasses the catalog
+packages_add:  [vim, "pkg:sqlitebrowser", "flatpak:org.gimp.GIMP"]   # prefix = raw name, bypasses the catalog
 packages_skip: [discord]
 packages_absent: [akregator]   # explicit uninstall (see Removal)
 ```
@@ -377,8 +377,8 @@ Checked in `debian:13` and `ubuntu:26.04` containers on 2026-10-24: NVIDIA, Virt
 2. **Catalog keys `rpm` and `deb`.** Many `all:` entries are RPM names (`ImageMagick`,
    `lm_sensors`, `gstreamer1-*`…); `all` keeps only names that match everywhere. Key order:
    Fedora `fedora, rpm, all`; AlmaLinux 10 `el10, el, rpm, all`; Debian 13
-   `debian13, debian, deb, all`; Ubuntu 26.04 `ubuntu2604, ubuntu, deb, all`. The `rpm:` raw-name
-   prefix in this file's custom.yml example becomes `native:`.
+   `debian13, debian, deb, all`; Ubuntu 26.04 `ubuntu2604, ubuntu, deb, all`. The example's `rpm:`
+   raw-name prefix in "User file" was a slip for `pkg:`, the prefix the code reads (fixed).
 3. **VirtualBox from Oracle's apt repository on both** (`download.virtualbox.org/virtualbox/debian`,
    suites `trixie` and `resolute`, `virtualbox-7.2`), signed by `vboxdrv.sh` with the key in
    `/var/lib/shim-signed/mok`: the code path EL already uses. Debian 13 has no VirtualBox package;

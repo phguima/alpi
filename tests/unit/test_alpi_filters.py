@@ -33,10 +33,13 @@ CATALOG = {
     # swap per distro: a replacement on one distro only (apt replaces through package metadata)
     "swap_fedora_only": {"fedora": {"native": "ffmpeg", "swap": True}, "el": "ffmpeg"},
     "swap_not_on_el": {"all": "libfoo", "el": {"native": "libfoo", "swap": False}, "swap": True},
+    # RPM names under 'rpm', names every distro shares under 'all'
+    "sensors": {"rpm": "lm_sensors", "all": "lm-sensors"},
 }
 ALIASES = {"p7zip": "7zip"}
-FEDORA = ["fedora", "all"]
-EL10 = ["el10", "el", "all"]
+FEDORA = ["fedora", "rpm", "all"]
+EL10 = ["el10", "el", "rpm", "all"]
+DEBIAN13 = ["debian13", "debian", "deb", "all"]
 
 
 def resolve(ids, keys):
@@ -47,6 +50,11 @@ class TestResolve:
     def test_native_names_per_distro(self):
         assert resolve(["git", "vim"], FEDORA)["native"] == ["git", "vim"]
         assert resolve(["git", "vim"], EL10)["native"] == ["git", "vim-enhanced"]
+
+    def test_rpm_key_before_all(self):
+        assert resolve(["sensors"], FEDORA)["native"] == ["lm_sensors"]
+        assert resolve(["sensors"], EL10)["native"] == ["lm_sensors"]
+        assert resolve(["sensors"], DEBIAN13)["native"] == ["lm-sensors"]
 
     def test_list_values_expand(self):
         assert resolve(["7zip"], EL10)["native"] == ["7zip", "7zip-standalone"]

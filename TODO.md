@@ -27,9 +27,6 @@ container or VM before code relies on them. Consequences to keep in mind:
 
 ### Phase 1 — prerequisites (no apt distro enabled; Fedora/EL golden values must not move)
 
-- [ ] **Catalog `rpm` key**, a pure rename on Fedora/EL, checked by the golden values. PROPOSAL's
-      custom.yml example (`"rpm:sqlitebrowser"`, line 161) uses `rpm:` as a raw-name prefix: rename
-      it there (`native:`) so it is not confused with the key.
 - [ ] **Support matrix:** an entry may give `version:` (exact) instead of `min`/`max`; the assert and
       its `fail_msg` (which renders `v.min`/`v.max`) handle both; `unsupported` and `failures`
       expectations follow.

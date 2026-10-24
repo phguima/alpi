@@ -188,7 +188,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   `roles/packages/tasks/check.yml` (`alpi_upstream_missing`: a 404 or no matching asset fails,
   no answer only warns). Installed by root, so it runs for root-only runs too.
 - Catalog values per distro may be `{native: …, repo: …}`: a repository only that distro needs
-  (Oracle VirtualBox on EL).
+  (Oracle VirtualBox on EL). Catalog keys (`alpi_catalog_keys` per distro): Fedora
+  `fedora, rpm, all`, EL `el10, el, rpm, all`; `rpm` holds RPM names both share, `all` only
+  names that also exist on Debian and Ubuntu (check a new `all:` name there).
 - `roles/nvidia` (after `packages`): `/etc/modprobe.d/nvidia.conf`; akmods rebuild + `dracut` only
   when no module exists for the running kernel. Runs only when the `nvidia-driver` id is selected
   (NVIDIA detected, Fedora, not skipped).

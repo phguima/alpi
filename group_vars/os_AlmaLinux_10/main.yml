@@ -1,5 +1,5 @@
 ---
-alpi_catalog_keys: [el10, el, all]
+alpi_catalog_keys: [el10, el, rpm, all]
 # LibreOffice was dropped from EL10 (Flathub there, see the catalog)
 packages_os: [libreoffice]
 

@@ -1,7 +1,9 @@
 ---
 # Package catalog: logical id -> what to install on each distro.
 # Keys are tried in the order of alpi_catalog_keys (group_vars/os_*), most specific first:
-#   Fedora: fedora, all        AlmaLinux 10: el10, el, all
+#   Fedora: fedora, rpm, all        AlmaLinux 10: el10, el, rpm, all
+# 'rpm' holds the RPM names Fedora and EL share; 'all' only names that exist on every distro,
+# Debian and Ubuntu included (checked in debian:13 and ubuntu:26.04 on 2026-10-24).
 # Values: a native package name, a list of names, {flatpak: <app id>}, {pipx: <PyPI spec>} (a
 # Python app installed for the user by roles/pipx; extras allowed: "markitdown[all]"),
 # {upstream: <source id>} (from the vendor's own releases, group_vars/all/upstream.yml), or ~
@@ -23,20 +25,20 @@ alpi_catalog:
   git:           {all: git}
   htop:          {all: htop}
   hwinfo:        {all: hwinfo}
-  imagemagick:   {all: ImageMagick}                 # EPEL on EL
-  lm-sensors:    {all: lm_sensors}
+  imagemagick:   {rpm: ImageMagick}                 # EPEL on EL
+  lm-sensors:    {rpm: lm_sensors}
   nodejs:        {all: nodejs}
   nvtop:         {all: nvtop}
   pipx:          {all: pipx}
   potrace:       {all: potrace}                     # EPEL on EL
   python3-pip:   {all: python3-pip}
-  shellcheck:    {all: ShellCheck}
+  shellcheck:    {rpm: ShellCheck}
   testdisk:      {all: testdisk}
   tmux:          {all: tmux}
   tuptime:       {all: tuptime}
   unrar:         {all: unrar}
   unzip:         {all: unzip}
-  uv:            {all: uv}
+  uv:            {rpm: uv}
   vim:           {fedora: vim, el: vim-enhanced}
   zsh:           {all: zsh}
 
@@ -52,7 +54,7 @@ alpi_catalog:
   argyllcms:     {fedora: argyllcms, el: ~}
   brave:         {all: [brave-browser, brave-origin], repo: brave-browser}
   chromium:      {all: chromium}
-  discord:       {all: discord}                   # RPM Fusion nonfree
+  discord:       {rpm: discord}                   # RPM Fusion nonfree
   drawy:         {fedora: drawy, el: {flatpak: org.kde.drawy}}
   gh:            {all: gh, repo: gh-cli}
   inkscape:      {fedora: inkscape, el: {flatpak: org.inkscape.Inkscape}}
@@ -94,14 +96,14 @@ alpi_catalog:
   # Flatpaks only see the GTK themes Flathub ships as runtimes; the Breeze one (dark variant
   # included) is what GTK_THEME=Breeze:dark in group_vars/all/flatpak.yml needs
   gtk3-theme-breeze:   {all: {flatpak: org.gtk.Gtk3theme.Breeze}}
-  kde-gtk-config:      {all: kde-gtk-config}
+  kde-gtk-config:      {rpm: kde-gtk-config}
   kpat:                {fedora: kpat, el: {flatpak: org.kde.kpat}}   # Fedora KDE ships it already
   ktorrent:            {all: ktorrent}
   media-downloader:    {all: {flatpak: com.markopejic.downloader}}
   plasma-sdk:          {all: plasma-sdk}
 
   # --- Fonts ---
-  fira-code-fonts:     {all: fira-code-fonts}           # EPEL on EL
+  fira-code-fonts:     {rpm: fira-code-fonts}           # EPEL on EL
   google-roboto-fonts: {fedora: google-roboto-fonts, el: {upstream: roboto}}  # not packaged for EL
 
   # --- Multimedia codecs (RPM Fusion) ---
@@ -110,18 +112,18 @@ alpi_catalog:
   # extras it brings beyond the codecs, and its freeworld members are conditional.
   multimedia:          {fedora: "@multimedia", el: ~}
   gstreamer1-plugins-bad-free-extras: {fedora: gstreamer1-plugins-bad-free-extras, el: ~}
-  gstreamer1-plugins-bad-freeworld:   {all: gstreamer1-plugins-bad-freeworld}
-  gstreamer1-plugins-ugly:            {all: gstreamer1-plugins-ugly}
-  gstreamer1-plugin-libav:            {all: gstreamer1-plugin-libav}   # was gstreamer1-libav
+  gstreamer1-plugins-bad-freeworld:   {rpm: gstreamer1-plugins-bad-freeworld}
+  gstreamer1-plugins-ugly:            {rpm: gstreamer1-plugins-ugly}
+  gstreamer1-plugin-libav:            {rpm: gstreamer1-plugin-libav}   # was gstreamer1-libav
   # Built against vlc-libs/libheif from EPEL on EL; libheif-freeworld pins libheif's exact
   # version, so the transaction fails whenever EPEL updates libheif before RPM Fusion rebuilds.
-  vlc-plugins-freeworld:              {all: vlc-plugins-freeworld}
-  libheif-freeworld:                  {all: libheif-freeworld}
+  vlc-plugins-freeworld:              {rpm: vlc-plugins-freeworld}
+  libheif-freeworld:                  {rpm: libheif-freeworld}
 
   # --- Hardware (feature_packages) ---
   # Video acceleration. EL10's mesa has no VA-API drivers and no freeworld build exists for it.
-  libva-intel-driver:  {all: libva-intel-driver}
-  intel-media-driver:  {all: intel-media-driver}         # RPM Fusion nonfree
+  libva-intel-driver:  {rpm: libva-intel-driver}
+  intel-media-driver:  {rpm: intel-media-driver}         # RPM Fusion nonfree
   mesa-va-drivers-freeworld: {fedora: mesa-va-drivers-freeworld, el: ~, swap: true}
   libva-utils:         {fedora: libva-utils, el: ~}
   vdpauinfo:           {fedora: vdpauinfo, el: ~}

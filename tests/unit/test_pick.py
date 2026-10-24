@@ -284,6 +284,11 @@ def test_load_data_layers_the_family_before_the_distro(tmp_path):
     assert data == {"family_key": "rpm", "layer": "distro", "major_key": 44}
 
 
+@pytest.mark.parametrize("distro,major", [("Fedora", "44"), ("AlmaLinux", "10")])
+def test_rpm_distros_try_the_rpm_key_before_all(distro, major):
+    assert pick.load_data(ROOT, distro, major)["alpi_catalog_keys"][-2:] == ["rpm", "all"]
+
+
 def test_every_distro_has_a_family():
     assert set(pick.DISTROS.values()) <= set(pick.FAMILIES)
 

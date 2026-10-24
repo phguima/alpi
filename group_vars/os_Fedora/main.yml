@@ -1,5 +1,5 @@
 ---
-alpi_catalog_keys: [fedora, all]
+alpi_catalog_keys: [fedora, rpm, all]
 packages_os: [multimedia]
 
 # MOK enrollment password (see group_vars/all/secureboot.yml)
