@@ -1,8 +1,9 @@
 # TODO — ALPI
 
-Work plan: open items only. A done item is removed in the commit that finishes it (the commit
-message records it); a section goes once it is empty. Architecture, rationale and decisions in
-`PROPOSAL.md`. Every item ships with its Molecule scenarios / unit tests (see `CLAUDE.md`).
+Work plan: open items only. A done item moves to `TODO-HISTORY.md` (date, short summary, commit)
+in the commit that finishes it; a section goes once it is empty. Architecture, rationale and
+decisions in `PROPOSAL.md`. Every item ships with its Molecule scenarios / unit tests (see
+`CLAUDE.md`).
 
 ## 4. Parity
 

@@ -1,0 +1,111 @@
+# TODO history — ALPI
+
+Done items moved out of `TODO.md`, in its section order, each with the date it was finished and
+its commit. Newer entries go at the end of their section; a new section is added when `TODO.md`
+closes one. Rebuilt on 2026-10-24 from `TODO.md`'s git history (items edited over time keep their
+final wording; the VM checklist steps live in `tests/vm-checklist.md`).
+
+## 0. Open decisions
+
+- **2026-10-05** All six recorded in `PROPOSAL.md` (`eb79382`): `packages_absent` (explicit
+  uninstall), an unknown catalog id stops the run, what profiles carry (profiles later replaced
+  by the picker), the VirtualBox source per distro, no Debian/Ubuntu port without a test VM,
+  GNOME and KDE from the first batch.
+
+## 1. Skeleton and Molecule tests
+
+- **2026-10-05** Skeleton: `bootstrap.sh` (distro detection via `/etc/os-release`), `site.yml` +
+  `tasks/env_setup.yml` (support matrix assert → detection → `group_by`), `group_vars/os_*`,
+  `catalog.yml` with package resolution and id validation, `packages_absent`, support matrix with
+  Debian 13 / Ubuntu 26.04 asserted as unsupported, `host_vars/127.0.0.1/{bootstrap,custom}.yml`
+  + `custom.yml.example` (`c9fe6f2`).
+- **2026-10-05** Every package name checked before installing (`pkg:`, `flatpak:`) (`b7a583a`).
+- **2026-10-05** Molecule with the podman driver, plays testable outside `localhost`, pytest unit
+  tests for `filter_plugins/alpi.py`, the `fedora44-personal`, `el10-work`, `failures`,
+  `unsupported` and `bootstrap` scenarios (`815fcfc`, `fa455aa`).
+
+## 2. Bring in AFPI (Fedora, personal machine)
+
+- **2026-10-05** Repositories: RPM Fusion, Brave, VS Code, GitHub CLI, ASUS COPR (`c952aff`).
+- **2026-10-06** Application lists: DNF common/KDE/GNOME, Flatpaks, ClamAV and Steam as features
+  (`0649a6a`, validated in `9080809`).
+- **2026-10-06** `system_hostname` and the git identity (`8d90381`).
+- **2026-10-06** Fonts, codecs (ffmpeg swap, @multimedia on Fedora), Intel/AMD video acceleration
+  (`5b24977`).
+- **2026-10-06** NVIDIA driver + `akmods_mok` (`56afb1b`).
+- **2026-10-06** VirtualBox as a feature: RPM Fusion akmod on Fedora, Oracle repository + own key
+  on EL; driven by the resolved set, no string match (`7faa73d`).
+- **2026-10-06** ClamAV: `roles/clamav` enables freshclam only when its package was resolved
+  (`ca8b28e`).
+- **2026-10-08** Profiles replaced with the package picker (`pick.py`, `selection.yml`), listing
+  only what the running distro offers (`667c8b2`).
+- **2026-10-08** Flatpak overrides only for apps being installed; `flatpak_filesystem_overrides`
+  empty in the repo, ZapZap in `custom.yml.example` (`f2ccd31`).
+- **2026-10-08** ASUS tasks beyond the packages (`/etc/asusd`, `supergfxd.service`, ROG GUI
+  autostart), with a Fedora 44 + systemd image built by the `asus` scenario (`4b695f9`).
+- **2026-10-08** zsh/Oh My Zsh setup; personal aliases (`open/close-thevoid`, LUKS UUID) moved to
+  `host_vars` (`luks_volumes`, `zsh_aliases_custom` in `custom.yml`) (`25717cc`).
+- **2026-10-09** System update (`update` role): dnf configuration, full upgrade, stop when a reboot
+  is needed (`763208f`).
+- **2026-10-09** Kernel maintenance (old and debug kernels, debug repositories) and GRUB settings
+  (`46871c7`).
+- **2026-10-09** Desktop: `~/wks`, Konsole profile and colors (KDE), Ptyxis settings (GNOME),
+  cedilla (`.XCompose`) (`00b48e3`).
+- **2026-10-09** API keys block in `.zshrc` (user only, from the optional vault) (`14cc1ea`).
+- **2026-10-09** pipx tools (markitdown, notebooklm-py with Playwright, pdf2docx) as catalog
+  entries (`8528fad`).
+- **2026-10-10** Claude Code, Antigravity CLI and IDE (AppImage, menu entry) as features
+  (`ff05304`).
+- **2026-10-10** GRUB: AFPI's `GRUB_GFXPAYLOAD=keep` is a no-op on BLS (the `blscfg` module sets
+  `gfxpayload=keep` itself): dropped, and removed from `/etc/default/grub` (`9c382ac`).
+- **2026-10-10** Steam launcher on the NVIDIA GPU (`6e4f49c`).
+
+## 3. Bring in AAPI (AlmaLinux 10, work machine)
+
+- **2026-10-09** Cleanup of both legacy `.zshrc` blocks (`14cc1ea`).
+- **2026-10-10** Roboto from upstream on EL (AAPI's desktop role: latest GitHub release, replaced
+  when the version changes) (`f468e8a`).
+- **2026-10-10** `group_vars/os_AlmaLinux_10` (dnf4, CRB/EPEL, Oracle VirtualBox); AAPI's legacy
+  repository ids kept, `gh auth login` reminder (`1dca75b`).
+
+## 4. Parity
+
+- **2026-10-13** Cedilla on KDE with KWin 6.6 (EL10, from AAPI): Chromium/Electron apps ignore
+  `~/.XCompose` on native Wayland, so they run on XWayland; gated on the KWin version
+  (`cedilla_xwayland: auto`, KWin < 6.7) and undone when it no longer applies (`c254add`); decided
+  again after `roles/update`'s upgrade (`63bdab8`).
+- **2026-10-21** `fedora:44` and `almalinux:10` containers, twice (idempotency): Molecule's
+  idempotence step in every scenario; `tests/run.sh full` green.
+- **2026-10-22** VM with EFI + Secure Boot, steps in `tests/vm-checklist.md`: Fedora 44 GNOME and
+  KDE, AlmaLinux 10 GNOME and KDE, all ok (also the transient hostname, the NVIDIA akmod build,
+  `dracut` and MOK enrollment, which containers only fake).
+- **2026-10-22** Golden test: resolved sets per (distro, DE) compared with AFPI and AAPI (reviewed
+  golden values in the `catalog` scenario).
+- **2026-10-22** AAPI and AFPI frozen with a README pointing to ALPI (`9755bcd`).
+
+## 6. Swap (zram)
+
+- **2026-10-14** `roles/memory`: zram through zram-generator on Fedora and EL, decided from the
+  machine's swap, zswap and zram-generator setup; hibernation reminder (`c73cc19`).
+- **2026-10-22** Checked on the AlmaLinux 10 work machine and on noir: the `zram_apply` steps
+  containers skip (`zramctl`, `swapon --show` priority 100, `vm.swappiness` 180,
+  `vm.page-cluster` 0; a second run reports no changes) (`1de0a02`).
+
+## Maintenance
+
+- **2026-10-23** VirtualBox vs KVM on kernel 6.12+: kvm keeps VMX on from load
+  (`enable_virt_at_load=Y`), so VirtualBox VMs failed with `VERR_VMX_IN_VMX_ROOT_MODE` on the
+  AlmaLinux 10 work machine. `/etc/modprobe.d/alpi-kvm.conf` (`options kvm enable_virt_at_load=0`),
+  removed when VirtualBox is off; applies after a reboot. noir was fine because VirtualBox 7.2.2+
+  shares VT-x with KVM on kernels 6.16+ (`86f1978`).
+- **2026-10-24** VLC and HEIF/HEVC freeworld codecs (`vlc-plugins-freeworld`,
+  `libheif-freeworld`, carried over from AAPI): waited for stable EPEL, which on 2026-10-24 had
+  `vlc-libs` 3.0.24 and `libheif` 1.23.6, what both require; added to the catalog (`all`) and
+  `packages_base` (`326b3d6`). Never enable `epel-testing` for them.
+- **2026-10-24** Freeworld builds lagging behind EPEL: `roles/update` upgrades with `nobest` (EL's
+  `best=True` failed the run until RPM Fusion rebuilt), and the name check fails early, naming the
+  package, when dependencies do not resolve (dry run with `--allowerasing`, like the swaps)
+  (`bf9a163`).
+- **2026-10-24** Recheck after Molecule 26.9.0 → 26.10.0: expected log noise unchanged; the only
+  deprecation, `bool` on an int in `molecule/user/verify.yml`, had made three absence checks
+  always pass, fixed (`d5de497`).
