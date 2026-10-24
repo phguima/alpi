@@ -1,0 +1,67 @@
+---
+# Stand-ins for an RPM Fusion freeworld package pinned to the exact version of its EPEL base
+# library (libheif-freeworld requires libheif = <its own version>): alpi-test-lib-freeworld 1.0
+# requires alpi-test-lib = 1.0. _pinned_lib_versions lists the alpi-test-lib versions in the local
+# repository alpi-test-pinned: [2.0] when the freeworld build lags behind (it cannot be installed),
+# [1.0, 2.0] for an installed pair whose library update is blocked.
+- name: Pinned pair | Local repository with the stand-ins
+  vars:
+    _pinned_rpms: >-
+      {{ _pinned_lib_versions | map('community.general.dict_kv', 'version')
+         | map('combine', {'name': 'alpi-test-lib'}) | list
+         + [{'name': 'alpi-test-lib-freeworld', 'version': '1.0', 'requires': 'Requires: alpi-test-lib = 1.0'}] }}
+  block:
+    - name: Pinned pair | Build tools
+      ansible.builtin.package:
+        name: [rpm-build, createrepo_c]
+        state: present
+
+    - name: Pinned pair | Directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop: [/opt/alpi-pinned/specs, /opt/alpi-pinned/repo]
+
+    - name: Pinned pair | Spec files
+      ansible.builtin.copy:
+        dest: "/opt/alpi-pinned/specs/{{ item.name }}-{{ item.version }}.spec"
+        content: |
+          Name: {{ item.name }}
+          Version: {{ item.version }}
+          Release: 1
+          Summary: ALPI test stand-in
+          License: GPL-3.0-or-later
+          BuildArch: noarch
+          {{ item.requires | default('') }}
+          %description
+          ALPI test stand-in for a library and its freeworld build.
+          %files
+        mode: "0644"
+      loop: "{{ _pinned_rpms }}"
+      loop_control:
+        label: "{{ item.name }}-{{ item.version }}"
+
+    - name: Pinned pair | Build the packages
+      ansible.builtin.command:
+        cmd: "rpmbuild -bb --define '_rpmdir /opt/alpi-pinned/repo' /opt/alpi-pinned/specs/{{ item.name }}-{{ item.version }}.spec"
+        creates: "/opt/alpi-pinned/repo/noarch/{{ item.name }}-{{ item.version }}-1.noarch.rpm"
+      loop: "{{ _pinned_rpms }}"
+      loop_control:
+        label: "{{ item.name }}-{{ item.version }}"
+
+    - name: Pinned pair | Repository metadata
+      ansible.builtin.command:
+        cmd: createrepo_c /opt/alpi-pinned/repo
+        creates: /opt/alpi-pinned/repo/repodata/repomd.xml
+
+    - name: Pinned pair | Local repository
+      ansible.builtin.copy:
+        dest: /etc/yum.repos.d/alpi-test-pinned.repo
+        content: |
+          [alpi-test-pinned]
+          name=ALPI test stand-ins (pinned freeworld pair)
+          baseurl=file:///opt/alpi-pinned/repo
+          enabled=1
+          gpgcheck=0
+        mode: "0644"

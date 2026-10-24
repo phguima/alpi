@@ -7,6 +7,9 @@
 #   alpi-upd-el10-reboot:      needs-restarting says reboot (dnf4): the play stops for the host
 #   alpi-upd-fedora44-kernel:  needs-restarting says no, but a newer kernel is installed (noir's
 #                              local-time RTC case): the play stops
+# Every instance also has an installed freeworld stand-in pinned to its library's exact version
+# while a newer library is available (shared/pinned_pair.yml): the upgrade must hold the library
+# back instead of failing (EL's dnf.conf has best=True).
 platforms:
   - name: alpi-upd-fedora44-ok
     image: registry.fedoraproject.org/fedora:44

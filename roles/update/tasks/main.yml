@@ -12,11 +12,15 @@
   loop_control:
     label: "{{ item.key }}"
 
+# nobest: an update that cannot be installed is held back instead of failing the run. RPM Fusion's
+# freeworld builds pin their EPEL library's exact version (libheif-freeworld: libheif = X), so EPEL
+# shipping the library first blocks it until RPM Fusion rebuilds; EL's dnf.conf has best=True.
 - name: Update | Upgrade all packages
   ansible.builtin.dnf:
     name: "*"
     state: latest
     update_cache: true
+    nobest: true
 
 # --- Reboot gate ---
 # If the upgrade touched the kernel or core libraries, stop here: the rest must run on the new

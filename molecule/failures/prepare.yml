@@ -1,0 +1,13 @@
+---
+- name: Prepare | Shared
+  ansible.builtin.import_playbook: ../shared/prepare.yml
+
+# The 'unresolvable dependencies' case: a freeworld build that lags behind its library
+# (alpi-test-lib 2.0 only, alpi-test-lib-freeworld 1.0 requires = 1.0)
+- name: Prepare | Freeworld stand-in that cannot be installed
+  hosts: all
+  vars:
+    _pinned_lib_versions: ["2.0"]
+  tasks:
+    - name: Prepare | Pinned pair
+      ansible.builtin.import_tasks: ../shared/pinned_pair.yml

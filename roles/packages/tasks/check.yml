@@ -75,3 +75,13 @@
     _missing_flatpak: "{{ _flatpak_info.results | default([]) | rejectattr('rc', 'equalto', 0) | map(attribute='item') | list }}"
     _missing_pipx: "{{ _pypi_info.results | default([]) | rejectattr('status', 'equalto', 200) | map(attribute='item') | list }}"
     _missing_upstream: "{{ _upstream_info.results | default([]) | alpi_upstream_missing(upstream_sources | default({})) }}"
+
+- name: Packages | Fail on unresolvable dependencies
+  ansible.builtin.assert:
+    that: alpi_unresolved_native | default([]) | length == 0
+    fail_msg: >-
+      Dependencies could not be resolved, none of the listed packages was installed:
+      {{ alpi_unresolved_native | join(' ') }} A freeworld package (RPM Fusion) usually waits
+      for a rebuild against the library EPEL just updated: skip it in host_vars/127.0.0.1/custom.yml
+      (packages_skip) until then.
+    quiet: true

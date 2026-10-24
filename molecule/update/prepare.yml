@@ -50,6 +50,17 @@
           exec /usr/bin/rpm "$@"
         mode: "0755"
 
+    - name: Prepare | Pinned pair, library 1.0 and 2.0 in the repository
+      ansible.builtin.import_tasks: ../shared/pinned_pair.yml
+      vars:
+        _pinned_lib_versions: ["1.0", "2.0"]
+
+    - name: Prepare | Install the pair at 1.0
+      ansible.builtin.command:
+        cmd: dnf -y install alpi-test-lib-1.0 alpi-test-lib-freeworld
+      register: _pinned_install
+      changed_when: "'Nothing to do' not in _pinned_install.stdout"
+
     # The role must replace an existing value, not add a second line (AFPI appended)
     - name: Prepare | Outdated dnf setting
       ansible.builtin.lineinfile:

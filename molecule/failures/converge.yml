@@ -77,6 +77,13 @@
                  "Flatpaks (not on Flathub): org.nope.App.",
                  "pipx apps (not on PyPI): alpi-nope-not-on-pypi-xyz.",
                  "none of the listed packages was installed"]
+      # RPM Fusion's freeworld build lagging behind EPEL (libheif-freeworld pins libheif's exact
+      # version): the dry run finds the name but cannot resolve it (stand-ins from prepare.yml)
+      - name: unresolvable dependencies
+        packages_add: ["pkg:alpi-test-lib-freeworld"]
+        packages_role: true
+        expect: ["Dependencies could not be resolved", "alpi-test-lib-freeworld",
+                 "none of the listed packages was installed"]
       - name: unreadable repository
         packages_role: true
         broken_repo: true

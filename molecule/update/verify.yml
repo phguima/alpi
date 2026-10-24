@@ -8,6 +8,7 @@
       loop:
         - cat /etc/dnf/dnf.conf
         - test -f /etc/alpi-test/after-update
+        - rpm -q alpi-test-lib alpi-test-lib-freeworld
       register: _q
       changed_when: false
       failed_when: false
@@ -26,4 +27,10 @@
       ansible.builtin.assert:
         that: (_q.results[1].rc == 0) == (inventory_hostname == 'alpi-upd-fedora44-ok')
         fail_msg: "marker rc {{ _q.results[1].rc }} on {{ inventory_hostname }}"
+        quiet: true
+
+    - name: Verify | The pinned library held back, the freeworld build kept
+      ansible.builtin.assert:
+        that: _q.results[2].stdout_lines == ['alpi-test-lib-1.0-1.noarch', 'alpi-test-lib-freeworld-1.0-1.noarch']
+        fail_msg: "{{ _q.results[2].stdout_lines }}"
         quiet: true

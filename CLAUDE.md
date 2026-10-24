@@ -56,8 +56,11 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   non-interactive dnf call fails on them.
   yum repository ids are the `.repo` file/section names: keep AFPI's and AAPI's (`brave-browser`,
   `code`, `gh-cli`, `virtualbox`), or a migrated machine gets each repository twice.
-- `roles/packages`: name checks first (`check_<os_family>.yml`: dnf dry run, which fails outright
-  when a repository's metadata cannot be read instead of reporting nothing; `flatpak remote-info`),
+- `roles/packages`: name checks first (`check_<os_family>.yml`: dnf dry run with `--allowerasing`
+  like the swaps, which fails outright when a repository's metadata cannot be read instead of
+  reporting nothing, and on dependencies that do not resolve (`alpi_unresolved_native`: Problem
+  lines with neither a transaction summary nor "Nothing to do", since dnf prints a Problem block
+  even when it resolves around it); `flatpak remote-info`),
   then replacements (catalog `swap: true`, installed with `allowerasing`: `ffmpeg`,
   `mesa-va-drivers-freeworld`), base, user extras, explicit uninstalls. Needs the `repos` role
   before it (section 2). Native names may be dnf groups (`@multimedia`).
@@ -84,7 +87,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   each cedilla app's override file that still grants `~/.XCompose` is reset before the other
   layers are applied again.
 - `roles/update` (after `repos`, before anything that builds modules or installs packages):
-  `dnf_config` into `/etc/dnf/dnf.conf` (replaced, not appended), full upgrade, then the reboot
+  `dnf_config` into `/etc/dnf/dnf.conf` (replaced, not appended), full upgrade with `nobest`
+  (RPM Fusion's freeworld builds pin their EPEL library's exact version; EL's `best=True` would
+  fail the run until RPM Fusion rebuilds, so the library is held back instead), then the reboot
   gate: `dnf needs-restarting -r` rc 1, or the newest installed `kernel-core` is not the running
   kernel (noir's local-time RTC fools needs-restarting), ends the play for the host. Otherwise
   it ends with `tasks/cedilla.yml` again (the upgrade may bring a newer KWin).
@@ -261,7 +266,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `host_vars/<instance>/{custom,selection}.yml`, like a real machine, and check that both
     files' layers apply), `failures` (every validation must fail with its message,
     `shared/expect_failure.yml`; Fedora + Alma; a case's `upstream_sources` goes through
-    set_fact, saved and restored), `flags` (env_setup on Fedora 44 with the hardware flags as
+    set_fact, saved and restored; its `prepare.yml` builds a freeworld stand-in that cannot be
+    installed, `shared/pinned_pair.yml`), `flags` (env_setup on Fedora 44 with the hardware flags as
     key=value extra vars, i.e. strings: `is_nvidia=true` turns NVIDIA on, `=false` keeps the
     others off), `unsupported` (Debian 13), `upstream` (`roles/upstream` on
     AlmaLinux 10 against a stand-in GitHub served by `http.server` on 127.0.0.1:8766: install v1,
@@ -281,7 +287,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `prepare.yml`: everything selected, and supergfxctl + GUI skipped), `update` (repos +
     `roles/update`; wrappers in `/usr/local/bin` script needs-restarting's answer and the newest
     kernel per instance, the dnf one still running the real needs-restarting: no reboot, reboot
-    by needs-restarting (EL), reboot by a newer kernel), `memory` (env_setup + `roles/memory` +
+    by needs-restarting (EL), reboot by a newer kernel; each also has an installed freeworld
+    stand-in pinned to its library while a newer library is available, `shared/pinned_pair.yml`:
+    the upgrade holds the library back), `memory` (env_setup + `roles/memory` +
     `tasks/reminders.yml`, `zram_apply` skipped; a `swapon` wrapper and a zswap file script the
     swap state per instance: no swap, Fedora's zram0 with `zram_size`, zswap on, `zram: false`
     after a run, the user's own config), `boot` (`roles/boot` on Fedora + Alma;
