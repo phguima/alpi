@@ -369,16 +369,16 @@
       ansible.builtin.set_fact:
         _xw_now_text: "{{ dict(_xw_now.results | map(attribute='item') | map('basename')
                                | zip(_xw_now.results | map(attribute='content', default='') | map('b64decode'))) }}"
-        # A missing file reads as '' (no content)
-        _xw_now_exists: "{{ dict(_xw_now.results | map(attribute='item') | map('basename')
-                                 | zip(_xw_now.results | map(attribute='content', default='') | map('length') | map('bool'))) }}"
+        # Files that exist (a failed slurp has no content). Not length | bool: ansible-core 2.21's
+        # bool turns any int but 0/1 into False, so every real file read as missing.
+        _xw_now_present: "{{ _xw_now.results | selectattr('content', 'defined') | map(attribute='item') | map('basename') | list }}"
 
     - name: Verify | Not on GNOME nor EL, nothing on XWayland and the system entries left alone
       ansible.builtin.assert:
         that:
           - _xw_now_text['alpi-cedilla-xwayland'] == 'False  False\n'
           - _xw_flag not in _xw_now_text['.zshrc']
-          - _xw_entries | map('extract', _xw_now_exists) | select | list == []
+          - _xw_entries | select('in', _xw_now_present) | list == []
         fail_msg: "{{ _xw_now_text | to_json }}"
         quiet: true
       when: inventory_hostname != 'alpi-user-kde'
@@ -439,8 +439,8 @@
               - _xw_now_text['alpi-cedilla-xwayland'] == 'False 6.7.5 True\n'
               - _xw_flag not in _xw_now_text['.zshrc']
               # ALPI's (and AAPI's) copies gone, the user's own entry as it was
-              - not _xw_now_exists['brave-browser.desktop']
-              - not _xw_now_exists['com.microsoft.VSCode.UrlHandler.desktop']
+              - "'brave-browser.desktop' not in _xw_now_present"
+              - "'com.microsoft.VSCode.UrlHandler.desktop' not in _xw_now_present"
               - _xw_now_text['com.microsoft.VSCode.desktop'] ==
                 '[Desktop Entry]\nName=My Code\nExec=/opt/code/code --user-data-dir=/srv/code\nType=Application\n'
               # Flatpaks: reset, the KDE layer back on Bitwarden, Zoom as before

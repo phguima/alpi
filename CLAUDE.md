@@ -340,7 +340,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `SCENARIO RECAP`: after a failed step Molecule runs cleanup and the recap can still say
     `failed=0` (a non-zero `missing=` is the hint). This hid an idempotence failure on
     2026-10-06. `tests/run.sh` checks both.
-  - Expected noise in a green log (checked 2026-10-06):
+  - Expected noise in a green log (checked 2026-10-06, again 2026-10-24 with Molecule 26.10.0;
+    no `DEPRECATION` warnings left):
     - `fatal:` / `[ERROR]: Task failed` lines in `failures`: each case fails on purpose and
       `shared/expect_failure.yml` asserts the message (a case that does not fail, or fails with
       another message, turns the scenario red).

@@ -35,10 +35,14 @@ scenarios / unit tests (see `CLAUDE.md`).
       puts first in `PATH`) or Fedora's `ansible` package, rerun `tests/run.sh full` and recheck
       the expected log noise listed in `CLAUDE.md` (Molecule section): the `molecule/default`
       CRITICAL must still be non-fatal, and the `containers.podman` in `~/.ansible/collections`
-      must still be newer than the system copy. Versions in the green 2026-10-08 run (AlmaLinux 10
-      work machine): Molecule 26.9.0 (host pipx), ansible-core 2.21.5 (Molecule's venv),
-      `containers.podman` 1.21.1 (user; no system copy there). On 2026-10-06 (Fedora): ansible-core
-      2.20.7 (system), `containers.podman` 1.21.0 (user) vs 1.20.2 (system).
+      must still be newer than the system copy, and grep the logs for `DEPRECATION`. Versions in the
+      last green run, 2026-10-24 (AlmaLinux 10 work machine): Molecule 26.10.0 (host pipx; was
+      26.9.0 on 2026-10-08), ansible-core 2.21.5 (Molecule's venv), `containers.podman` 1.21.1 and
+      `community.general` 11.4.9 (user; no system copy there); the CRITICAL line still non-fatal
+      in all 16 scenarios; the only deprecation, `bool` on an int in `molecule/user/verify.yml`
+      (removed in 2.23, and it had made three absence checks always pass), fixed
+      (`test(user): absence checks that do not rely on bool`). On 2026-10-06 (Fedora):
+      ansible-core 2.20.7 (system), `containers.podman` 1.21.0 (user) vs 1.20.2 (system).
 - [x] VLC and HEIF/HEVC freeworld codecs on EL (`vlc-plugins-freeworld`, `libheif-freeworld`,
       carried over from AAPI's TODO): left out because RPM Fusion builds them against newer
       libraries than stable EPEL ships. On 2026-10-04 both only waited for stable EPEL (it had
