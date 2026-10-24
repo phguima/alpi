@@ -204,10 +204,35 @@ class TestFeatures:
 
     def test_filters_are_registered(self):
         assert set(alpi.FilterModule().filters()) == {
-            "alpi_resolve", "alpi_canonical", "alpi_features", "alpi_repos", "alpi_feature_ids",
+            "alpi_resolve", "alpi_support", "alpi_canonical", "alpi_features", "alpi_repos", "alpi_feature_ids",
             "alpi_flatpak_overrides", "alpi_cedilla_xwayland", "alpi_zram_plan", "alpi_xwayland_entries", "alpi_luks_aliases", "alpi_invalid_luks", "alpi_pipx_name",
             "alpi_appimage_release", "alpi_github_release", "alpi_upstream_missing",
         }
+
+
+# --- alpi_support ------------------------------------------------------------------------------
+SUPPORT = {"Fedora": {"min": 41, "max": 44}, "AlmaLinux": {"min": 10, "max": 10},
+           "Ubuntu": {"version": "26.04"}}
+
+
+@pytest.mark.parametrize("distro,version,major,expected", [
+    ("Fedora", "44", "44", True),
+    ("Fedora", "41", "41", True),
+    ("Fedora", "40", "40", False),
+    ("Fedora", "45", "45", False),
+    ("AlmaLinux", "10.0", "10", True),
+    # Ubuntu's major (26) is the same for 26.04 and 26.10: an exact version, not a range
+    ("Ubuntu", "26.04", "26", True),
+    ("Ubuntu", "26.10", "26", False),
+    ("Debian", "13", "13", False),
+])
+def test_support(distro, version, major, expected):
+    assert alpi.alpi_support(SUPPORT, distro, version, major)["supported"] is expected
+
+
+def test_support_lists_ranges_single_majors_and_exact_versions():
+    assert alpi.alpi_support(SUPPORT, "Debian", "13", "13")["listed"] == \
+        "Fedora 41-44, AlmaLinux 10, Ubuntu 26.04"
 
 
 # --- alpi_flatpak_overrides --------------------------------------------------------------------

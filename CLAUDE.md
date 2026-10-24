@@ -21,7 +21,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 
 ## Layout (skeleton, 2026-10-05)
 
-- `site.yml`: `tasks/env_setup.yml` (support matrix assert → user/hardware/DE facts, ported from
+- `site.yml`: `tasks/env_setup.yml` (support matrix assert, `alpi_support`: `{min, max}` majors or
+  an exact `{version}` → user/hardware/DE facts, ported from
   AFPI → `group_by` into `family_<os_family>`, `os_<distro>`, `os_<distro>_<major>` → machine-settings assert →
   `tasks/resolve.yml`), then the roles (`repos`, `update`, `boot`, `memory`, `akmods_mok`, `virtualbox`,
   `packages`, `upstream`, `common`, `zsh`, `desktop`, `pipx`, `ai_tools`, `clamav`, `asus`, `nvidia` so far),

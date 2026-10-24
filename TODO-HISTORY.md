@@ -104,6 +104,9 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
 - **2026-10-24** Phase 1: catalog key `rpm` (Fedora `fedora, rpm, all`, EL `el10, el, rpm, all`);
   the 14 `all:` names missing on Debian 13 or Ubuntu 26.04 (checked in containers) moved to it;
   PROPOSAL's `rpm:` raw-name example fixed to `pkg:` (`refactor(catalog): rpm key for the RPM names`).
+- **2026-10-24** Phase 1: support matrix entries may give an exact `{version: "26.04"}` besides
+  `{min, max}` majors; the check and its message moved into the `alpi_support` filter
+  (`feat(env): exact versions in the support matrix`).
 
 ## 6. Swap (zram)
 

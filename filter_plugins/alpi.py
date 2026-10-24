@@ -79,6 +79,30 @@ def alpi_resolve(ids, catalog, keys, aliases=None):
     return out
 
 
+def alpi_support(matrix, distro, version, major):
+    """Whether the distro is in the support matrix, and the matrix as text for the error.
+
+    matrix: {distro: {min: N, max: N}} (major versions, inclusive) or {distro: {version: "26.04"}}
+    (that exact distribution_version: Ubuntu's major is 26 for both 26.04 and 26.10).
+    Returns {"supported": bool, "listed": "Fedora 41-44, AlmaLinux 10, Ubuntu 26.04"}.
+    """
+    def text(name, entry):
+        if "version" in entry:
+            return f"{name} {entry['version']}"
+        lo, hi = entry["min"], entry["max"]
+        return f"{name} {lo}" if lo == hi else f"{name} {lo}-{hi}"
+
+    entry = (matrix or {}).get(distro)
+    if entry is None:
+        supported = False
+    elif "version" in entry:
+        supported = str(version) == str(entry["version"])
+    else:
+        supported = str(major).isdigit() and int(entry["min"]) <= int(major) <= int(entry["max"])
+    return {"supported": supported,
+            "listed": ", ".join(text(name, e) for name, e in (matrix or {}).items())}
+
+
 def alpi_feature_ids(feature_packages, flags):
     """Package ids of the features that are on (feature_packages: feature -> list of ids)."""
     ids = []
@@ -398,6 +422,7 @@ class FilterModule(object):
     def filters(self):
         return {
             "alpi_resolve": alpi_resolve,
+            "alpi_support": alpi_support,
             "alpi_canonical": alpi_canonical,
             "alpi_features": alpi_features,
             "alpi_repos": alpi_repos,

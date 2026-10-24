@@ -27,9 +27,6 @@ container or VM before code relies on them. Consequences to keep in mind:
 
 ### Phase 1 — prerequisites (no apt distro enabled; Fedora/EL golden values must not move)
 
-- [ ] **Support matrix:** an entry may give `version:` (exact) instead of `min`/`max`; the assert and
-      its `fail_msg` (which renders `v.min`/`v.max`) handle both; `unsupported` and `failures`
-      expectations follow.
 - [ ] **Version comparison:** dpkg versions carry an epoch (`kwin 4:6.6.6-0ubuntu0.1`), and
       `_version()` would read `(4, 6, 6, …)`, always below 6.7, so the workaround would never turn
       off. Read `${source:Upstream-Version}` with `dpkg-query`; unit test with epoch strings.

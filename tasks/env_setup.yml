@@ -5,15 +5,14 @@
 
 - name: Env Setup | Ensure the distro is supported
   ansible.builtin.assert:
-    that:
-      - ansible_facts['distribution'] in alpi_supported
-      - ansible_facts['distribution_major_version'] | int >= alpi_supported[ansible_facts['distribution']].min
-      - ansible_facts['distribution_major_version'] | int <= alpi_supported[ansible_facts['distribution']].max
+    that: _support.supported
     fail_msg: >-
       ALPI does not support {{ ansible_facts['distribution'] }}
-      {{ ansible_facts['distribution_version'] }}. Supported:
-      {% for d, v in alpi_supported.items() %}{{ d }} {{ v.min }}{{ '' if v.min == v.max else '-' ~ v.max }}{{ '' if loop.last else ', ' }}{% endfor %}.
+      {{ ansible_facts['distribution_version'] }}. Supported: {{ _support.listed }}.
     quiet: true
+  vars:
+    _support: "{{ alpi_supported | alpi_support(ansible_facts['distribution'], ansible_facts['distribution_version'],
+                                                ansible_facts['distribution_major_version']) }}"
   tags: [always]
 
 - name: Env Setup | Get primary user data

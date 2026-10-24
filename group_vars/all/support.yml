@@ -1,7 +1,9 @@
 ---
-# Support matrix: the playbook stops in env_setup on anything not listed here (major versions,
-# inclusive). There is no fallback by os_family: Rocky, CentOS Stream or Ubuntu are not "close
-# enough" to a supported distro.
+# Support matrix: the playbook stops in env_setup on anything not listed here. An entry gives
+# major versions ({min, max}, inclusive) or one exact distribution_version ({version: "26.04"}:
+# Ubuntu's major is the same for 26.04 and 26.10). Checked by the alpi_support filter. There is
+# no fallback by os_family: Rocky, CentOS Stream or Ubuntu are not "close enough" to a supported
+# distro.
 # Reserved, not supported yet (PROPOSAL.md, decision 6): Debian 13, Ubuntu 26.04.
 alpi_supported:
   Fedora: {min: 41, max: 44}
