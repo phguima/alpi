@@ -9,9 +9,9 @@ are in English.
 
 Skeleton stage (created on 2026-10-05; skeleton done the same day). `PROPOSAL.md` holds the architecture (reviewed by an
 adversarial agent); `TODO.md` holds the work plan (decisions are recorded in `PROPOSAL.md`).
-**Read both before starting.** When an item is done, tick it (`- [x]`) in `TODO.md` in the same
-commit, naming that commit by its title (a commit cannot contain its own hash; older ticks carry
-short hashes); remove a section only once all its items are ticked. Record the validation in
+**Read both before starting.** `TODO.md` lists open items only: when an item is done, remove it
+in the same commit (decided 2026-10-24; done items live in the commit history, and what code
+relies on goes in this file), and remove a section once it is empty. Record the validation in
 the commit message.
 
 Decision of 2026-10-05: **new** repo, without AFPI's history. AFPI and AAPI stay active until
