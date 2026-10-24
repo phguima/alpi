@@ -27,7 +27,9 @@ def alpi_resolve(ids, catalog, keys, aliases=None):
                    repository instead, for a source that only one distro needs;
       swap:        native names of entries with 'swap: true', which replace a conflicting
                    package (ffmpeg-free -> ffmpeg) and are installed first with allowerasing.
-                   They are in 'native' too, so name checks and verification cover them.
+                   They are in 'native' too, so name checks and verification cover them. A
+                   per-distro value {native: …, swap: true|false} overrides the entry's 'swap'
+                   for that distro.
     """
     aliases = aliases or {}
     out = {"native": [], "flatpak": [], "pipx": [], "upstream": [], "unknown": [], "missing": [],
@@ -64,12 +66,14 @@ def alpi_resolve(ids, catalog, keys, aliases=None):
             add("upstream", [str(value["upstream"])])
         else:
             repo = entry.get("repo") or []
+            swap = entry.get("swap")
             if isinstance(value, dict):
                 repo = value.get("repo") or []
+                swap = value.get("swap", swap)
                 value = value["native"]
             names = [str(v) for v in value] if isinstance(value, (list, tuple)) else [str(value)]
             add("native", names)
-            if entry.get("swap"):
+            if swap:
                 add("swap", names)
             add("repos", [repo] if isinstance(repo, str) else list(repo))
     return out

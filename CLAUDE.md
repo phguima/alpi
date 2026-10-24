@@ -62,8 +62,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   reporting nothing, and on dependencies that do not resolve (`alpi_unresolved_native`: Problem
   lines with neither a transaction summary nor "Nothing to do", since dnf prints a Problem block
   even when it resolves around it); `flatpak remote-info`),
-  then replacements (catalog `swap: true`, installed with `allowerasing`: `ffmpeg`,
-  `mesa-va-drivers-freeworld`), base, user extras, explicit uninstalls. Needs the `repos` role
+  then replacements (catalog `swap: true`, or per distro `{native: …, swap: true|false}`;
+  installed with `allowerasing` where dnf is the package manager, apt replaces through package
+  metadata: `ffmpeg`, `mesa-va-drivers-freeworld`), base, user extras, explicit uninstalls. Needs the `repos` role
   before it (section 2). Native names may be dnf groups (`@multimedia`).
 - Flatpak overrides: `group_vars/all/flatpak.yml` (`flatpak_overrides_common`: ZapZap reads
   `~/wks`, every desktop; `flatpak_overrides_kde`: Bitwarden, Zoom) plus

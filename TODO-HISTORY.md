@@ -95,6 +95,9 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
   ids instead of RPM names (`^VirtualBox`, `akmod-nvidia`, `^akmod-`), which apt's `virtualbox-7.2`
   would have skipped silently; the akmods key also needs the distro's `kmod_signer: akmods`
   (`refactor(roles): gate the module roles on catalog ids`).
+- **2026-10-24** Phase 1: `swap` per distro (`{native: …, swap: true|false}` overrides the entry's
+  `swap`), and the `allowerasing` install runs only where dnf is the package manager
+  (`feat(catalog): swap per distro, allowerasing on dnf only`).
 
 ## 6. Swap (zram)
 

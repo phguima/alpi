@@ -30,6 +30,9 @@ CATALOG = {
     "virtualbox": {"fedora": ["VirtualBox", "akmod-VirtualBox"],
                    "el": {"native": ["VirtualBox-7.2", "gcc"], "repo": "virtualbox"}},
     "vendor_both": {"fedora": {"native": "tool", "repo": ["a", "b"]}, "el": "tool", "repo": "entry"},
+    # swap per distro: a replacement on one distro only (apt replaces through package metadata)
+    "swap_fedora_only": {"fedora": {"native": "ffmpeg", "swap": True}, "el": "ffmpeg"},
+    "swap_not_on_el": {"all": "libfoo", "el": {"native": "libfoo", "swap": False}, "swap": True},
 }
 ALIASES = {"p7zip": "7zip"}
 FEDORA = ["fedora", "all"]
@@ -131,6 +134,16 @@ class TestResolve:
 
     def test_no_swap_for_flatpaks_or_raw_names(self):
         assert resolve(["codecs-flatpak", "pkg:ffmpeg"], FEDORA)["swap"] == []
+
+    def test_swap_in_a_per_distro_value(self):
+        assert resolve(["swap_fedora_only"], FEDORA)["swap"] == ["ffmpeg"]
+        out = resolve(["swap_fedora_only"], EL10)
+        assert out["swap"] == [] and out["native"] == ["ffmpeg"]
+
+    def test_per_distro_swap_overrides_the_entry_swap(self):
+        assert resolve(["swap_not_on_el"], FEDORA)["swap"] == ["libfoo"]
+        out = resolve(["swap_not_on_el"], EL10)
+        assert out["swap"] == [] and out["native"] == ["libfoo"] and out["repos"] == []
 
 
 class TestRepos:

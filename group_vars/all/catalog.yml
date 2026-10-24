@@ -8,7 +8,8 @@
 # (unavailable: the id is skipped with a warning). 'repo:' names the repository (group_vars/all/repos.yml) the native
 # packages come from when it is not always on; roles/repos enables it only when needed.
 # 'swap: true' marks a package that replaces a conflicting one (ffmpeg-free -> ffmpeg): roles/packages
-# installs it first, with allowerasing. Native names may be dnf groups ('@multimedia').
+# installs it first, with allowerasing (dnf only). A per-distro value {native: …, swap: true|false}
+# overrides it for that distro. Native names may be dnf groups ('@multimedia').
 # A per-distro value {native: <name or list>, repo: <id>} names a repository only that distro
 # needs (it replaces the entry's 'repo:').
 # An id with no key for the current distro is a catalog bug and stops the run, so every id must
