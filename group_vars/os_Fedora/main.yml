@@ -4,6 +4,8 @@ packages_os: [multimedia]
 
 # MOK enrollment password (see group_vars/all/secureboot.yml)
 mok_password: "fedora-alpi"
+# akmods builds and signs the NVIDIA and VirtualBox modules (roles/akmods_mok)
+kmod_signer: akmods
 
 # dnf5's needs-restarting says whether to reboot by default (-r is accepted but does nothing)
 zsh_aliases_os: |

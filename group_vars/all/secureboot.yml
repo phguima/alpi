@@ -5,3 +5,8 @@
 # so the screen's password names the system being installed: mok_password is "fedora-alpi" in
 # group_vars/os_Fedora and "alma-alpi" in group_vars/os_AlmaLinux_10. Override it in
 # host_vars/127.0.0.1/custom.yml.
+
+# Catalog ids whose packages build kernel modules that must be signed under Secure Boot. Who
+# signs them is per distro (kmod_signer in group_vars/os_*): akmods (Fedora, roles/akmods_mok),
+# none (EL: VirtualBox's vboxdrv.sh signs with roles/virtualbox's key, NVIDIA is unavailable).
+kmod_ids: [nvidia-driver, virtualbox]

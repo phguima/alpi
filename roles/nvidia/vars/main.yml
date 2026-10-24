@@ -1,3 +1,4 @@
 ---
-# The driver was selected: nvidia feature on, available on this distro, not skipped.
-nvidia_driver_selected: "{{ 'akmod-nvidia' in (alpi_pkgs.native + alpi_pkgs_extra.native) }}"
+# The driver was selected: nvidia feature on, available on this distro, not skipped (by catalog
+# id: the native names differ per distro).
+nvidia_driver_selected: "{{ 'nvidia-driver' in alpi_ids_selected }}"

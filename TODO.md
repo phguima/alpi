@@ -27,14 +27,6 @@ container or VM before code relies on them. Consequences to keep in mind:
 
 ### Phase 1 — prerequisites (no apt distro enabled; Fedora/EL golden values must not move)
 
-- [ ] **Gate roles on catalog ids, not native names** (CLAUDE.md already requires it):
-      - `roles/virtualbox/vars/main.yml`: `^VirtualBox(-|$)` misses `virtualbox-7.2`, so the role
-        (key, groups, `alpi-kvm.conf`) would be skipped silently. Use `'virtualbox' in
-        alpi_ids_selected`; keep the akmod test for the build method only.
-      - `roles/nvidia/vars/main.yml` (`'akmod-nvidia' in …`) → `'nvidia-driver' in
-        alpi_ids_selected`.
-      - `roles/akmods_mok` (`^akmod-`): becomes "which module signer this distro uses" (akmods, DKMS,
-        none on Ubuntu's signed NVIDIA).
 - [ ] **`swap` per distro:** `swap: true` sits on the entry (`ffmpeg: {all: ffmpeg, swap: true}`), so
       `alpi_resolve` puts `ffmpeg` in `alpi_pkgs.swap` on apt too and `roles/packages` then calls
       `ansible.builtin.dnf`. Allow `swap` inside a per-distro value and gate the task on

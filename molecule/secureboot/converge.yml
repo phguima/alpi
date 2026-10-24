@@ -12,6 +12,16 @@
 - name: Secure Boot | env_setup + roles/akmods_mok, virtualbox, nvidia
   hosts: all
   tasks:
+    # Native names that are not the RPM ones (apt's virtualbox-7.2, a driver without
+    # akmod-nvidia): the roles must gate on the catalog ids, not on the package names
+    - name: Secure Boot | Native names unlike the RPM ones
+      ansible.builtin.set_fact:
+        alpi_catalog: "{{ alpi_catalog | combine(_names[inventory_hostname] | default({}), recursive=True) }}"
+      vars:
+        _names:
+          alpi-sb-el10: {virtualbox: {el: {native: [virtualbox-7.2, kernel-devel]}}}
+          alpi-nosb-fedora44: {nvidia-driver: {fedora: [nvidia-driver-580-open]}}
+
     - name: Secure Boot | Environment setup
       ansible.builtin.import_tasks: ../../tasks/env_setup.yml
 

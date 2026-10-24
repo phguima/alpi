@@ -91,6 +91,10 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
   left alone, Ubuntu codecs without the Microsoft fonts, `uv` through pipx, MOK passwords;
   recorded in `PROPOSAL.md`, the steps moved from `PLAN-DEBIAN-UBUNTU.md` into `TODO.md`
   (`docs: Debian and Ubuntu decisions recorded, steps in the TODO`).
+- **2026-10-24** Phase 1: `roles/virtualbox`, `roles/nvidia` and `roles/akmods_mok` gate on catalog
+  ids instead of RPM names (`^VirtualBox`, `akmod-nvidia`, `^akmod-`), which apt's `virtualbox-7.2`
+  would have skipped silently; the akmods key also needs the distro's `kmod_signer: akmods`
+  (`refactor(roles): gate the module roles on catalog ids`).
 
 ## 6. Swap (zram)
 

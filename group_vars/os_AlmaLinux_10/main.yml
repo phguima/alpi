@@ -5,6 +5,8 @@ packages_os: [libreoffice]
 
 # MOK enrollment password (see group_vars/all/secureboot.yml)
 mok_password: "alma-alpi"
+# No akmods: VirtualBox's vboxdrv.sh signs with roles/virtualbox's key, NVIDIA is unavailable
+kmod_signer: none
 
 # dnf4: without -r, needs-restarting lists processes instead of saying whether to reboot
 zsh_aliases_os: |

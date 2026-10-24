@@ -115,11 +115,13 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   created or removed. Runtime steps (sysctl values, starting/stopping zram0) are tagged
   `zram_apply`.
 - `roles/akmods_mok` (before `packages`): Secure Boot signing key + MOK enrollment request, only
-  when Secure Boot is on and an `akmod-*` package was resolved (akmods signs at build time, so the
-  key must exist first). `mok_password` per distro (`fedora-alpi` in `group_vars/os_Fedora`,
+  when Secure Boot is on, the distro's `kmod_signer` is `akmods` (Fedora; `none` on EL) and a
+  catalog id in `kmod_ids` (`nvidia-driver`, `virtualbox`) was selected (akmods signs at build
+  time, so the key must exist first). `mok_password` per distro (`fedora-alpi` in `group_vars/os_Fedora`,
   `alma-alpi` in `group_vars/os_AlmaLinux_10`; notes in `group_vars/all/secureboot.yml`). `tasks/enroll.yml`
   (MOK enrollment of one key) is shared with `roles/virtualbox`.
-- `roles/virtualbox` (before `packages`): on a non-akmod build (Oracle, EL) with Secure Boot, its
+- `roles/virtualbox` (before `packages`; runs when the `virtualbox` id is selected, whatever the
+  native names): on a non-akmod build (Oracle, EL) with Secure Boot, its
   own key in `/var/lib/shim-signed/mok` (vboxdrv.sh signs with it); `vboxusers`/`vboxsf` groups;
   `/etc/modprobe.d/alpi-kvm.conf` (`options kvm enable_virt_at_load=0`: since kernel 6.12 kvm
   holds VT-x/AMD-V from load and VirtualBox fails with `VERR_VMX_IN_VMX_ROOT_MODE`; VirtualBox
@@ -186,7 +188,7 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - Catalog values per distro may be `{native: …, repo: …}`: a repository only that distro needs
   (Oracle VirtualBox on EL).
 - `roles/nvidia` (after `packages`): `/etc/modprobe.d/nvidia.conf`; akmods rebuild + `dracut` only
-  when no module exists for the running kernel. Runs only when `akmod-nvidia` was resolved
+  when no module exists for the running kernel. Runs only when the `nvidia-driver` id is selected
   (NVIDIA detected, Fedora, not skipped).
 - Hardware features (`alpi_hardware_features`: nvidia, asus, intel, amd) follow detection and can
   only be vetoed; their packages come from `feature_packages`.
@@ -277,7 +279,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `el10-work` installs the real release), `bootstrap`
     (bootstrap.sh with scripted answers, picker in text mode), `common` (env_setup +
     `roles/common` on `almalinux/10-init` with systemd: static hostname via hostnamectl, git),
-    `secureboot` (env_setup + `akmods_mok`, `virtualbox`, `nvidia`, nothing downloaded; Secure Boot
+    `secureboot` (env_setup + `akmods_mok`, `virtualbox`, `nvidia`, nothing downloaded; converge
+    renames EL's VirtualBox and Fedora's NVIDIA native packages, so the roles must gate on ids; Secure Boot
     detected from a fake EFI variable mounted over `/sys/firmware`: Fedora with Secure Boot and
     NVIDIA vetoed, Fedora without (and VirtualBox off: a stale `alpi-kvm.conf` removed), EL with;
     fake `mokutil` in `files/`, real `kmodgenca`/openssl),

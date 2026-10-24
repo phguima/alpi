@@ -3,11 +3,13 @@
 # roles/nvidia, no repos/packages (the 'catalog' scenario checks the names; nothing is
 # downloaded). NVIDIA is pinned on. Secure Boot is detected for real from a fake EFI variable
 # mounted over /sys/firmware (firmware/ here: bytes 06 00 00 00 01 = on), absent = legacy BIOS.
-#   alpi-sb-fedora44:   Secure Boot, NVIDIA vetoed: akmod-VirtualBox alone must trigger akmods_mok
+#   alpi-sb-fedora44:   Secure Boot, NVIDIA vetoed: the virtualbox id alone must trigger akmods_mok
 #   alpi-nosb-fedora44: no Secure Boot, NVIDIA on: modprobe settings, no key, no mokutil call;
 #                       VirtualBox off: its stale kvm setting removed
 #   alpi-sb-el10:       Secure Boot: Oracle VirtualBox key (no akmod on EL), NVIDIA unavailable
 # Where VirtualBox is on, /etc/modprobe.d/alpi-kvm.conf keeps VMX off until a KVM guest runs.
+# converge.yml renames the native packages on two instances (EL's VirtualBox as apt's
+# virtualbox-7.2, the NVIDIA driver without akmod-nvidia): the roles gate on catalog ids.
 # mokutil is a fake that logs calls (files/mokutil); kmodgenca and openssl are real. A container
 # cannot build or load modules: that, and the real enrollment, are left to the VM.
 platforms:

@@ -52,7 +52,7 @@
         fail_msg: "alpi-kvm.conf options: {{ _kvm_options }}"
         quiet: true
 
-    - name: Verify | Secure Boot on Fedora, NVIDIA vetoed - akmods key from akmod-VirtualBox
+    - name: Verify | Secure Boot on Fedora, NVIDIA vetoed - akmods key from the virtualbox id
       ansible.builtin.assert:
         that:
           - is_secure_boot and not alpi_feature.nvidia

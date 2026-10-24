@@ -1,14 +1,15 @@
 ---
 # Secure Boot signing key for akmod-built modules (ported from AFPI). Runs before roles/packages:
 # akmods signs the modules it builds with this key, so it must exist before any akmod-* package is
-# installed. Only with Secure Boot and when the resolved sets contain an akmod package (NVIDIA,
-# VirtualBox on Fedora). Idempotent; the enrollment itself is confirmed by hand in MokManager on
-# the next boot.
+# installed. Only with Secure Boot, on a distro whose modules akmods builds (kmod_signer), and
+# when a catalog id that builds modules was selected (kmod_ids: NVIDIA, VirtualBox). Idempotent;
+# the enrollment itself is confirmed by hand in MokManager on the next boot.
 
 - name: MOK | Prepare the akmods signing key
   when:
     - is_secure_boot
-    - (alpi_pkgs.native + alpi_pkgs_extra.native) | select('match', '^akmod-') | list | length > 0
+    - kmod_signer == 'akmods'
+    - alpi_ids_selected | select('in', kmod_ids) | list | length > 0
   block:
     - name: MOK | Install signing tools
       ansible.builtin.package:
