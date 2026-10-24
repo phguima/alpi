@@ -5,7 +5,7 @@ _golden:
   native: [7zip, 7zip-standalone, curl, fastfetch, git, htop, hwinfo, ImageMagick, lm_sensors, nodejs, nvtop, pipx, potrace,
     python3-pip, ShellCheck, testdisk, tmux, tuptime, unrar, unzip, uv, vim, zsh, fira-code-fonts,
     google-roboto-fonts, ffmpeg, gstreamer1-plugins-bad-free-extras, gstreamer1-plugins-bad-freeworld,
-    gstreamer1-plugins-ugly, gstreamer1-plugin-libav, chkrootkit, lynis, rkhunter,
+    gstreamer1-plugins-ugly, gstreamer1-plugin-libav, vlc-plugins-freeworld, libheif-freeworld, chkrootkit, lynis, rkhunter,
     unhide, argyllcms, brave-browser, brave-origin, chromium, discord, drawy, gh, inkscape, telegram-desktop, code,
     "@multimedia", kde-gtk-config, kpat, ktorrent, plasma-sdk, flatseal, gnome-tweaks, steam, clamav, clamav-update,
     VirtualBox, akmod-VirtualBox, kernel-devel, asusctl, supergfxctl, asusctl-rog-gui, libva-intel-driver, intel-media-driver, mesa-va-drivers-freeworld,

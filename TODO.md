@@ -39,7 +39,7 @@ scenarios / unit tests (see `CLAUDE.md`).
       work machine): Molecule 26.9.0 (host pipx), ansible-core 2.21.5 (Molecule's venv),
       `containers.podman` 1.21.1 (user; no system copy there). On 2026-10-06 (Fedora): ansible-core
       2.20.7 (system), `containers.podman` 1.21.0 (user) vs 1.20.2 (system).
-- [ ] VLC and HEIF/HEVC freeworld codecs on EL (`vlc-plugins-freeworld`, `libheif-freeworld`,
+- [x] VLC and HEIF/HEVC freeworld codecs on EL (`vlc-plugins-freeworld`, `libheif-freeworld`,
       carried over from AAPI's TODO): left out because RPM Fusion builds them against newer
       libraries than stable EPEL ships. On 2026-10-04 both only waited for stable EPEL (it had
       `vlc-libs` 3.0.23 and `libheif` 1.17.6; `epel-testing` had 3.0.24 and 1.23.5, which both
@@ -47,6 +47,9 @@ scenarios / unit tests (see `CLAUDE.md`).
       and `packages_base`. Re-check with CRB, EPEL and RPM Fusion enabled:
       `dnf repoquery --qf "%{name}-%{version}" vlc-libs libheif` vs
       `dnf repoquery --requires vlc-plugins-freeworld libheif-freeworld | grep -E "^(vlc-libs|libheif)"`.
+      On 2026-10-24 stable EPEL had `vlc-libs` 3.0.24 and `libheif` 1.23.6, what both require:
+      both added to the catalog (`all`) and `packages_base`
+      (`feat(packages): VLC and HEIF freeworld codecs on every distro`).
 - [x] VirtualBox vs KVM on kernel 6.12+: `kvm.enable_virt_at_load=Y` (the default) keeps VMX on
       while `kvm_intel` is loaded, even unused, so VirtualBox VMs fail with `VT-x is being used by
       another hypervisor (VERR_VMX_IN_VMX_ROOT_MODE)`. Seen on 2026-10-13 on the AlmaLinux 10 work

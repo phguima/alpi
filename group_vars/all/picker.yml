@@ -30,7 +30,8 @@ picker_groups:
   - title: Fonts & codecs
     ids: [fira-code-fonts, google-roboto-fonts, ffmpeg, multimedia,
           gstreamer1-plugins-bad-free-extras, gstreamer1-plugins-bad-freeworld,
-          gstreamer1-plugins-ugly, gstreamer1-plugin-libav]
+          gstreamer1-plugins-ugly, gstreamer1-plugin-libav, vlc-plugins-freeworld,
+          libheif-freeworld]
 
 picker_descriptions:
   # System tools
@@ -115,3 +116,5 @@ picker_descriptions:
   gstreamer1-plugins-bad-freeworld: GStreamer non-free plugins (bad)
   gstreamer1-plugins-ugly: GStreamer non-free plugins (ugly)
   gstreamer1-plugin-libav: GStreamer FFmpeg plugin
+  vlc-plugins-freeworld: VLC non-free codec plugins
+  libheif-freeworld: HEIF/HEIC images with HEVC decoding

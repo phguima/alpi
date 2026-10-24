@@ -114,7 +114,8 @@ ansible-playbook site.yml -K 2>&1 | tee run2.log
       → no `GRUB_GFXPAYLOAD`. At boot the menu waits 5 s (Fedora may auto-hide it on a single-OS
       install: hold Shift or press Esc). Press `e` on the default entry → `set gfxpayload=keep`
       is there. 📸 (phone photo of the `e` screen).
-- [ ] **Codecs:** `rpm -q ffmpeg` installed, `rpm -q ffmpeg-free` not.
+- [ ] **Codecs:** `rpm -q ffmpeg` installed, `rpm -q ffmpeg-free` not; `rpm -q
+      vlc-plugins-freeworld libheif-freeworld` both installed.
 - [ ] **ClamAV:** `systemctl is-active clamav-freshclam` → active.
 - [ ] **Flatpaks:** `flatpak list --app` has the defaults (EL also Telegram, Drawy, Inkscape and
       the GNOME ones).
