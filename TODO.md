@@ -67,16 +67,15 @@ container or VM before code relies on them. Consequences to keep in mind:
 ### Phase 3 — Debian 13
 
 - [ ] **Support:** `Debian: {min: 13, max: 13}`; `unsupported` moves to `debian:12`.
-- [ ] **`group_vars/os_Debian/`:** catalog keys, `mok_password`, `zsh_aliases_os`, components, the
-      `virtualbox` repository (`trixie`).
+- [ ] **`group_vars/os_Debian/`:** `zsh_aliases_os`, components (catalog keys, `mok_password` and the
+      `virtualbox` repository are there since the `debian13` scenario).
 - [ ] **`bootstrap.sh`:** a `debian)` branch. With a root password set at install, Debian installs no
       `sudo` at all: detect it and print `su - -c "apt install sudo && usermod -aG sudo $USER"` (`su -`:
       plain `su` lacks `/usr/sbin`), then log in again.
 - [ ] **`pick.py`:** `"debian": "Debian"` (its unit test's fake Debian changes from unsupported).
-- [ ] **Catalog `debian`/`deb` values:** `chromium` is a real deb; `ffmpeg` and the GStreamer plugins
-      are in main (`multimedia` → `~`); `discord`, `drawy`, `telegram` probably Flatpak;
-      `asusctl`/`supergfxctl` and `mesa-va-drivers-freeworld` → `~`; `fastfetch`, `tuptime`, `hwinfo`,
-      `nvtop` *(check, the `catalog` scenario decides)*.
+- [ ] **Catalog on apt:** a `catalog` instance for Debian 13 once `check_Debian.yml` exists (the
+      `debian` values were checked with `apt-cache` only; the vendor repositories' names on apt,
+      `brave-origin` among them, are unchecked).
 - [ ] **NVIDIA:** DKMS key created and enrolled before `nvidia-driver` installs, then `nvidia.conf`.
 
 ### Phase 4 — Ubuntu 26.04 LTS

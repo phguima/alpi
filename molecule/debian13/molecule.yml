@@ -1,0 +1,17 @@
+---
+# Debian 13 while the apt layer is built (TODO.md section 5): Debian is not in the support matrix
+# yet, so host_vars/ allows it for this instance only. Resolution with KDE, GNOME and all hardware
+# forced on, compared with reviewed golden values (verify.yml); the apt roles join converge.yml
+# as they are ported.
+platforms:
+  - name: alpi-debian13
+    image: docker.io/library/debian:13
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-debian13:/var/cache/apt"]
+provisioner:
+  options:
+    # kwin_version: Debian 13's (4:6.3.6-1), so the cedilla's XWayland overrides are in the golden values
+    extra-vars: '{"is_kde": true, "is_gnome": true, "is_nvidia": true, "is_asus": true, "is_intel": true, "is_amd": true, "kwin_version": "6.3.6"}'
+  playbooks:
+    converge: converge.yml

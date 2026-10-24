@@ -191,7 +191,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - Catalog values per distro may be `{native: …, repo: …}`: a repository only that distro needs
   (Oracle VirtualBox on EL). Catalog keys (`alpi_catalog_keys` per distro): Fedora
   `fedora, rpm, all`, EL `el10, el, rpm, all`; `rpm` holds RPM names both share, `all` only
-  names that also exist on Debian and Ubuntu (check a new `all:` name there).
+  names that also exist on Debian and Ubuntu (check a new `all:` name there). Debian 13
+  (`group_vars/os_Debian`, not in the support matrix yet): `debian13, debian, deb, all`; a new
+  catalog id needs a `debian` (or `deb`/`all`) value, or `debian13` stops on it.
 - `roles/nvidia` (after `packages`): `/etc/modprobe.d/nvidia.conf`; akmods rebuild + `dracut` only
   when no module exists for the running kernel. Runs only when the `nvidia-driver` id is selected
   (NVIDIA detected, Fedora, not skipped).
@@ -277,7 +279,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     set_fact, saved and restored; its `prepare.yml` builds a freeworld stand-in that cannot be
     installed, `shared/pinned_pair.yml`), `flags` (env_setup on Fedora 44 with the hardware flags as
     key=value extra vars, i.e. strings: `is_nvidia=true` turns NVIDIA on, `=false` keeps the
-    others off), `unsupported` (Debian 13), `upstream` (`roles/upstream` on
+    others off), `debian13` (env_setup + resolution on Debian 13, allowed in its own host_vars
+    while the apt layer is built; golden values like `catalog`; the apt roles join it as they are
+    ported), `unsupported` (Debian 13), `upstream` (`roles/upstream` on
     AlmaLinux 10 against a stand-in GitHub served by `http.server` on 127.0.0.1:8766: install v1,
     `side_effect.yml` publishes v2 and runs again (Molecule's side_effect step, added to the
     scenario's test_sequence), GitHub unreachable keeps v0, `packages_absent` removes it;

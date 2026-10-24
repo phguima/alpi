@@ -111,6 +111,11 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
   as 4.x would have kept the cedilla workaround on forever), and KWin read with `dpkg-query`'s
   `source:Upstream-Version` of `kwin-wayland` on Debian/Ubuntu (`fix(desktop): KWin versions
   with a dpkg epoch`). Phase 1 done.
+- **2026-10-24** Phase 2 foundation (pulled from Phase 3.2/3.5): `debian13` scenario (Debian 13
+  allowed in its own host_vars, resolution against reviewed golden values), `group_vars/os_Debian`
+  (catalog keys, `mok_password`, `kmod_signer: dkms`, the Oracle VirtualBox deb822 repository), a
+  `debian` value for every catalog entry (names checked with `apt-cache`), apt test images without
+  `docker-clean` and `policy-rc.d` (`test(debian13): resolution on Debian 13, catalog values`).
 
 ## 6. Swap (zram)
 

@@ -2,6 +2,7 @@
 # Package catalog: logical id -> what to install on each distro.
 # Keys are tried in the order of alpi_catalog_keys (group_vars/os_*), most specific first:
 #   Fedora: fedora, rpm, all        AlmaLinux 10: el10, el, rpm, all
+#   Debian 13: debian13, debian, deb, all (not supported yet, see group_vars/os_Debian)
 # 'rpm' holds the RPM names Fedora and EL share; 'all' only names that exist on every distro,
 # Debian and Ubuntu included (checked in debian:13 and ubuntu:26.04 on 2026-10-24).
 # Values: a native package name, a list of names, {flatpak: <app id>}, {pipx: <PyPI spec>} (a
@@ -25,50 +26,51 @@ alpi_catalog:
   git:           {all: git}
   htop:          {all: htop}
   hwinfo:        {all: hwinfo}
-  imagemagick:   {rpm: ImageMagick}                 # EPEL on EL
-  lm-sensors:    {rpm: lm_sensors}
+  imagemagick:   {rpm: ImageMagick, debian: imagemagick}                 # EPEL on EL
+  lm-sensors:    {rpm: lm_sensors, debian: lm-sensors}
   nodejs:        {all: nodejs}
   nvtop:         {all: nvtop}
   pipx:          {all: pipx}
   potrace:       {all: potrace}                     # EPEL on EL
   python3-pip:   {all: python3-pip}
-  shellcheck:    {rpm: ShellCheck}
+  shellcheck:    {rpm: ShellCheck, debian: shellcheck}
   testdisk:      {all: testdisk}
   tmux:          {all: tmux}
   tuptime:       {all: tuptime}
   unrar:         {all: unrar}
   unzip:         {all: unzip}
-  uv:            {rpm: uv}
-  vim:           {fedora: vim, el: vim-enhanced}
+  uv:            {rpm: uv, deb: {pipx: uv}}
+  vim:           {fedora: vim, el: vim-enhanced, debian: vim}
   zsh:           {all: zsh}
 
   # --- Security ---
-  chkrootkit:    {fedora: chkrootkit, el: ~}
+  chkrootkit:    {fedora: chkrootkit, el: ~, debian: chkrootkit}
   clamav:        {all: clamav}
-  clamav-freshclam: {fedora: clamav-update, el: clamav-freshclam}
+  clamav-freshclam: {fedora: clamav-update, el: clamav-freshclam, debian: clamav-freshclam}
   lynis:         {all: lynis}
   rkhunter:      {all: rkhunter}
-  unhide:        {fedora: unhide, el: ~}
+  unhide:        {fedora: unhide, el: ~, debian: unhide}
 
   # --- Desktop applications ---
-  argyllcms:     {fedora: argyllcms, el: ~}
+  argyllcms:     {fedora: argyllcms, el: ~, debian: argyll}
   brave:         {all: [brave-browser, brave-origin], repo: brave-browser}
   chromium:      {all: chromium}
-  discord:       {rpm: discord}                   # RPM Fusion nonfree
-  drawy:         {fedora: drawy, el: {flatpak: org.kde.drawy}}
+  discord:       {rpm: discord, debian: {flatpak: com.discordapp.Discord}}                   # RPM Fusion nonfree
+  drawy:         {fedora: drawy, el: {flatpak: org.kde.drawy}, debian: {flatpak: org.kde.drawy}}
   gh:            {all: gh, repo: gh-cli}
-  inkscape:      {fedora: inkscape, el: {flatpak: org.inkscape.Inkscape}}
+  inkscape:      {fedora: inkscape, el: {flatpak: org.inkscape.Inkscape}, debian: inkscape}
   # Fedora Workstation ships it; dropped from EL10, so a default there only (packages_os)
-  libreoffice:   {fedora: libreoffice, el: {flatpak: org.libreoffice.LibreOffice}}
-  steam:         {fedora: steam, el: ~}
-  telegram:      {fedora: telegram-desktop, el: {flatpak: org.telegram.desktop}}
+  libreoffice:   {fedora: libreoffice, el: {flatpak: org.libreoffice.LibreOffice}, debian: libreoffice}
+  steam:         {fedora: steam, el: ~, debian: steam-installer}
+  telegram:      {fedora: telegram-desktop, el: {flatpak: org.telegram.desktop}, debian: {flatpak: org.telegram.desktop}}
   vscode:        {all: code, repo: code}
   # Fixed source per distro (PROPOSAL decision 5): RPM Fusion's akmod on Fedora (named, so
   # roles/akmods_mok sees it), Oracle's repository on EL with the module build tools it needs.
   # kernel-devel is named on Fedora: akmods needs a kernel-devel-uname-r provider, and without an
   # installed kernel (containers) dnf picks kernel-debug-devel, which roles/boot then removes.
   virtualbox:    {fedora: [VirtualBox, akmod-VirtualBox, kernel-devel],
-                  el: {native: [VirtualBox-7.2, kernel-devel, gcc, make, elfutils-libelf-devel], repo: virtualbox}}
+                  el: {native: [VirtualBox-7.2, kernel-devel, gcc, make, elfutils-libelf-devel], repo: virtualbox},
+                  debian: {native: [virtualbox-7.2, linux-headers-amd64, gcc, make], repo: virtualbox}}
 
   # --- Python apps (pipx, for the user; roles/pipx) ---
   markitdown:          {all: {pipx: "markitdown[all]"}}         # documents to Markdown
@@ -96,46 +98,47 @@ alpi_catalog:
   # Flatpaks only see the GTK themes Flathub ships as runtimes; the Breeze one (dark variant
   # included) is what GTK_THEME=Breeze:dark in group_vars/all/flatpak.yml needs
   gtk3-theme-breeze:   {all: {flatpak: org.gtk.Gtk3theme.Breeze}}
-  kde-gtk-config:      {rpm: kde-gtk-config}
-  kpat:                {fedora: kpat, el: {flatpak: org.kde.kpat}}   # Fedora KDE ships it already
+  kde-gtk-config:      {rpm: kde-gtk-config, debian: kde-config-gtk-style}
+  kpat:                {fedora: kpat, el: {flatpak: org.kde.kpat}, debian: kpat}   # Fedora KDE ships it already
   ktorrent:            {all: ktorrent}
   media-downloader:    {all: {flatpak: com.markopejic.downloader}}
   plasma-sdk:          {all: plasma-sdk}
 
   # --- Fonts ---
-  fira-code-fonts:     {rpm: fira-code-fonts}           # EPEL on EL
-  google-roboto-fonts: {fedora: google-roboto-fonts, el: {upstream: roboto}}  # not packaged for EL
+  fira-code-fonts:     {rpm: fira-code-fonts, debian: fonts-firacode}           # EPEL on EL
+  google-roboto-fonts: {fedora: google-roboto-fonts, el: {upstream: roboto}, debian: fonts-roboto}  # not packaged for EL
 
   # --- Multimedia codecs (RPM Fusion) ---
   ffmpeg:              {all: ffmpeg, swap: true}         # replaces ffmpeg-free
   # Fedora only (packages_os), not unavailable: on EL it would add the PipeWire/PackageKit
   # extras it brings beyond the codecs, and its freeworld members are conditional.
-  multimedia:          {fedora: "@multimedia", el: ~}
-  gstreamer1-plugins-bad-free-extras: {fedora: gstreamer1-plugins-bad-free-extras, el: ~}
-  gstreamer1-plugins-bad-freeworld:   {rpm: gstreamer1-plugins-bad-freeworld}
-  gstreamer1-plugins-ugly:            {rpm: gstreamer1-plugins-ugly}
-  gstreamer1-plugin-libav:            {rpm: gstreamer1-plugin-libav}   # was gstreamer1-libav
+  multimedia:          {fedora: "@multimedia", el: ~, debian: ~}
+  gstreamer1-plugins-bad-free-extras: {fedora: gstreamer1-plugins-bad-free-extras, el: ~, debian: ~}
+  gstreamer1-plugins-bad-freeworld:   {rpm: gstreamer1-plugins-bad-freeworld, debian: gstreamer1.0-plugins-bad}
+  gstreamer1-plugins-ugly:            {rpm: gstreamer1-plugins-ugly, debian: gstreamer1.0-plugins-ugly}
+  gstreamer1-plugin-libav:            {rpm: gstreamer1-plugin-libav, debian: gstreamer1.0-libav}   # was gstreamer1-libav
   # Built against vlc-libs/libheif from EPEL on EL; libheif-freeworld pins libheif's exact
   # version, so the transaction fails whenever EPEL updates libheif before RPM Fusion rebuilds.
-  vlc-plugins-freeworld:              {rpm: vlc-plugins-freeworld}
-  libheif-freeworld:                  {rpm: libheif-freeworld}
+  vlc-plugins-freeworld:              {rpm: vlc-plugins-freeworld, debian: ~}
+  libheif-freeworld:                  {rpm: libheif-freeworld, debian: libheif-plugin-libde265}
 
   # --- Hardware (feature_packages) ---
   # Video acceleration. EL10's mesa has no VA-API drivers and no freeworld build exists for it.
-  libva-intel-driver:  {rpm: libva-intel-driver}
-  intel-media-driver:  {rpm: intel-media-driver}         # RPM Fusion nonfree
-  mesa-va-drivers-freeworld: {fedora: mesa-va-drivers-freeworld, el: ~, swap: true}
-  libva-utils:         {fedora: libva-utils, el: ~}
-  vdpauinfo:           {fedora: vdpauinfo, el: ~}
+  libva-intel-driver:  {rpm: libva-intel-driver, debian: i965-va-driver}
+  intel-media-driver:  {rpm: intel-media-driver, debian: intel-media-va-driver-non-free}         # RPM Fusion nonfree
+  mesa-va-drivers-freeworld: {fedora: mesa-va-drivers-freeworld, el: ~, debian: ~, swap: true}
+  libva-utils:         {fedora: libva-utils, el: ~, debian: vainfo}
+  vdpauinfo:           {fedora: vdpauinfo, el: ~, debian: vdpauinfo}
   # NVIDIA proprietary driver (RPM Fusion nonfree akmod; roles/akmods_mok and roles/nvidia).
   nvidia-driver: {fedora: [akmod-nvidia, xorg-x11-drv-nvidia, xorg-x11-drv-nvidia-cuda,
-                           xorg-x11-drv-nvidia-libs, xorg-x11-drv-nvidia-libs.i686], el: ~}
-  nvidia-build:  {fedora: [akmods, kmodtool, gcc, kernel-devel, kernel-headers], el: ~}
-  nvidia-vulkan: {fedora: [vulkan, xorg-x11-drv-nvidia-cuda-libs], el: ~}
-  nvidia-vaapi:  {fedora: libva-nvidia-driver, el: ~}           # VA-API and NVENC/NVDEC
-  asusctl:         {fedora: asusctl, el: ~, repo: asus-linux}
-  supergfxctl:     {fedora: supergfxctl, el: ~, repo: asus-linux}
-  asusctl-rog-gui: {fedora: asusctl-rog-gui, el: ~, repo: asus-linux}
+                           xorg-x11-drv-nvidia-libs, xorg-x11-drv-nvidia-libs.i686], el: ~,
+                 debian: nvidia-driver}
+  nvidia-build:  {fedora: [akmods, kmodtool, gcc, kernel-devel, kernel-headers], el: ~, debian: [linux-headers-amd64, dkms]}
+  nvidia-vulkan: {fedora: [vulkan, xorg-x11-drv-nvidia-cuda-libs], el: ~, debian: nvidia-vulkan-icd}
+  nvidia-vaapi:  {fedora: libva-nvidia-driver, el: ~, debian: nvidia-vaapi-driver}           # VA-API and NVENC/NVDEC
+  asusctl:         {fedora: asusctl, el: ~, debian: ~, repo: asus-linux}
+  supergfxctl:     {fedora: supergfxctl, el: ~, debian: ~, repo: asus-linux}
+  asusctl-rog-gui: {fedora: asusctl-rog-gui, el: ~, debian: ~, repo: asus-linux}
 
 # Renamed ids keep resolving: old id -> current id.
 alpi_catalog_aliases:

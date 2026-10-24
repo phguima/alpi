@@ -1,0 +1,37 @@
+---
+# Test-only: Debian 13 allowed while the apt layer is built (the repository's matrix leaves it out
+# until it passes on a VM, PROPOSAL decision 6 of 2026-10-05)
+alpi_supported:
+  Fedora: {min: 41, max: 44}
+  AlmaLinux: {min: 10, max: 10}
+  Debian: {min: 13, max: 13}
+
+# Expected full resolved sets (verify.yml), reviewed 2026-10-24: Debian 13 names checked with
+# apt-cache (main, contrib, non-free); KDE, GNOME and all hardware forced on in molecule.yml.
+_golden:
+  native: [7zip, 7zip-standalone, curl, fastfetch, git, htop, hwinfo, imagemagick, lm-sensors, nodejs, nvtop, pipx,
+    potrace, python3-pip, shellcheck, testdisk, tmux, tuptime, unrar, unzip, vim, zsh, fonts-firacode, fonts-roboto,
+    ffmpeg, gstreamer1.0-plugins-bad, gstreamer1.0-plugins-ugly, gstreamer1.0-libav, libheif-plugin-libde265,
+    chkrootkit, lynis, rkhunter, unhide, argyll, brave-browser, brave-origin, chromium, gh, inkscape, code,
+    kde-config-gtk-style, kpat, ktorrent, plasma-sdk, flatseal, gnome-tweaks, steam-installer, clamav,
+    clamav-freshclam, virtualbox-7.2, linux-headers-amd64, gcc, make, i965-va-driver, intel-media-va-driver-non-free,
+    vainfo, vdpauinfo, nvidia-driver, dkms, nvidia-vulkan-icd, nvidia-vaapi-driver]
+  # ffmpeg's entry-wide swap: harmless, the allowerasing install is dnf only
+  swap: [ffmpeg]
+  flatpak: [com.discordapp.Discord, org.kde.drawy, org.telegram.desktop, com.bitwarden.desktop, net.displaycal.DisplayCAL,
+    com.dec05eba.gpu_screen_recorder, com.slack.Slack, com.spotify.Client, com.rtosta.zapzap, us.zoom.Zoom,
+    org.zotero.Zotero, org.gtk.Gtk3theme.Breeze, com.markopejic.downloader, com.mattjakeman.ExtensionManager,
+    de.haeckerfelix.Fragments, com.github.unrud.VideoDownloader]
+  pipx: [uv, "markitdown[all]", "notebooklm-py[browser]", pdf2docx]
+  upstream: []
+  extra: []
+  absent: []
+  unavailable: [gstreamer1-plugins-bad-free-extras, vlc-plugins-freeworld, asusctl, supergfxctl, asusctl-rog-gui,
+    mesa-va-drivers-freeworld]
+  features: {amd: true, antigravity_cli: true, antigravity_ide: true, asus: true, claude_code: true, clamav: true,
+    intel: true, nvidia: true, steam: true, virtualbox: true}
+  repos: [brave-browser, gh-cli, code, virtualbox]
+  # KDE forced with KWin 6.3.6: the cedilla layer is on, as on EL10
+  flatpak_overrides: [com.rtosta.zapzap, com.bitwarden.desktop, us.zoom.Zoom, com.slack.Slack, com.spotify.Client]
+  cedilla_xwayland: true
+  groups: [family_Debian, os_Debian, os_Debian_13]
