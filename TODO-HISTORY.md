@@ -83,6 +83,15 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
   golden values in the `catalog` scenario).
 - **2026-10-22** AAPI and AFPI frozen with a README pointing to ALPI (`9755bcd`).
 
+## 5. New distros
+
+- **2026-10-24** Phase 0 decisions for Debian 13 and Ubuntu 26.04, after checking the packages in
+  `debian:13` and `ubuntu:26.04` containers: family groups, catalog keys `rpm`/`deb`, Oracle's
+  VirtualBox repository on both, NVIDIA (DKMS on Debian, a pinned `-open` branch on Ubuntu), snaps
+  left alone, Ubuntu codecs without the Microsoft fonts, `uv` through pipx, MOK passwords;
+  recorded in `PROPOSAL.md`, the steps moved from `PLAN-DEBIAN-UBUNTU.md` into `TODO.md`
+  (`docs: Debian and Ubuntu decisions recorded, steps in the TODO`).
+
 ## 6. Swap (zram)
 
 - **2026-10-14** `roles/memory`: zram through zram-generator on Fedora and EL, decided from the

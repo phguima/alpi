@@ -358,3 +358,46 @@ Each of these becomes a feature or is guarded by the resolved package set.
    query that must agree with what the upgrade really does. A new KWin needs a new login, not a
    reboot, so the reboot gate is unchanged; the run asks for a new login when the decision
    flips. `--tags resolve` shows the decision before the upgrade.
+
+## Decisions (2026-10-24)
+
+Debian 13 and Ubuntu 26.04 LTS (`TODO.md` section 5; drafted in `PLAN-DEBIAN-UBUNTU.md`, reviewed
+by an adversarial agent, removed once these were recorded). Decision 6 of 2026-10-05 still holds:
+a distro is supported only after it passes on a test VM. Targets: Debian 13 "trixie" (kernel
+6.12, GNOME 48 with gnome-terminal / Plasma 6.3, ansible-core 2.19) and Ubuntu 26.04 "Resolute
+Raccoon" (kernel 7.0, GNOME with Ptyxis / Kubuntu with Plasma 6.6, ansible-core 2.20). Order: the
+shared prerequisites and the apt layer, then Debian 13 (the plainer base), then Ubuntu as a delta.
+Checked in `debian:13` and `ubuntu:26.04` containers on 2026-10-24: NVIDIA, VirtualBox, codec and
+`uv` packages below; Ubuntu's `kwin-wayland` is `4:6.6.6-0ubuntu0.1` (an epoch); Debian ships
+`libheif` 1.23.6 with the `libde265` (HEVC) plugin and VLC 3.0.24 in main.
+
+1. **Family groups.** `env_setup.yml` adds `family_<os_family>` (`family_RedHat`,
+   `family_Debian`) to the `group_by` loop, and `pick.py` loads it, for data both apt distros
+   share (`os_Debian` is Debian's own group).
+2. **Catalog keys `rpm` and `deb`.** Many `all:` entries are RPM names (`ImageMagick`,
+   `lm_sensors`, `gstreamer1-*`…); `all` keeps only names that match everywhere. Key order:
+   Fedora `fedora, rpm, all`; AlmaLinux 10 `el10, el, rpm, all`; Debian 13
+   `debian13, debian, deb, all`; Ubuntu 26.04 `ubuntu2604, ubuntu, deb, all`. The `rpm:` raw-name
+   prefix in this file's custom.yml example becomes `native:`.
+3. **VirtualBox from Oracle's apt repository on both** (`download.virtualbox.org/virtualbox/debian`,
+   suites `trixie` and `resolute`, `virtualbox-7.2`), signed by `vboxdrv.sh` with the key in
+   `/var/lib/shim-signed/mok`: the code path EL already uses. Debian 13 has no VirtualBox package;
+   Ubuntu's multiverse has 7.2.6 against Oracle's 7.2.22, and would be a second signing path.
+4. **NVIDIA.** Debian: `nvidia-driver` (550, non-free) built by DKMS and signed with DKMS's key,
+   enrolled through `roles/akmods_mok/tasks/enroll.yml`. Ubuntu: a **pinned branch with open
+   modules**, `nvidia-driver-NNN-open` with Canonical's signed `linux-modules-nvidia-NNN-open-*`,
+   NNN set in `group_vars/os_Ubuntu` and bumped on purpose; the `catalog` scenario checks that
+   the signed modules exist. Not `ubuntu-drivers install`, which bypasses the catalog (name
+   check, `verify_installed`, `packages_absent`) and cannot be tested in a container. Open modules
+   need a Turing or newer GPU; the newest branch on 2026-10-24 (615) already had signed modules
+   only in its `-open` flavour (535–610 had both). Both distros: i386 multiarch when
+   `nvidia-driver` or `steam` is selected.
+5. **Snaps (Ubuntu) left alone:** snapd and its snaps (Firefox) stay; no catalog id maps to a
+   snap transitional package (`chromium` is `1snap1`); Flatpak instead.
+6. **Ubuntu codecs without the Microsoft fonts:** `ubuntu-restricted-addons` + `libavcodec-extra`
+   (`unrar` is already in the catalog), not `ubuntu-restricted-extras`, which recommends
+   `ttf-mscorefonts-installer`, whose EULA fails a non-interactive run; nothing is accepted on the
+   user's behalf.
+7. **`uv` through pipx on deb** (`{pipx: uv}`): packaged on neither distro; the pipx role installs
+   and upgrades it, and its PyPI name check already exists.
+8. **MOK passwords** `debian-alpi` and `ubuntu-alpi`, like `fedora-alpi` and `alma-alpi`.
