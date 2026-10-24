@@ -77,7 +77,7 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   entry does not undo it, except for the cedilla workaround's apps (`reset_if`, below).
 - Cedilla on XWayland (ported from AAPI, 2026-10-13): under KWin 6.6, Chromium/Electron apps on
   native Wayland ignore `~/.XCompose`. `tasks/cedilla.yml` (from `resolve.yml`, and again at the
-  end of `roles/update`, which may upgrade KWin) reads `kwin_version` (`rpm -q kwin`, KDE only;
+  end of `roles/update`, which may upgrade KWin) reads `kwin_version` (`rpm -q kwin`, or the upstream version of `kwin-wayland` from `dpkg-query` on Debian/Ubuntu; `alpi_cedilla_xwayland` drops a dpkg epoch and revision; KDE only;
   pinned by extra vars in tests) and sets `alpi_cedilla_xwayland` (`alpi_cedilla_xwayland`
   filter: `cedilla_xwayland` auto/true/false in `custom.yml`, auto = KWin older than
   `cedilla_xwayland_kwin_below`, KDE only) and the Flatpak overrides; when the second pass

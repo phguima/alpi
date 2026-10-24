@@ -107,6 +107,10 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
 - **2026-10-24** Phase 1: support matrix entries may give an exact `{version: "26.04"}` besides
   `{min, max}` majors; the check and its message moved into the `alpi_support` filter
   (`feat(env): exact versions in the support matrix`).
+- **2026-10-24** Phase 1: KWin versions compared without a dpkg epoch or revision (`4:6.7.0-1` read
+  as 4.x would have kept the cedilla workaround on forever), and KWin read with `dpkg-query`'s
+  `source:Upstream-Version` of `kwin-wayland` on Debian/Ubuntu (`fix(desktop): KWin versions
+  with a dpkg epoch`). Phase 1 done.
 
 ## 6. Swap (zram)
 

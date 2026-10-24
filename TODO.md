@@ -25,12 +25,6 @@ container or VM before code relies on them. Consequences to keep in mind:
   Molecule's 2.21; `debian13-personal` resolves with the container's own ansible-core, as
   `el10-work` does (`shared/verify_native_controller.yml`).
 
-### Phase 1 — prerequisites (no apt distro enabled; Fedora/EL golden values must not move)
-
-- [ ] **Version comparison:** dpkg versions carry an epoch (`kwin 4:6.6.6-0ubuntu0.1`), and
-      `_version()` would read `(4, 6, 6, …)`, always below 6.7, so the workaround would never turn
-      off. Read `${source:Upstream-Version}` with `dpkg-query`; unit test with epoch strings.
-
 ### Phase 2 — shared apt layer (`family_Debian`)
 
 - [ ] **`roles/repos`:**
@@ -87,8 +81,8 @@ container or VM before code relies on them. Consequences to keep in mind:
 
 ### Phase 4 — Ubuntu 26.04 LTS
 
-- [ ] **Support:** `Ubuntu: {version: "26.04"}` (Phase 1); `unsupported` adds a 26.10 case (faked
-      `os-release` if no image).
+- [ ] **Support:** `Ubuntu: {version: "26.04"}` (`alpi_support` takes exact versions);
+      `unsupported` adds a 26.10 case (faked `os-release` if no image).
 - [ ] **`group_vars/os_Ubuntu/`:** catalog keys, `mok_password`, `zsh_aliases_os`, `universe` and
       `multiverse`, the `virtualbox` repository (`resolute`).
 - [ ] **`bootstrap.sh`, `pick.py`:** `ubuntu` branches (the picker's tests already fake Ubuntu).

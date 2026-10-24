@@ -8,9 +8,13 @@
 #   alpi_cedilla_flipped:  the decision changed since the previous pass (KWin upgraded)
 #   alpi_flatpak_overrides: [{app, flags, reset_if}] for the selected Flatpak apps
 
+# The upstream version only: rpm's %{VERSION}, dpkg's source:Upstream-Version (no epoch, no
+# revision; the package is kwin-wayland on Debian and Ubuntu). rc 1 when KWin is not installed.
 - name: Cedilla | Read the KWin version (KDE)
-  ansible.builtin.command: rpm -q --qf '%{VERSION}' kwin
-  register: _kwin_rpm
+  ansible.builtin.command:
+    argv: "{{ ['dpkg-query', '-W', '-f=${source:Upstream-Version}', 'kwin-wayland']
+              if ansible_facts['os_family'] == 'Debian' else ['rpm', '-q', '--qf', '%{VERSION}', 'kwin'] }}"
+  register: _kwin_query
   changed_when: false
   failed_when: false
   check_mode: false
@@ -18,7 +22,7 @@
 
 - name: Cedilla | Set the KWin version fact
   ansible.builtin.set_fact:
-    kwin_version: "{{ _kwin_rpm.stdout | trim if (_kwin_rpm.rc | default(1)) == 0 else '' }}"
+    kwin_version: "{{ _kwin_query.stdout | trim if (_kwin_query.rc | default(1)) == 0 else '' }}"
 
 - name: Cedilla | On XWayland when KDE runs an older KWin
   ansible.builtin.set_fact:

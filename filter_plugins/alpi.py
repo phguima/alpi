@@ -185,7 +185,10 @@ def alpi_flatpak_overrides(layers, filesystem, selected, reset_if=None):
 
 
 def _version(text):
-    return tuple(int(n) for n in re.findall(r"\d+", str(text)))
+    """Upstream version numbers: a dpkg epoch ('4:') and the revision or release after the first
+    '-' are dropped, so '4:6.6.6-0ubuntu0.1' reads as (6, 6, 6)."""
+    upstream = re.sub(r"^\d+:", "", str(text).strip()).split("-", 1)[0]
+    return tuple(int(n) for n in re.findall(r"\d+", upstream))
 
 
 def alpi_cedilla_xwayland(setting, is_kde, kwin_version, below):

@@ -292,6 +292,11 @@ def test_flatpak_overrides_reset_if_for_selected_apps_even_without_flags():
         (True, True, "6.7.5", True),
         (True, False, "6.6.4", False),     # forced on KDE only
         (False, True, "6.6.4", False),
+        # dpkg versions: the epoch and the revision are not part of the upstream version
+        ("auto", True, "4:6.6.6-0ubuntu0.1", True),
+        ("auto", True, "4:6.7.0-1", False),
+        ("auto", True, "4:6.3.6-1", True),
+        ("auto", True, "6.7-1", False),      # a revision does not make 6.7 newer than 6.7
     ],
 )
 def test_cedilla_xwayland(setting, is_kde, kwin, expected):
