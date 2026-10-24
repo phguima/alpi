@@ -3,12 +3,13 @@
 # roles/repos enables only those, after the distro's alpi_repos_always (group_vars/os_*).
 # Types: rpm (release package by URL), package (release package from enabled repos),
 # dnf_config (enable a defined repo, dnf4), yum (repo file), copr.
-# Repositories with the same URLs on every supported distro live here; distro-specific ones in
-# alpi_repos_os (group_vars/os_*).
+# Repositories with the same URLs on every distro of the family live here (alpi_repos_family; the
+# Debian family's in group_vars/family_Debian/repos.yml); distro-specific ones in alpi_repos_os
+# (group_vars/os_*).
 # yum repository ids are also the .repo file and section names: keep AFPI's and AAPI's
 # (brave-browser, code, gh-cli; virtualbox on EL) so a machine set up by them gets its files
 # rewritten, not a second copy of the same repository under another id.
-alpi_repos_common:
+alpi_repos_family:
   brave-browser:
     type: yum
     description: Brave Browser

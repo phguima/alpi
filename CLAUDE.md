@@ -59,6 +59,12 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   non-interactive dnf call fails on them.
   yum repository ids are the `.repo` file/section names: keep AFPI's and AAPI's (`brave-browser`,
   `code`, `gh-cli`, `virtualbox`), or a migrated machine gets each repository twice.
+  Definitions per family (`alpi_repos_family` in `group_vars/family_<os_family>/repos.yml`) plus
+  the distro's `alpi_repos_os`; `tasks/<os_family>.yml`. apt (`Debian.yml`): Debian's own
+  `apt_components` added to its sources in either format (`alpi_apt_components`, only the
+  release's suites, `cdrom:` lines left alone), then `deb822` repositories written under the
+  vendor's own file name and keyring path (`file`, `keyring`; `.asc` keys dearmored): two files
+  for one repository with different `Signed-By` make apt refuse every source.
 - `roles/packages`: name checks first (`check_<os_family>.yml`: dnf dry run with `--allowerasing`
   like the swaps, which fails outright when a repository's metadata cannot be read instead of
   reporting nothing, and on dependencies that do not resolve (`alpi_unresolved_native`: Problem

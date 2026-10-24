@@ -9,8 +9,12 @@
         fail_msg: ALPI_TARGET is not set; this scenario must target its containers. Set it in molecule.yml.
         quiet: true
 
-- name: Debian 13 | Environment setup and resolution
+- name: Debian 13 | Environment setup, then the apt roles ported so far
   hosts: all
   tasks:
     - name: Debian 13 | Environment setup
       ansible.builtin.import_tasks: ../../tasks/env_setup.yml
+
+    - name: Debian 13 | Repositories
+      ansible.builtin.import_role:
+        name: repos

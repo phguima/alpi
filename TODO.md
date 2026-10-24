@@ -27,16 +27,6 @@ container or VM before code relies on them. Consequences to keep in mind:
 
 ### Phase 2 — shared apt layer (`family_Debian`)
 
-- [ ] **`roles/repos`:**
-      - `python3-debian` first (needed by `ansible.builtin.deb822_repository`).
-      - A `deb822` type; `alpi_repos_common` entries keyed per family (`{yum: …, deb822: …}`, one
-        `type` per id today).
-      - Vendor files and keys under the **vendor's own names**: VS Code's `.deb` writes
-        `vscode.sources` with `/usr/share/keyrings/microsoft.gpg`, and a second file with another
-        `Signed-By` makes `apt update` fail *(check)*. Or preseed `code/add-microsoft-repo false`.
-      - Components (`contrib`/`non-free`, `universe`/`multiverse`) in both formats: Debian's
-        installer writes a one-line `/etc/apt/sources.list` (maybe with a `cdrom:` line) *(check)*,
-        the images and Ubuntu use deb822 `.sources`.
 - [ ] **apt in general:** `DEBIAN_FRONTEND=noninteractive`; `lock_timeout` raised (unattended-upgrades
       and PackageKit hold the dpkg lock on a fresh install); `NEEDRESTART_MODE=a` on Ubuntu.
 - [ ] **`roles/packages`:** `check_Debian.yml` (`apt-get install -s` after `apt update`); `flatpak` and
@@ -105,7 +95,8 @@ container or VM before code relies on them. Consequences to keep in mind:
 - [ ] **VM checklist:** Debian 13 GNOME and KDE, Ubuntu 26.04 and Kubuntu 26.04, EFI + Secure Boot:
       MOK enrollment, `update-grub` and the GRUB menu, the reboot gate, VirtualBox next to KVM on
       Debian's 6.12, cedilla on KDE, the first run with unattended-upgrades still busy, the
-      Antigravity IDE under AppArmor (Ubuntu).
+      Antigravity IDE under AppArmor (Ubuntu), the installer's own `sources.list` (one-line, maybe
+      a `cdrom:` line) getting `contrib`/`non-free` (only the images' deb822 file is tested).
 - [ ] **Release:** after `tests/run.sh full` and the VM checklist per distro: Debian 13 as `v1.2.0`,
       Ubuntu 26.04 as `v1.3.0` (or one release if both land together).
 

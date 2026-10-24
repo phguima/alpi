@@ -4,3 +4,64 @@
   tasks:
     - name: Verify | Resolution matches the reviewed golden sets
       ansible.builtin.include_tasks: ../shared/verify_resolution.yml
+
+- name: Verify | Repositories (roles/repos)
+  hosts: all
+  gather_facts: false
+  vars:
+    _repo_files:
+      brave-browser-release: /usr/share/keyrings/brave-browser-archive-keyring.gpg
+      vscode: /usr/share/keyrings/microsoft.gpg
+      github-cli: /etc/apt/keyrings/githubcli-archive-keyring.gpg
+      virtualbox: /usr/share/keyrings/oracle-virtualbox-2016.gpg
+  tasks:
+    - name: Verify | Read the repository files
+      ansible.builtin.slurp:
+        src: "/etc/apt/sources.list.d/{{ item }}.sources"
+      loop: "{{ _repo_files.keys() | list }}"
+      register: _repo_src
+
+    - name: Verify | Look up the keyrings
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop: "{{ _repo_files.values() | list }}"
+      register: _repo_keys
+
+    - name: Verify | Each file signed by the vendor's keyring, which exists
+      ansible.builtin.assert:
+        that:
+          - "('Signed-By: ' ~ _repo_files[item.0.item]) in (item.0.content | b64decode)"
+          - item.1.stat.exists
+        fail_msg: "{{ item.0.item }}: {{ item.0.content | b64decode }}"
+        quiet: true
+      loop: "{{ _repo_src.results | zip(_repo_keys.results) }}"
+      loop_control:
+        label: "{{ item.0.item }}"
+
+    - name: Verify | apt update, the files naming VS Code's repository, the candidates
+      ansible.builtin.shell: >-
+        set -o pipefail;
+        apt-get update 2>&1 | grep -E '^(E|W):' || true;
+        echo "== files"; grep -l 'packages.microsoft.com/repos/code' /etc/apt/sources.list.d/* /etc/apt/sources.list 2>/dev/null || true;
+        echo "== components"; grep '^Components:' /etc/apt/sources.list.d/debian.sources;
+        echo "== candidates";
+        for p in brave-browser code gh virtualbox-7.2 steam-installer nvidia-driver; do
+        echo "$p $(apt-cache policy $p | sed -n 's/ *Candidate: //p')"; done
+      args:
+        executable: /bin/bash
+      register: _apt_state
+      changed_when: false
+
+    - name: Verify | apt reads every source, one file for VS Code, components and packages available
+      ansible.builtin.assert:
+        that:
+          - _lines | select('match', '^(E|W):') | list == []
+          - _files == ['/etc/apt/sources.list.d/vscode.sources']
+          - "_lines | select('match', '^Components:') | list | unique == ['Components: main contrib non-free non-free-firmware']"
+          - _candidates | select('match', '^\\S+ (|\\(none\\))$') | list == []
+        fail_msg: "{{ _apt_state.stdout }}"
+        quiet: true
+      vars:
+        _lines: "{{ _apt_state.stdout_lines }}"
+        _files: "{{ _lines[(_lines.index('== files') + 1):_lines.index('== components')] }}"
+        _candidates: "{{ _lines[(_lines.index('== candidates') + 1):] }}"

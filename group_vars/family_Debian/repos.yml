@@ -1,0 +1,37 @@
+---
+# apt repository definitions for the Debian family, by id (the ids the catalog's 'repo:' names, as
+# in group_vars/family_RedHat/repos.yml). Type deb822: roles/repos writes
+# /etc/apt/sources.list.d/<file>.sources signed by <keyring>, both as the vendor's own install
+# instructions name them: apt refuses to read any source when two files list the same repository
+# with different Signed-By values ("Conflicting values set for option Signed-By"; VS Code's .deb
+# writes vscode.sources with /usr/share/keyrings/microsoft.gpg, checked on Debian 13, 2026-10-24),
+# so ALPI rewrites the vendor's file and matches its keyring. An armored key (key_url ending .asc)
+# is dearmored into the keyring, as the vendors' instructions do.
+alpi_repos_family:
+  brave-browser:
+    type: deb822
+    description: Brave Browser
+    file: brave-browser-release
+    uris: https://brave-browser-apt-release.s3.brave.com/
+    suites: stable
+    components: main
+    key_url: https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+    keyring: /usr/share/keyrings/brave-browser-archive-keyring.gpg
+  code:
+    type: deb822
+    description: Visual Studio Code
+    file: vscode
+    uris: https://packages.microsoft.com/repos/code
+    suites: stable
+    components: main
+    key_url: https://packages.microsoft.com/keys/microsoft.asc
+    keyring: /usr/share/keyrings/microsoft.gpg
+  gh-cli:
+    type: deb822
+    description: GitHub CLI
+    file: github-cli
+    uris: https://cli.github.com/packages
+    suites: stable
+    components: main
+    key_url: https://cli.github.com/packages/githubcli-archive-keyring.gpg
+    keyring: /etc/apt/keyrings/githubcli-archive-keyring.gpg

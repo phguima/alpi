@@ -97,7 +97,7 @@
 - name: Resolve | Select repositories
   ansible.builtin.set_fact:
     _repos: >-
-      {{ (alpi_repos_common | default({})) | combine(alpi_repos_os | default({}))
+      {{ (alpi_repos_family | default({})) | combine(alpi_repos_os | default({}))
          | alpi_repos(alpi_repos_always | default([]), alpi_pkgs.repos + alpi_pkgs_extra.repos) }}
 
 - name: Resolve | Check repository ids
@@ -105,7 +105,7 @@
     that: _repos.unknown | length == 0
     fail_msg: >-
       Catalog bug, repositories with no definition for {{ ansible_facts['distribution'] }}
-      (alpi_repos_common / alpi_repos_os): {{ _repos.unknown | join(', ') }}.
+      (alpi_repos_family / alpi_repos_os): {{ _repos.unknown | join(', ') }}.
     quiet: true
 
 - name: Resolve | Set repositories

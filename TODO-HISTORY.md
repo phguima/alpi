@@ -116,6 +116,12 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
   (catalog keys, `mok_password`, `kmod_signer: dkms`, the Oracle VirtualBox deb822 repository), a
   `debian` value for every catalog entry (names checked with `apt-cache`), apt test images without
   `docker-clean` and `policy-rc.d` (`test(debian13): resolution on Debian 13, catalog values`).
+- **2026-10-24** Phase 2: `roles/repos` on apt. Repository definitions per family
+  (`alpi_repos_family`, `group_vars/family_<os_family>/repos.yml`); Debian's `contrib`/`non-free`
+  components in either source format; Brave, VS Code, GitHub CLI and VirtualBox as deb822 files
+  under the vendor's own file and keyring names, since a second file with another `Signed-By`
+  (VS Code's `.deb` writes `vscode.sources`) makes apt refuse every source; no preseed needed
+  (`feat(repos): apt repositories for the Debian family`).
 
 ## 6. Swap (zram)
 

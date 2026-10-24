@@ -103,6 +103,44 @@ def alpi_support(matrix, distro, version, major):
             "listed": ", ".join(text(name, e) for name, e in (matrix or {}).items())}
 
 
+def alpi_apt_components(text, components, release):
+    """Add the missing components to the distro's own apt sources, in either format.
+
+    text: /etc/apt/sources.list (one-line) or a deb822 .sources file. Only the entries whose suite
+    is the release or one of its pockets (trixie, trixie-updates, trixie-security) change; cdrom:
+    lines, comments and other repositories are kept as they are. Missing components are appended,
+    the existing ones keep their order. Returns the new text (the same text when nothing is missing).
+    """
+    def ours(suite):
+        return suite == release or suite.startswith(release + "-")
+
+    def merged(present):
+        return present + [c for c in components if c not in present]
+
+    lines = str(text).split("\n")
+    if any(re.match(r"(?i)^(Types|URIs|Suites):", l) for l in lines):
+        # deb822: stanzas separated by blank lines; change Components where Suites is ours
+        out, stanza = [], []
+        for line in lines + [""]:
+            if line.strip():
+                stanza.append(line)
+                continue
+            suites = next((l.split(":", 1)[1].split() for l in stanza if re.match(r"(?i)^Suites:", l)), [])
+            if any(ours(s) for s in suites):
+                stanza = [f"Components: {' '.join(merged(l.split(':', 1)[1].split()))}"
+                          if re.match(r"(?i)^Components:", l) else l for l in stanza]
+            out.extend(stanza + [line])
+            stanza = []
+        return "\n".join(out[:-1])
+    out = []
+    for line in lines:
+        m = re.match(r"^(deb(?:-src)?\s+(?:\[[^\]]*\]\s+)?)(\S+)\s+(\S+)((?:\s+\S+)*)\s*$", line)
+        if m and not m.group(2).startswith("cdrom:") and ours(m.group(3)):
+            line = f"{m.group(1)}{m.group(2)} {m.group(3)} {' '.join(merged(m.group(4).split()))}"
+        out.append(line)
+    return "\n".join(out)
+
+
 def alpi_feature_ids(feature_packages, flags):
     """Package ids of the features that are on (feature_packages: feature -> list of ids)."""
     ids = []
@@ -426,6 +464,7 @@ class FilterModule(object):
         return {
             "alpi_resolve": alpi_resolve,
             "alpi_support": alpi_support,
+            "alpi_apt_components": alpi_apt_components,
             "alpi_canonical": alpi_canonical,
             "alpi_features": alpi_features,
             "alpi_repos": alpi_repos,

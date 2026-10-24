@@ -204,7 +204,7 @@ class TestFeatures:
 
     def test_filters_are_registered(self):
         assert set(alpi.FilterModule().filters()) == {
-            "alpi_resolve", "alpi_support", "alpi_canonical", "alpi_features", "alpi_repos", "alpi_feature_ids",
+            "alpi_resolve", "alpi_support", "alpi_apt_components", "alpi_canonical", "alpi_features", "alpi_repos", "alpi_feature_ids",
             "alpi_flatpak_overrides", "alpi_cedilla_xwayland", "alpi_zram_plan", "alpi_xwayland_entries", "alpi_luks_aliases", "alpi_invalid_luks", "alpi_pipx_name",
             "alpi_appimage_release", "alpi_github_release", "alpi_upstream_missing",
         }
@@ -233,6 +233,54 @@ def test_support(distro, version, major, expected):
 def test_support_lists_ranges_single_majors_and_exact_versions():
     assert alpi.alpi_support(SUPPORT, "Debian", "13", "13")["listed"] == \
         "Fedora 41-44, AlmaLinux 10, Ubuntu 26.04"
+
+
+# --- alpi_apt_components -----------------------------------------------------------------------
+COMPS = ["main", "contrib", "non-free", "non-free-firmware"]
+DEBIAN_SOURCES = """Types: deb
+# http://snapshot.debian.org/archive/debian/20250101T000000Z
+URIs: http://deb.debian.org/debian
+Suites: trixie trixie-updates
+Components: main
+Signed-By: /usr/share/keyrings/debian-archive-keyring.pgp
+
+Types: deb
+URIs: http://deb.debian.org/debian-security
+Suites: trixie-security
+Components: main
+Signed-By: /usr/share/keyrings/debian-archive-keyring.pgp
+"""
+
+
+def test_apt_components_deb822_every_stanza_of_the_release():
+    out = alpi.alpi_apt_components(DEBIAN_SOURCES, COMPS, "trixie")
+    assert out.count("Components: main contrib non-free non-free-firmware\n") == 2
+    assert out.replace("Components: main contrib non-free non-free-firmware", "Components: main") == DEBIAN_SOURCES
+
+
+def test_apt_components_one_line_format_skips_cdrom_comments_and_other_suites():
+    text = (
+        "deb cdrom:[Debian GNU/Linux 13.1.0 _Trixie_]/ trixie main non-free-firmware\n"
+        "deb http://deb.debian.org/debian/ trixie main non-free-firmware\n"
+        "deb-src http://deb.debian.org/debian/ trixie main non-free-firmware\n"
+        "# deb http://deb.debian.org/debian/ trixie main\n"
+        "deb [signed-by=/k.gpg] http://security.debian.org/debian-security trixie-security main\n"
+        "deb https://example.org/repo stable main\n"
+    )
+    out = alpi.alpi_apt_components(text, COMPS, "trixie").splitlines()
+    assert out[0] == "deb cdrom:[Debian GNU/Linux 13.1.0 _Trixie_]/ trixie main non-free-firmware"
+    assert out[1] == "deb http://deb.debian.org/debian/ trixie main non-free-firmware contrib non-free"
+    assert out[2] == "deb-src http://deb.debian.org/debian/ trixie main non-free-firmware contrib non-free"
+    assert out[3] == "# deb http://deb.debian.org/debian/ trixie main"
+    assert out[4] == ("deb [signed-by=/k.gpg] http://security.debian.org/debian-security trixie-security "
+                      "main contrib non-free non-free-firmware")
+    assert out[5] == "deb https://example.org/repo stable main"
+
+
+def test_apt_components_are_idempotent():
+    once = alpi.alpi_apt_components(DEBIAN_SOURCES, COMPS, "trixie")
+    assert alpi.alpi_apt_components(once, COMPS, "trixie") == once
+    assert alpi.alpi_apt_components("", COMPS, "trixie") == ""
 
 
 # --- alpi_flatpak_overrides --------------------------------------------------------------------

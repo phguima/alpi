@@ -10,13 +10,20 @@ mok_password: "debian-alpi"
 # signs with roles/virtualbox's key
 kmod_signer: dkms
 
+# Components roles/repos adds to Debian's own sources (steam-installer is in contrib, the NVIDIA
+# driver and Intel's media driver in non-free, firmware in non-free-firmware)
+apt_components: [main, contrib, non-free, non-free-firmware]
+
 alpi_repos_always: []
 alpi_repos_os:
-  # Debian 13 has no VirtualBox package (catalog: virtualbox)
+  # Debian 13 has no VirtualBox package (catalog: virtualbox). Oracle's file and keyring names (see
+  # group_vars/family_Debian/repos.yml)
   virtualbox:
     type: deb822
     description: Oracle VirtualBox
+    file: virtualbox
     uris: https://download.virtualbox.org/virtualbox/debian
     suites: trixie
     components: contrib
-    signed_by: https://www.virtualbox.org/download/oracle_vbox_2016.asc
+    key_url: https://www.virtualbox.org/download/oracle_vbox_2016.asc
+    keyring: /usr/share/keyrings/oracle-virtualbox-2016.gpg

@@ -1,0 +1,35 @@
+---
+- name: Prepare | Shared
+  ansible.builtin.import_playbook: ../shared/prepare.yml
+
+# What VS Code's .deb leaves (checked on Debian 13, 2026-10-24): vscode.sources signed by
+# /usr/share/keyrings/microsoft.gpg. roles/repos must rewrite that file, not add a second one for
+# the same repository (apt then refuses every source: "Conflicting values set for option Signed-By").
+- name: Prepare | VS Code's own repository file
+  hosts: all
+  tasks:
+    - name: Prepare | Tools
+      ansible.builtin.apt:
+        name: [curl, gpg, ca-certificates]
+        state: present
+        update_cache: true
+
+    - name: Prepare | Microsoft's keyring, as the .deb writes it
+      ansible.builtin.shell: >-
+        set -o pipefail; curl -fsSL https://packages.microsoft.com/keys/microsoft.asc
+        | gpg --dearmor --yes -o /usr/share/keyrings/microsoft.gpg
+      args:
+        executable: /bin/bash
+        creates: /usr/share/keyrings/microsoft.gpg
+
+    - name: Prepare | vscode.sources, as the .deb writes it
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/vscode.sources
+        content: |
+          Types: deb
+          URIs: https://packages.microsoft.com/repos/code
+          Suites: stable
+          Components: main
+          Architectures: amd64,arm64,armhf
+          Signed-By: /usr/share/keyrings/microsoft.gpg
+        mode: "0644"

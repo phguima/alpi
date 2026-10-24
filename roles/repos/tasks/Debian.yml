@@ -1,0 +1,107 @@
+---
+# apt (main.yml): the distro's own components first (contrib, non-free…), then the deb822
+# repositories (group_vars/family_Debian/repos.yml), each under the vendor's own file and keyring
+# names, then one apt update when anything changed.
+
+- name: Repos | Refresh the package lists
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  # A cache refresh is not a change to the system (and keeps idempotence green)
+  changed_when: false
+
+# python3-debian: ansible.builtin.deb822_repository; gpg: dearmoring the vendors' .asc keys
+- name: Repos | Install what deb822 repositories need
+  ansible.builtin.apt:
+    name: [python3-debian, gpg]
+    state: present
+
+# Debian's own sources: deb822 (debian.sources: the images, and installs since trixie) or the
+# one-line sources.list (Debian's installer; it may carry a cdrom: line, left alone)
+- name: Repos | Read the distro's sources
+  ansible.builtin.slurp:
+    src: "{{ item }}"
+  loop: [/etc/apt/sources.list, /etc/apt/sources.list.d/debian.sources]
+  register: _apt_sources
+  failed_when: false
+
+- name: Repos | Add the distro's components
+  ansible.builtin.copy:
+    dest: "{{ item.item }}"
+    content: "{{ _new }}"
+    mode: "0644"
+  loop: "{{ _apt_sources.results | selectattr('content', 'defined') }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when: _new != item.content | b64decode
+  register: _apt_components
+  vars:
+    _new: "{{ item.content | b64decode | alpi_apt_components(apt_components, ansible_facts['distribution_release']) }}"
+
+- name: Repos | Key download directory
+  ansible.builtin.file:
+    path: /var/lib/alpi/apt-keys
+    state: directory
+    mode: "0755"
+  when: _deb822 | length > 0
+  vars:
+    _deb822: "{{ alpi_repos_enabled | selectattr('type', 'eq', 'deb822') }}"
+
+- name: Repos | Download repository keys
+  ansible.builtin.get_url:
+    url: "{{ item.key_url }}"
+    dest: "/var/lib/alpi/apt-keys/{{ item.id }}{{ '.asc' if item.key_url.endswith('.asc') else '.gpg' }}"
+    mode: "0644"
+  loop: "{{ alpi_repos_enabled | selectattr('type', 'eq', 'deb822') }}"
+  loop_control:
+    label: "{{ item.id }}"
+  register: _apt_keys
+
+- name: Repos | Look up the keyrings
+  ansible.builtin.stat:
+    path: "{{ item.keyring }}"
+  loop: "{{ alpi_repos_enabled | selectattr('type', 'eq', 'deb822') }}"
+  loop_control:
+    label: "{{ item.id }}"
+  register: _apt_keyrings
+
+- name: Repos | Keyring directories
+  ansible.builtin.file:
+    path: "{{ item.keyring | dirname }}"
+    state: directory
+    mode: "0755"
+  loop: "{{ alpi_repos_enabled | selectattr('type', 'eq', 'deb822') }}"
+  loop_control:
+    label: "{{ item.id }}"
+
+# A binary key is the keyring as is; an armored one is dearmored, as the vendors' instructions do.
+# Again when the download changed or the keyring is missing.
+- name: Repos | Install the keyrings
+  ansible.builtin.command:
+    argv: "{{ ['gpg', '--dearmor', '--yes', '-o', item.0.item.keyring, item.0.dest]
+              if item.0.dest.endswith('.asc') else ['install', '-m', '0644', item.0.dest, item.0.item.keyring] }}"
+  loop: "{{ _apt_keys.results | zip(_apt_keyrings.results) }}"
+  loop_control:
+    label: "{{ item.0.item.id }}"
+  when: item.0 is changed or not item.1.stat.exists
+
+- name: Repos | Add the repositories
+  ansible.builtin.deb822_repository:
+    name: "{{ item.file }}"
+    types: deb
+    uris: "{{ item.uris }}"
+    suites: "{{ item.suites }}"
+    components: "{{ item.components }}"
+    architectures: "{{ item.architectures | default('amd64') }}"
+    signed_by: "{{ item.keyring }}"
+    state: present
+    enabled: true
+  loop: "{{ alpi_repos_enabled | selectattr('type', 'eq', 'deb822') }}"
+  loop_control:
+    label: "{{ item.id }}"
+  register: _apt_repos
+
+- name: Repos | Update the package lists
+  ansible.builtin.apt:
+    update_cache: true
+  when: _apt_components is changed or _apt_repos is changed
