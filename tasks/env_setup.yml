@@ -130,12 +130,14 @@
     is_kde: "{{ 'KDE' in detected_xdg or 'PLASMA' in detected_xdg }}"
   tags: [always, system, detection]
 
-# group_vars/os_<distro> and os_<distro>_<major> load once the host is in these groups (only the
-# directories that exist count).
+# group_vars/family_<os_family> (data a distro family shares, e.g. family_Debian for Debian and
+# Ubuntu), os_<distro> and os_<distro>_<major> load once the host is in these groups (only the
+# directories that exist count; each layer keeps its own keys, see CLAUDE.md).
 - name: Env Setup | Join the distro groups
   ansible.builtin.group_by:
     key: "{{ item }}"
   loop:
+    - "family_{{ ansible_facts['os_family'] }}"
     - "os_{{ ansible_facts['distribution'] }}"
     - "os_{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_major_version'] }}"
   changed_when: false

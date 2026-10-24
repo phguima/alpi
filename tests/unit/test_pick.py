@@ -267,6 +267,27 @@ def test_main_writes_the_selection_and_keeps_it_on_the_next_run(tmp_path, monkey
                    "features_selection": {"steam": False}}
 
 
+def test_load_data_layers_the_family_before_the_distro(tmp_path):
+    gv = tmp_path / "group_vars"
+    files = {
+        "all/catalog.yml": "{}", "all/packages.yml": "{}", "all/features.yml": "{}",
+        "all/picker.yml": "{}",
+        "family_RedHat/main.yml": "family_key: rpm\nlayer: family\n",
+        "family_Debian/main.yml": "debian_key: deb\n",
+        "os_Fedora/main.yml": "layer: distro\n",
+        "os_Fedora_44/main.yml": "major_key: 44\n",
+    }
+    for name, text in files.items():
+        (gv / name).parent.mkdir(parents=True, exist_ok=True)
+        (gv / name).write_text(text)
+    data = pick.load_data(tmp_path, "Fedora", "44")
+    assert data == {"family_key": "rpm", "layer": "distro", "major_key": 44}
+
+
+def test_every_distro_has_a_family():
+    assert set(pick.DISTROS.values()) <= set(pick.FAMILIES)
+
+
 def test_main_rejects_an_unsupported_distro(tmp_path, monkeypatch):
     rc, sel = run_main(tmp_path, monkeypatch, "debian", [])
     assert rc == 1 and sel is None

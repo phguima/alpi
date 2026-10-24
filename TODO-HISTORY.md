@@ -98,6 +98,9 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
 - **2026-10-24** Phase 1: `swap` per distro (`{native: …, swap: true|false}` overrides the entry's
   `swap`), and the `allowerasing` install runs only where dnf is the package manager
   (`feat(catalog): swap per distro, allowerasing on dnf only`).
+- **2026-10-24** Phase 1: family groups, `family_<os_family>` in `env_setup`'s `group_by` and in
+  `pick.py` (`FAMILIES`), loaded before `os_<distro>`; no family data yet (Fedora and EL share no
+  key), `family_Debian` comes with the apt layer (`feat(env): family groups for shared distro data`).
 
 ## 6. Swap (zram)
 

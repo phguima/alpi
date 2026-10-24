@@ -28,6 +28,8 @@ ROOT = Path(__file__).resolve().parent
 # /etc/os-release ID -> Ansible's distribution name (group_vars/os_<name>). The playbook's support
 # matrix (group_vars/all/support.yml) is the authoritative check.
 DISTROS = {"fedora": "Fedora", "almalinux": "AlmaLinux"}
+# Ansible's os_family per distribution (group_vars/family_<family>)
+FAMILIES = {"Fedora": "RedHat", "AlmaLinux": "RedHat", "Debian": "Debian", "Ubuntu": "Debian"}
 HEADER = """---
 # Written by pick.py (./bootstrap.sh runs it; run ./pick.py again to change the choice). Only the
 # differences from the repository defaults, so new defaults still arrive with git pull.
@@ -70,8 +72,8 @@ def load_data(root, distro, major):
     data = {}
     for name in ("catalog", "packages", "features", "picker"):
         data.update(load_yaml(gv / "all" / f"{name}.yml"))
-    # Same layering as group_by in env_setup: os_<distro>, then os_<distro>_<major>
-    for group in (f"os_{distro}", f"os_{distro}_{major}"):
+    # Same layering as group_by in env_setup: family_<os_family>, os_<distro>, os_<distro>_<major>
+    for group in (f"family_{FAMILIES[distro]}", f"os_{distro}", f"os_{distro}_{major}"):
         for path in sorted((gv / group).glob("*.yml")) if (gv / group).is_dir() else []:
             data.update(load_yaml(path))
     return data

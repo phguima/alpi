@@ -22,7 +22,7 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 ## Layout (skeleton, 2026-10-05)
 
 - `site.yml`: `tasks/env_setup.yml` (support matrix assert → user/hardware/DE facts, ported from
-  AFPI → `group_by` into `os_<distro>`, `os_<distro>_<major>` → machine-settings assert →
+  AFPI → `group_by` into `family_<os_family>`, `os_<distro>`, `os_<distro>_<major>` → machine-settings assert →
   `tasks/resolve.yml`), then the roles (`repos`, `update`, `boot`, `memory`, `akmods_mok`, `virtualbox`,
   `packages`, `upstream`, `common`, `zsh`, `desktop`, `pipx`, `ai_tools`, `clamav`, `asus`, `nvidia` so far),
   then `tasks/reminders.yml` in `post_tasks` (tag `reminders`, not `always`, so `--tags resolve`
@@ -34,9 +34,10 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - `tasks/resolve.yml` + `filter_plugins/alpi.py`: catalog lookup, merge of the package/feature
   layers, all validation (fails before anything changes). Keep logic in the filter plugin, not in
   long Jinja expressions.
-- `group_vars/all/{support,catalog,packages,features,repos,machine}.yml`, `group_vars/os_*/`:
-  each layer has its own keys, so group order does not matter (`ansible_group_priority` does not
-  work in `group_vars/`).
+- `group_vars/all/{support,catalog,packages,features,repos,machine}.yml`, `group_vars/family_*/`
+  (none yet; `family_Debian` comes with the apt layer), `group_vars/os_*/`: each layer has its
+  own keys, so group order does not matter (`ansible_group_priority` does not work in
+  `group_vars/`). `pick.py` loads the same layers (`FAMILIES` maps a distro to its family).
 - No profiles (removed 2026-10-08, PROPOSAL "Decisions (2026-10-08)"). `host_vars/127.0.0.1/`
   (git-ignored): `bootstrap.yml` (written by `bootstrap.sh`: hostname, git identity),
   `selection.yml` (written by `pick.py`: `packages_selection_add/_skip`, `features_selection`,
@@ -259,8 +260,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     replace inline `host_vars`, so a scenario's settings under test go in
     `molecule/<scenario>/host_vars/<instance>.yml`).
   - Scenarios: `catalog` (Fedora + Alma: repos + every name checked, nothing installed; the full
-    resolved sets compared with reviewed golden values in its `host_vars/`, via
-    `shared/verify_resolution.yml`. Update those when the catalog or package lists change, after
+    resolved sets, and the host's `family_`/`os_` groups, compared with reviewed golden values in
+    its `host_vars/`, via `shared/verify_resolution.yml`. Update those when the catalog or package lists change, after
     reviewing the diff; also the AI tools' upstream URLs, `roles/ai_tools/tasks/check.yml`),
     `fedora44-personal`, `el10-work` (real installs, heaviest apps skipped;
     `shared/verify_installed.yml` checks everything resolved is installed; `el10-work` also

@@ -28,3 +28,4 @@ _golden:
   # replacing Bitwarden's and adding Slack, Spotify and ZapZap; every app selected
   flatpak_overrides: [com.rtosta.zapzap, com.bitwarden.desktop, us.zoom.Zoom, com.slack.Slack, com.spotify.Client]
   cedilla_xwayland: true
+  groups: [family_RedHat, os_AlmaLinux, os_AlmaLinux_10]

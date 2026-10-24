@@ -23,3 +23,5 @@
       repos: "{{ alpi_repos_enabled | map(attribute='id') | list }}"
       flatpak_overrides: "{{ alpi_flatpak_overrides | map(attribute='app') | list }}"
       cedilla_xwayland: "{{ alpi_cedilla_xwayland }}"
+      # family_<os_family>, os_<distro>, os_<distro>_<major>: the group_vars layers that apply
+      groups: "{{ group_names | select('match', '^(family|os)_') | sort }}"
