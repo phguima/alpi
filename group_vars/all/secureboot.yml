@@ -3,8 +3,8 @@
 # akmods or DKMS build, e.g. NVIDIA). One-time: typed once in the blue MokManager screen on the next boot.
 # MokManager uses a US keyboard layout, so stick to plain letters, digits and '-'. Set per distro,
 # so the screen's password names the system being installed: mok_password is "fedora-alpi" in
-# group_vars/os_Fedora, "alma-alpi" in group_vars/os_AlmaLinux_10 and "debian-alpi" in
-# group_vars/os_Debian. Override it in host_vars/127.0.0.1/custom.yml.
+# group_vars/os_Fedora, "alma-alpi" in group_vars/os_AlmaLinux_10, "debian-alpi" in
+# group_vars/os_Debian and "ubuntu-alpi" in group_vars/os_Ubuntu. Override it in host_vars/127.0.0.1/custom.yml.
 
 # Who builds and signs kernel modules is per distro (kmod_signer in group_vars/os_*): a signer
 # here, or none (EL: VirtualBox's vboxdrv.sh signs with roles/virtualbox's key, NVIDIA is
@@ -31,3 +31,14 @@ kmod_signers:
     generate: [dkms, generate_mok]
     key_der: /var/lib/dkms/mok.pub
     label: DKMS
+  # Ubuntu: DKMS signs with shim-signed's MOK.priv, and when it is missing at build time runs
+  # update-secureboot-policy, a debconf prompt; Oracle's vboxdrv.sh signs with the same pair. Ubuntu's
+  # own tool creates it (no prompt with --new-key) before either is installed, so roles/virtualbox
+  # finds it and one enrollment covers both. The NVIDIA modules are Canonical's, already signed:
+  # nvidia-driver is here for a DKMS build if its prebuilt modules ever go missing.
+  shim:
+    ids: [nvidia-driver, virtualbox]
+    packages: [shim-signed, mokutil]
+    generate: [update-secureboot-policy, --new-key]
+    key_der: /var/lib/shim-signed/mok/MOK.der
+    label: DKMS and VirtualBox

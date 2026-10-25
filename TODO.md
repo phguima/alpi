@@ -21,10 +21,6 @@ container or VM before code relies on them. Consequences to keep in mind:
 
 ### Phase 4 — Ubuntu 26.04 LTS
 
-- [ ] **DKMS key = VirtualBox's key file.** Ubuntu's DKMS signs with
-      `/var/lib/shim-signed/mok/MOK.{priv,der}`, the path `roles/virtualbox` already uses; when it is
-      missing at build time DKMS runs `update-secureboot-policy`, a debconf prompt. Create and enroll
-      it before any DKMS package (one key, one enrollment, shared by both).
 - [ ] **AppArmor:** Ubuntu restricts unprivileged user namespaces, so Electron AppImages (Antigravity
       IDE) fail their sandbox; `roles/ai_tools` adds an AppArmor profile with `userns,` *(check)*.
 

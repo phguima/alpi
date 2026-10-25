@@ -92,6 +92,24 @@
       register: _sb_deb_conf
       when: inventory_hostname == 'alpi-sb-debian13'
 
+    - name: Verify | Read NVIDIA's options (Ubuntu)
+      ansible.builtin.slurp:
+        src: /etc/modprobe.d/alpi-nvidia.conf
+      register: _sb_ubu_conf
+      when: inventory_hostname == 'alpi-sb-ubuntu2604'
+
+    - name: Verify | Secure Boot on Ubuntu - one shim-signed key for DKMS and VirtualBox, options for nvidia
+      ansible.builtin.assert:
+        that:
+          - is_secure_boot and alpi_feature.nvidia and 'virtualbox' in alpi_ids_selected
+          - _oracle_key and _oracle_priv_mode == '0600' and not _akmods_key and not _files.results[5].stat.exists
+          - _imports == ['--import /var/lib/shim-signed/mok/MOK.der']
+          - "'password: ubuntu-alpi / ubuntu-alpi' in _mok_log.stdout_lines"
+          - "'options nvidia NVreg_DynamicPowerManagement=0x02' in (_sb_ubu_conf.content | b64decode)"
+        fail_msg: "mokutil log: {{ _mok_log.stdout_lines | default([]) }}"
+        quiet: true
+      when: inventory_hostname == 'alpi-sb-ubuntu2604'
+
     - name: Verify | Secure Boot on Debian - DKMS and Oracle keys, NVIDIA options for nvidia-current
       ansible.builtin.assert:
         that:

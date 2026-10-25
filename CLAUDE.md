@@ -161,9 +161,12 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   when Secure Boot is on, the distro's `kmod_signer` is one of `kmod_signers`
   (`group_vars/all/secureboot.yml`: `akmods` on Fedora for `nvidia-driver` and `virtualbox`,
   key from `kmodgenca -a`; `dkms` on Debian for `nvidia-driver`, key from `dkms generate_mok`
-  (DKMS 3.2 would create it at the first build otherwise); `none` on EL) and one of its ids was
+  (DKMS 3.2 would create it at the first build otherwise); `shim` on Ubuntu for both, key from
+  `update-secureboot-policy --new-key` in `/var/lib/shim-signed/mok`, where Ubuntu's DKMS and
+  Oracle's `vboxdrv.sh` both sign from, so `roles/virtualbox` finds it and one enrollment covers
+  both; `none` on EL) and one of its ids was
   selected (the signer signs at build time, so the key must exist first). `mok_password` per distro (`fedora-alpi` in `group_vars/os_Fedora`,
-  `alma-alpi` in `group_vars/os_AlmaLinux_10`, `debian-alpi` in `group_vars/os_Debian`; notes in `group_vars/all/secureboot.yml`). `tasks/enroll.yml`
+  `alma-alpi` in `group_vars/os_AlmaLinux_10`, `debian-alpi` in `group_vars/os_Debian`, `ubuntu-alpi` in `group_vars/os_Ubuntu`; notes in `group_vars/all/secureboot.yml`). `tasks/enroll.yml`
   (MOK enrollment of one key) is shared with `roles/virtualbox`.
 - `roles/virtualbox` (before `packages`; runs when the `virtualbox` id is selected, whatever the
   native names): on a non-akmod build (Oracle, EL and Debian) with Secure Boot, its
@@ -357,8 +360,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     detected from a fake EFI variable mounted over `/sys/firmware`: Fedora with Secure Boot and
     NVIDIA vetoed, Fedora without (and VirtualBox off: a stale `alpi-kvm.conf` removed), EL with,
     Debian with (DKMS key and Oracle key both enrolled, NVIDIA options for `nvidia-current`, a
-    stand-in for Debian's own `nvidia.conf` left alone); fake `mokutil` in `files/` (state per
-    key), real `kmodgenca`/`dkms`/openssl),
+    stand-in for Debian's own `nvidia.conf` left alone), Ubuntu with (one shim-signed key,
+    requested once for DKMS and VirtualBox); fake `mokutil` in `files/` (state per key), real
+    `kmodgenca`/`dkms`/`update-secureboot-policy`/openssl),
     `services` (env_setup + service roles on `almalinux/10-init` with systemd; prepare installs
     the packages: freshclam enabled and running, and skipped cleanly when its id is skipped; on
     Debian 13 too, built from `shared/Dockerfile-systemd-apt.j2`, the systemd image for any apt

@@ -177,6 +177,9 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
   (components, Oracle's resolute suite, `ubuntu-alpi`); `pick.py` and `bootstrap.sh` branches;
   new `ubuntu2604` scenario on `debian13`'s playbooks; `unsupported` adds Ubuntu 26.10
   (`feat(ubuntu): catalog, repositories and support for Ubuntu 26.04`).
+- **2026-10-25** Phase 4: one Secure Boot key on Ubuntu, the `shim` signer:
+  `update-secureboot-policy --new-key` before DKMS or Oracle's `vboxdrv.sh` sign anything, so
+  one enrollment covers both (`feat(secureboot): one shim-signed key on Ubuntu`).
 
 ## 6. Swap (zram)
 
