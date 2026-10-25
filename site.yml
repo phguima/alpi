@@ -6,6 +6,12 @@
   # Molecule sets ALPI_TARGET=all to run against its containers; a real run targets localhost.
   hosts: "{{ lookup('env', 'ALPI_TARGET') | default('localhost', true) }}"
   become: yes
+  # apt (group_vars/family_Debian/apt.yml): no prompts, a longer wait for the dpkg lock. Empty on
+  # dnf, and until env_setup's group_by loads the family's variables.
+  environment: "{{ apt_environment | default({}) }}"
+  module_defaults:
+    ansible.builtin.apt:
+      lock_timeout: "{{ apt_lock_timeout | default(60) }}"
 
   pre_tasks:
     - name: ALPI | Environment Setup

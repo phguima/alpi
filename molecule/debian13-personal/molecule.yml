@@ -1,0 +1,22 @@
+---
+# Debian 13, personal machine (custom.yml + selection.yml) through site.yml, with the roles ported
+# to apt so far (TODO.md section 5; the others are skipped by tag and join as they are ported):
+# repos (contrib/non-free, Brave, VS Code, GitHub CLI; i386 for Steam), packages (apt name check,
+# base with steam-installer and its i386 libraries, real Flatpaks, extra, explicit uninstall),
+# upstream, common, pipx. Debian is allowed in host_vars (not in the support matrix yet).
+# prepare.yml holds the dpkg lock for the start of the converge: the apt module must wait for it
+# (apt_lock_timeout), as it would for unattended-upgrades on a fresh install.
+platforms:
+  - name: alpi-debian13-personal
+    image: docker.io/library/debian:13
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-debian13-personal:/var/cache/apt"]
+provisioner:
+  options:
+    # No systemd (services: 'services', 'asus'), no upgrade or swap (see fedora44-personal), and
+    # the roles not ported to apt yet. Setting skip-tags replaces Molecule's default, so its own
+    # tags are repeated.
+    skip-tags: molecule-notest,notest,clamav,supergfxd,update,memory,boot,akmods_mok,virtualbox,asus,nvidia,zsh,desktop,ai_tools
+  playbooks:
+    prepare: prepare.yml

@@ -18,3 +18,9 @@
     - name: Debian 13 | Repositories
       ansible.builtin.import_role:
         name: repos
+
+    # Every name, everything on (nothing installed): steam-installer resolves only with i386
+    - name: Debian 13 | Check every name
+      ansible.builtin.include_role:
+        name: packages
+        tasks_from: check.yml

@@ -141,6 +141,34 @@ def alpi_apt_components(text, components, release):
     return "\n".join(out)
 
 
+def alpi_apt_simulation(lines):
+    """Read the output of `apt-get install -s <names>` (LC_ALL=C).
+
+    missing: names apt does not know ("Unable to locate package") or knows only as a name other
+    packages refer to ("has no installation candidate"); apt reports them all and resolves
+    nothing. unresolved: when nothing is missing, the "unmet dependencies" block and the other
+    E: lines (no transaction was reached). W: lines are not errors.
+    """
+    lines = [str(l) for l in lines or []]
+    missing = []
+    for line in lines:
+        m = re.match(r"^E: (?:Unable to locate package (\S+)|Package '([^']+)' has no installation candidate)", line)
+        if m and (m.group(1) or m.group(2)) not in missing:
+            missing.append(m.group(1) or m.group(2))
+    if missing:
+        return {"missing": missing, "unresolved": []}
+    unresolved, block = [], False
+    for line in lines:
+        if line.startswith("The following packages have unmet dependencies:"):
+            block = True
+        elif line.startswith("E: "):
+            block = False
+            unresolved.append(line)
+        elif block and line.strip():
+            unresolved.append(line.strip())
+    return {"missing": [], "unresolved": unresolved}
+
+
 def alpi_feature_ids(feature_packages, flags):
     """Package ids of the features that are on (feature_packages: feature -> list of ids)."""
     ids = []
@@ -485,6 +513,7 @@ class FilterModule(object):
             "alpi_resolve": alpi_resolve,
             "alpi_support": alpi_support,
             "alpi_apt_components": alpi_apt_components,
+            "alpi_apt_simulation": alpi_apt_simulation,
             "alpi_canonical": alpi_canonical,
             "alpi_features": alpi_features,
             "alpi_repos": alpi_repos,

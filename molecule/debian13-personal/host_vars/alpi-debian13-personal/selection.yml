@@ -1,0 +1,7 @@
+---
+# As pick.py writes it. Skipped: the large pipx apps and downloads ('catalog' and debian13 check
+# the names), and VirtualBox (Oracle's package builds its modules at install: Phase 3).
+packages_selection_add: []
+packages_selection_skip: [chromium, discord, telegram, drawy, displaycal, gpu-screen-recorder, markitdown,
+                          notebooklm-py, pdf2docx, inkscape]
+features_selection: {virtualbox: false}

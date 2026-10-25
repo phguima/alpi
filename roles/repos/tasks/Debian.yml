@@ -101,7 +101,22 @@
     label: "{{ item.id }}"
   register: _apt_repos
 
+# i386 packages (multiarch) for the selected ids that need them (apt_i386_ids): Steam's 32-bit
+# libraries resolve only with it. Never removed: other packages may already depend on it.
+- name: Repos | List the foreign architectures
+  ansible.builtin.command: dpkg --print-foreign-architectures
+  register: _apt_archs
+  changed_when: false
+  check_mode: false
+
+- name: Repos | Add the i386 architecture
+  ansible.builtin.command: dpkg --add-architecture i386
+  register: _apt_i386
+  when:
+    - "'i386' not in _apt_archs.stdout_lines"
+    - alpi_ids_selected | intersect(apt_i386_ids) | length > 0
+
 - name: Repos | Update the package lists
   ansible.builtin.apt:
     update_cache: true
-  when: _apt_components is changed or _apt_repos is changed
+  when: _apt_components is changed or _apt_repos is changed or _apt_i386 is changed

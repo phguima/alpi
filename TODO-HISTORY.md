@@ -127,6 +127,13 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
   under the vendor's own file and keyring names, since a second file with another `Signed-By`
   (VS Code's `.deb` writes `vscode.sources`) makes apt refuse every source; no preseed needed
   (`feat(repos): apt repositories for the Debian family`).
+- **2026-10-25** Phase 2: apt in general and `roles/packages` on apt. `site.yml` gets the
+  family's `apt_environment` (no debconf or needrestart prompts) and `apt_lock_timeout` (600 s,
+  passed on by `ansible.builtin.package`); `check_Debian.yml` reads `apt-get update` (exit 0 on
+  an unreachable source) and `apt-get install -s` (`alpi_apt_simulation`); i386 multiarch for
+  Steam and NVIDIA in `roles/repos`; `debian13` checks every name with apt, `brave-origin` and the
+  other vendor names included (Phase 3's "Catalog on apt" with it); new `debian13-personal`
+  installs for real through `site.yml` (`feat(packages): apt name check, i386, apt settings`).
 
 ## 6. Swap (zram)
 

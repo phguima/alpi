@@ -32,11 +32,16 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   `hibernate` is on and disk swap is smaller than RAM (`alpi_memory.hibernate_reminder`), then
   AAPI's final status banner (`alpi_final_status`; a run stopped by the reboot gate never gets
   there).
+- apt settings for the whole play (`site.yml`'s `environment` and `module_defaults`, from
+  `group_vars/family_Debian/apt.yml`, empty on dnf and before `group_by`): `apt_environment`
+  (`DEBIAN_FRONTEND=noninteractive`, `NEEDRESTART_MODE=a`) and `apt_lock_timeout` (600 s for the
+  apt module's dpkg lock wait, which `ansible.builtin.package` passes on: unattended-upgrades holds
+  the lock on a fresh install). Scenarios that import roles without `site.yml` do not get them.
 - `tasks/resolve.yml` + `filter_plugins/alpi.py`: catalog lookup, merge of the package/feature
   layers, all validation (fails before anything changes). Keep logic in the filter plugin, not in
   long Jinja expressions.
 - `group_vars/all/{support,catalog,packages,features,repos,machine}.yml`, `group_vars/family_*/`
-  (none yet; `family_Debian` comes with the apt layer), `group_vars/os_*/`: each layer has its
+  (data a family's distros share: repository definitions, apt settings…), `group_vars/os_*/`: each layer has its
   own keys, so group order does not matter (`ansible_group_priority` does not work in
   `group_vars/`). `pick.py` loads the same layers (`FAMILIES` maps a distro to its family).
 - No profiles (removed 2026-10-08, PROPOSAL "Decisions (2026-10-08)"). `host_vars/127.0.0.1/`
@@ -74,12 +79,18 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   `apt_components` added to its sources in either format (`alpi_apt_components`, only the
   release's suites, `cdrom:` lines left alone), then `deb822` repositories written under the
   vendor's own file name and keyring path (`file`, `keyring`; `.asc` keys dearmored): two files
-  for one repository with different `Signed-By` make apt refuse every source.
+  for one repository with different `Signed-By` make apt refuse every source. i386 multiarch
+  (`dpkg --add-architecture`) when a selected id is in `apt_i386_ids` (Steam's 32-bit libraries,
+  the NVIDIA driver's), never removed.
 - `roles/packages`: name checks first (`check_<os_family>.yml`: dnf dry run with `--allowerasing`
   like the swaps, which fails outright when a repository's metadata cannot be read instead of
   reporting nothing, and on dependencies that do not resolve (`alpi_unresolved_native`: Problem
   lines with neither a transaction summary nor "Nothing to do", since dnf prints a Problem block
-  even when it resolves around it); `flatpak remote-info`),
+  even when it resolves around it); apt (`check_Debian.yml`): `apt-get update` run and read, since
+  it exits 0 when a source cannot be fetched (`W: Failed to fetch`; retried while the lists lock is
+  held, which `DPkg::Lock::Timeout` does not cover), then `apt-get install -s` of the whole set read
+  by `alpi_apt_simulation` (every unknown name first, unmet dependencies only when none is
+  missing); `flatpak remote-info`),
   then replacements (catalog `swap: true`, or per distro `{native: …, swap: true|false}`;
   installed with `allowerasing` where dnf is the package manager, apt replaces through package
   metadata: `ffmpeg`, `mesa-va-drivers-freeworld`), base, user extras, explicit uninstalls. Needs the `repos` role
@@ -301,8 +312,12 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     installed, `shared/pinned_pair.yml`), `flags` (env_setup on Fedora 44 with the hardware flags as
     key=value extra vars, i.e. strings: `is_nvidia=true` turns NVIDIA on, `=false` keeps the
     others off), `debian13` (env_setup + resolution on Debian 13, allowed in its own host_vars
-    while the apt layer is built; golden values like `catalog`; the apt roles join it as they are
-    ported), `unsupported` (Debian 13), `upstream` (`roles/upstream` on
+    while the apt layer is built; golden values like `catalog`; `roles/repos`, then every name of
+    the golden set checked with apt, nothing installed), `debian13-personal` (`site.yml` on
+    Debian 13 with the roles ported to apt, the others skipped by tag until they are: real installs
+    as in `fedora44-personal`, Steam with its i386 libraries; `prepare.yml` holds the dpkg lock
+    for 150 s, which the apt module must wait out: with `apt_lock_timeout: 20` the converge fails),
+    `unsupported` (Debian 13), `upstream` (`roles/upstream` on
     AlmaLinux 10 against a stand-in GitHub served by `http.server` on 127.0.0.1:8766: install v1,
     `side_effect.yml` publishes v2 and runs again (Molecule's side_effect step, added to the
     scenario's test_sequence), GitHub unreachable keeps v0, `packages_absent` removes it;
@@ -365,7 +380,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     sees the host's GPU once `pciutils` is installed.
   - Images are bare: `shared/prepare.yml` installs python3 and sudo; the podman connection runs
     `raw` without a shell (wrap in `sh -c`). Bare Fedora lacks the Python rpm bindings, so verify
-    with `rpm -q --whatprovides` (`shared/verify_installed.yml`), not `package_facts`.
+    with `rpm -q --whatprovides` (`shared/verify_installed.yml`; `dpkg-query` status `ii` on
+    apt), not `package_facts`.
   - A failure-case harness must be shown to fail on a case that should not fail before trusting it.
   - Verify plays share registered vars across plays, and a registered var beats a task's `vars:`:
     give each play's vars their own prefix (`_steam_…`) or a later assert reads an earlier

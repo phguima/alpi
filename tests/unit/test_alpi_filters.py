@@ -205,7 +205,7 @@ class TestFeatures:
 
     def test_filters_are_registered(self):
         assert set(alpi.FilterModule().filters()) == {
-            "alpi_resolve", "alpi_support", "alpi_apt_components", "alpi_canonical", "alpi_features", "alpi_repos", "alpi_feature_ids",
+            "alpi_resolve", "alpi_support", "alpi_apt_components", "alpi_apt_simulation", "alpi_canonical", "alpi_features", "alpi_repos", "alpi_feature_ids",
             "alpi_flatpak_overrides", "alpi_cedilla_xwayland", "alpi_zram_plan", "alpi_xwayland_entries", "alpi_luks_aliases", "alpi_invalid_luks", "alpi_zsh_aliases", "alpi_pipx_name",
             "alpi_appimage_release", "alpi_github_release", "alpi_upstream_missing",
         }
@@ -282,6 +282,48 @@ def test_apt_components_are_idempotent():
     once = alpi.alpi_apt_components(DEBIAN_SOURCES, COMPS, "trixie")
     assert alpi.alpi_apt_components(once, COMPS, "trixie") == once
     assert alpi.alpi_apt_components("", COMPS, "trixie") == ""
+
+
+# --- alpi_apt_simulation -----------------------------------------------------------------------
+# Output of apt-get install -s on Debian 13 (2026-10-25)
+
+def test_apt_simulation_missing_names_and_no_candidate():
+    out = alpi.alpi_apt_simulation([
+        "Reading package lists...",
+        "Package steam-installer is not available, but is referred to by another package.",
+        "E: Unable to locate package nosuchpkg1",
+        "E: Unable to locate package nosuchpkg2",
+        "E: Package 'steam-installer' has no installation candidate",
+        "E: Unable to locate package nosuchpkg1",
+    ])
+    assert out == {"missing": ["nosuchpkg1", "nosuchpkg2", "steam-installer"], "unresolved": []}
+
+
+def test_apt_simulation_unmet_dependencies():
+    out = alpi.alpi_apt_simulation([
+        "Solving dependencies...",
+        "Some packages could not be installed. This may mean that you have",
+        "The following information may help to resolve the situation:",
+        "",
+        "The following packages have unmet dependencies:",
+        " steam-installer : Depends: steam-libs-i386 (= 1:1.0.0.83~ds-3) but it is not installable",
+        "E: Unable to correct problems, you have held broken packages.",
+        "E: The following information from --solver 3.0 may provide additional context:",
+        "   Unable to satisfy dependencies. Reached two conflicting decisions:",
+    ])
+    assert out["missing"] == []
+    assert out["unresolved"] == [
+        "steam-installer : Depends: steam-libs-i386 (= 1:1.0.0.83~ds-3) but it is not installable",
+        "E: Unable to correct problems, you have held broken packages.",
+        "E: The following information from --solver 3.0 may provide additional context:",
+    ]
+
+
+def test_apt_simulation_clean_run_and_warnings():
+    assert alpi.alpi_apt_simulation([
+        "W: Some warning", "Inst vim (2:9.1 Debian:13.7/stable [amd64])", "Conf vim (2:9.1 Debian:13.7/stable [amd64])",
+    ]) == {"missing": [], "unresolved": []}
+    assert alpi.alpi_apt_simulation(None) == {"missing": [], "unresolved": []}
 
 
 # --- alpi_flatpak_overrides --------------------------------------------------------------------

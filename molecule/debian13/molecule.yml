@@ -5,7 +5,8 @@
 # as they are ported:
 #   roles/repos: Debian's contrib/non-free components, the vendor repositories under their own
 #   file and keyring names (prepare.yml plants VS Code's own vscode.sources, which must be
-#   rewritten, not duplicated), apt update clean afterwards
+#   rewritten, not duplicated), apt update clean afterwards; i386 added (Steam and NVIDIA selected)
+#   roles/packages' name check (check_Debian.yml): every name of the golden set, nothing installed
 platforms:
   - name: alpi-debian13
     image: docker.io/library/debian:13

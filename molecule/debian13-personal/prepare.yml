@@ -1,0 +1,24 @@
+---
+- name: Prepare | Shared
+  ansible.builtin.import_playbook: ../shared/prepare.yml
+
+- name: Prepare | Debian 13, personal
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Prepare | The package packages_absent removes
+      ansible.builtin.apt:
+        name: nano
+        state: present
+
+    # Held for 150 s from here: the converge's first dpkg step (repos' python3-debian) comes well
+    # within that and outlasts the apt module's default 60 s wait
+    - name: Prepare | Hold the dpkg lock, as unattended-upgrades does on a fresh install
+      ansible.builtin.command:
+        argv:
+          - python3
+          - -c
+          - import fcntl, time; f = open('/var/lib/dpkg/lock-frontend', 'w'); fcntl.lockf(f, fcntl.LOCK_EX); time.sleep(150)
+      async: 200
+      poll: 0
+      changed_when: false

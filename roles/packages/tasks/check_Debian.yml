@@ -1,0 +1,50 @@
+---
+# apt (check.yml). The package lists are refreshed here and read: apt-get update exits 0 when a
+# source cannot be fetched (unreachable, bad key), only printing W: lines, and the names of that
+# source would then be reported missing, or old lists used. It does not wait for the lists lock
+# (DPkg::Lock::Timeout is dpkg's), so a lock held by unattended-upgrades is retried here.
+- name: Packages | Refresh the package lists
+  ansible.builtin.command: apt-get update
+  environment:
+    LC_ALL: C
+  register: _apt_update
+  changed_when: false
+  failed_when: _apt_update.rc != 0 and 'Could not get lock' not in _apt_update.stderr
+  until: "'Could not get lock' not in _apt_update.stderr"
+  retries: "{{ (apt_lock_timeout | int / 10) | round(0, 'ceil') | int }}"
+  delay: 10
+  check_mode: false
+
+- name: Packages | Fail on unreadable sources
+  ansible.builtin.assert:
+    that: _errors | length == 0
+    fail_msg: >-
+      Could not read every apt source, so the package names were not checked: {{ _errors | join(' ') }}
+    quiet: true
+  vars:
+    _errors: >-
+      {{ (_apt_update.stdout_lines + _apt_update.stderr_lines)
+         | select('match', '^(E:|W: (Failed to fetch|Some index files))') | unique }}
+
+# Simulated install of the whole native set: apt-get -s reports every name no source provides
+# before it resolves anything, then the unmet dependencies (alpi_apt_simulation). Virtual names
+# resolve to a provider as in a real install.
+- name: Packages | Look up native package names
+  ansible.builtin.command:
+    argv: "{{ ['apt-get', 'install', '-s'] + _native }}"
+  environment:
+    LC_ALL: C
+  register: _apt_dry_run
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  vars:
+    _native: "{{ alpi_pkgs.native + alpi_pkgs_extra.native }}"
+  when: _native | length > 0
+
+- name: Packages | Set missing native packages
+  ansible.builtin.set_fact:
+    alpi_missing_native: "{{ _simulation.missing }}"
+    alpi_unresolved_native: "{{ _simulation.unresolved }}"
+  vars:
+    _simulation: "{{ (_apt_dry_run.stdout_lines | default([]) + _apt_dry_run.stderr_lines | default([])) | alpi_apt_simulation }}"

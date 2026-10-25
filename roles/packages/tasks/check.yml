@@ -82,6 +82,7 @@
     fail_msg: >-
       Dependencies could not be resolved, none of the listed packages was installed:
       {{ alpi_unresolved_native | join(' ') }} A freeworld package (RPM Fusion) usually waits
-      for a rebuild against the library EPEL just updated: skip it in host_vars/127.0.0.1/custom.yml
+      for a rebuild against the library EPEL just updated; on apt, a package may need a component
+      or architecture that is not enabled. Skip it in host_vars/127.0.0.1/custom.yml
       (packages_skip) until then.
     quiet: true

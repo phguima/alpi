@@ -21,11 +21,6 @@ container or VM before code relies on them. Consequences to keep in mind:
 
 ### Phase 2 — shared apt layer (`family_Debian`)
 
-- [ ] **apt in general:** `DEBIAN_FRONTEND=noninteractive`; `lock_timeout` raised (unattended-upgrades
-      and PackageKit hold the dpkg lock on a fresh install); `NEEDRESTART_MODE=a` on Ubuntu.
-- [ ] **`roles/packages`:** `check_Debian.yml` (`apt-get install -s` after `apt update`); `flatpak` and
-      the Flathub remote (not installed on either); i386 multiarch when `steam` or `nvidia-driver` is
-      selected (`steam-installer`: contrib on Debian, universe on Ubuntu).
 - [ ] **`roles/update`:** `apt full-upgrade`. Reboot gate: newest installed `linux-image-*` vs the
       running kernel, plus `/run/reboot-required` where present (Ubuntu). No `dnf_config`.
 - [ ] **`roles/boot`:** RedHat-only kernel tasks (`dnf repoquery`, debug kernels) gated off; handler
@@ -57,9 +52,6 @@ container or VM before code relies on them. Consequences to keep in mind:
       `sudo` at all: detect it and print `su - -c "apt install sudo && usermod -aG sudo $USER"` (`su -`:
       plain `su` lacks `/usr/sbin`), then log in again.
 - [ ] **`pick.py`:** `"debian": "Debian"` (its unit test's fake Debian changes from unsupported).
-- [ ] **Catalog on apt:** a `catalog` instance for Debian 13 once `check_Debian.yml` exists (the
-      `debian` values were checked with `apt-cache` only; the vendor repositories' names on apt,
-      `brave-origin` among them, are unchecked).
 - [ ] **NVIDIA:** DKMS key created and enrolled before `nvidia-driver` installs, then `nvidia.conf`.
 
 ### Phase 4 — Ubuntu 26.04 LTS
@@ -85,7 +77,10 @@ container or VM before code relies on them. Consequences to keep in mind:
       `unsupported`, `update`, `boot`, `memory`, `secureboot`, `user`, `bootstrap`, `services`), not
       every scenario. `full` takes ~15 min (4 at a time) and grows with each instance; give
       `tests/run.sh` an `apt` list to run those alone while working.
-- [ ] **New:** `debian13-personal`, `ubuntu2604-personal` (real installs).
+- [ ] **New:** `ubuntu2604-personal` (real installs); `debian13-personal` exists and runs every role
+      once it is ported (its skip-tags shrink).
+- [ ] **`failures` on apt:** an unknown name and an unreadable source (`check_Debian.yml`; only
+      the parser has unit tests).
 - [ ] **VM checklist:** Debian 13 GNOME and KDE, Ubuntu 26.04 and Kubuntu 26.04, EFI + Secure Boot:
       MOK enrollment, `update-grub` and the GRUB menu, the reboot gate, VirtualBox next to KVM on
       Debian's 6.12, cedilla on KDE, the first run with unattended-upgrades still busy, the

@@ -1,0 +1,18 @@
+---
+- name: Verify | Debian 13, personal
+  hosts: all
+  tasks:
+    - name: Verify | Installed
+      ansible.builtin.include_tasks: ../shared/verify_installed.yml
+
+    - name: Verify | List the foreign architectures
+      ansible.builtin.command: dpkg --print-foreign-architectures
+      register: _deb_archs
+      changed_when: false
+
+    - name: Verify | Steam selected, so i386 is on and its 32-bit libraries are in
+      ansible.builtin.assert:
+        that:
+          - "'steam-installer' in alpi_pkgs.native"
+          - "'i386' in _deb_archs.stdout_lines"
+        quiet: true

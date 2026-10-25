@@ -1,0 +1,14 @@
+---
+# apt on Debian and Ubuntu (site.yml applies both to the whole play).
+# Environment: no prompts from debconf (the apt module sets that for its own runs, this covers
+# commands too) or needrestart (Ubuntu installs it: 'a' restarts the services an upgrade touched
+# instead of asking which).
+apt_environment:
+  DEBIAN_FRONTEND: noninteractive
+  NEEDRESTART_MODE: a
+# Seconds the apt module waits for the dpkg lock (60 by default): on a fresh install
+# unattended-upgrades and PackageKit hold it for minutes
+apt_lock_timeout: 600
+# Catalog ids that need i386 packages (multiarch): Steam's 32-bit libraries, the NVIDIA driver's
+# 32-bit libraries for it
+apt_i386_ids: [steam, nvidia-driver]

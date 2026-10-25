@@ -44,6 +44,7 @@
         apt-get update 2>&1 | grep -E '^(E|W):' || true;
         echo "== files"; grep -l 'packages.microsoft.com/repos/code' /etc/apt/sources.list.d/* /etc/apt/sources.list 2>/dev/null || true;
         echo "== components"; grep '^Components:' /etc/apt/sources.list.d/debian.sources;
+        echo "== archs"; dpkg --print-foreign-architectures;
         echo "== candidates";
         for p in brave-browser code gh virtualbox-7.2 steam-installer nvidia-driver; do
         echo "$p $(apt-cache policy $p | sed -n 's/ *Candidate: //p')"; done
@@ -52,16 +53,18 @@
       register: _apt_state
       changed_when: false
 
-    - name: Verify | apt reads every source, one file for VS Code, components and packages available
+    - name: Verify | apt reads every source, one file for VS Code, components, i386 and packages available
       ansible.builtin.assert:
         that:
           - _lines | select('match', '^(E|W):') | list == []
           - _files == ['/etc/apt/sources.list.d/vscode.sources']
           - "_lines | select('match', '^Components:') | list | unique == ['Components: main contrib non-free non-free-firmware']"
+          - _archs == ['i386']
           - _candidates | select('match', '^\\S+ (|\\(none\\))$') | list == []
         fail_msg: "{{ _apt_state.stdout }}"
         quiet: true
       vars:
         _lines: "{{ _apt_state.stdout_lines }}"
         _files: "{{ _lines[(_lines.index('== files') + 1):_lines.index('== components')] }}"
+        _archs: "{{ _lines[(_lines.index('== archs') + 1):_lines.index('== candidates')] }}"
         _candidates: "{{ _lines[(_lines.index('== candidates') + 1):] }}"
