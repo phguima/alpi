@@ -82,6 +82,11 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
 - **2026-10-22** Golden test: resolved sets per (distro, DE) compared with AFPI and AAPI (reviewed
   golden values in the `catalog` scenario).
 - **2026-10-22** AAPI and AFPI frozen with a README pointing to ALPI (`9755bcd`).
+- **2026-10-25** Steam on the NVIDIA GPU from its own launcher, checked on noir (Plasma 6.7.5,
+  Wayland): with ALPI's user launcher moved aside, the menu entry's `PrefersNonDefaultGPU` gave
+  every Steam process switcheroo-control's offload variables and `nvidia-smi` listed Steam. ALPI's
+  launcher dropped; a user launcher with the offload (ALPI's or AFPI's) is removed
+  (`refactor(desktop): Steam's own launcher on the NVIDIA GPU`).
 
 ## 5. New distros
 

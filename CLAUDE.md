@@ -160,11 +160,11 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   read-back value differs), cedilla (`~/.XCompose` from the Compose file of the locale in
   `/etc/locale.conf`, fallback `en_US.UTF-8`). Ansible runs modules with `LANG=C.utf8`, so
   `ansible_facts['env']['LANG']` never shows the session's locale (AFPI/AAPI's lookup found
-  nothing because of that). Steam on the NVIDIA GPU (`tasks/steam.yml`, when `steam` and
-  `nvidia-driver` are both selected): `~/.local/share/applications/steam.desktop` rebuilt from the
-  system launcher on every run, every `Exec=` (actions too) prefixed with `env
-  {{ nvidia_prime_env }}` (`group_vars/all/desktop.yml`, also the `nvidia-run` alias); otherwise
-  a user launcher carrying the offload (ours or AFPI's) is removed, any other one is kept.
+  nothing because of that). Steam needs no launcher of ALPI's: its own `PrefersNonDefaultGPU`
+  gets switcheroo-control's NVIDIA offload from the desktop (checked on noir, 2026-10-25), so
+  `tasks/steam.yml` only removes a user `steam.desktop` carrying `env __NV_PRIME_RENDER_OFFLOAD=1`
+  (ALPI's old one or AFPI's); any other one is the user's own. `nvidia_prime_env`
+  (`group_vars/all/desktop.yml`) is the `nvidia-run` alias.
 - `roles/asus` (after `packages`): `/etc/asusd` (`asusctl`), `supergfxd.service` (`supergfxctl`,
   tagged `supergfxd`), ROG Control Center autostart (`asusctl-rog-gui`), each gated on its
   resolved id (`asus_selected` in `vars/main.yml`).
@@ -328,8 +328,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `python3 -m http.server` on 127.0.0.1:8765 in each container (prepare writes the manifest with
     the stand-in AppImage's real sha512; converge's play vars point the URLs there): every tool on
     GNOME and EL, the Antigravity CLI and IDE on KDE; each stand-in refuses root and logs its runs; `is_nvidia`
-    pinned true: GNOME gets the Steam launcher from `files/steam.desktop`, a trimmed copy of RPM
-    Fusion's, KDE vetoes NVIDIA and loses AFPI's leftover launcher, EL keeps a user's own; `tasks/reminders.yml`: gh logged in on GNOME, reminded on KDE,
+    pinned true: GNOME loses ALPI's old Steam launcher and gets the `nvidia-run` alias, KDE vetoes
+    NVIDIA and loses AFPI's leftover launcher, EL keeps a user's own; `tasks/reminders.yml`: gh logged in on GNOME, reminded on KDE,
     skipped on EL, the fact recorded in `/root/alpi-gh-login-needed` for verify). That recipe
     is the way to test any user-specific step (root and the user differ there).
   - `fedora44-personal` and `el10-work` have no systemd: they skip service roles by tag

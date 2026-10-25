@@ -402,3 +402,11 @@ Checked in `debian:13` and `ubuntu:26.04` containers on 2026-10-24: NVIDIA, Virt
 7. **`uv` through pipx on deb** (`{pipx: uv}`): packaged on neither distro; the pipx role installs
    and upgrades it, and its PyPI name check already exists.
 8. **MOK passwords** `debian-alpi` and `ubuntu-alpi`, like `fedora-alpi` and `alma-alpi`.
+
+## Decisions (2026-10-25)
+
+1. **Steam's own launcher.** Steam's `steam.desktop` sets `PrefersNonDefaultGPU` and
+   `X-KDE-RunOnDiscreteGpu`, and the desktop applies switcheroo-control's offload variables:
+   checked on noir (Plasma 6.7.5, Wayland), every Steam process had them and `nvidia-smi` listed
+   Steam. ALPI's user copy with the PRIME variables (from AFPI) is dropped and removed where it
+   exists; `nvidia_prime_env` remains for the `nvidia-run` alias.

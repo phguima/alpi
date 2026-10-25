@@ -6,7 +6,7 @@ Three VMs in VirtualBox, all EFI + Secure Boot:
 
 | VM | Like | Covers |
 |---|---|---|
-| `fedora44-alpi`, Fedora 44 **KDE** | noir | akmods key, `akmod-VirtualBox` signed, NVIDIA akmod build + `dracut` (forced on), Steam launcher, Konsole |
+| `fedora44-alpi`, Fedora 44 **KDE** | noir | akmods key, `akmod-VirtualBox` signed, NVIDIA akmod build + `dracut` (forced on), Konsole |
 | `el10-alpi`, AlmaLinux 10 **Workstation (GNOME)** | work machine | Oracle VirtualBox's own key, Roboto from upstream, Ptyxis in a real session (AAPI's VM was KDE) |
 | `el10-kde-alpi`, AlmaLinux 10 **KDE** | | KDE on EL (EPEL's Plasma): Konsole, the cedilla on XWayland with EL10's KWin, the KDE flatpaks |
 
@@ -55,7 +55,7 @@ The clone stays on `main`: the VMs test what is not released yet. A real machine
 - [ ] Asks the hostname (give a **new** one, e.g. `fedora-alpi` / `alma-alpi` / `alma-kde-alpi`) and the git
       identity, then opens the picker: keep the defaults (OK). 📸 the end of the bootstrap output.
 - [ ] Fedora only: add `-e is_nvidia=true` to every `ansible-playbook` command below, so the
-      NVIDIA path (akmod build, `dracut`, Steam launcher) runs without an NVIDIA GPU. Extra vars
+      NVIDIA path (akmod build, `dracut`) runs without an NVIDIA GPU. Extra vars
       win over detection. Snapshot first if you want to roll the driver back later.
 - [ ] `ansible-playbook site.yml -K --tags resolve` prints the sets; nothing changes. 📸 the
       native/flatpak lists.
@@ -126,8 +126,6 @@ ansible-playbook site.yml -K 2>&1 | tee run2.log
 - [ ] **Terminal:** Fedora: Konsole opens with the kali-like-alt profile. EL: **Ptyxis** opens at
       120x35, underline cursor, Fira Code 10, opacity 0.95. 📸 each.
 - [ ] **Cedilla** (after logout/login): `'` + `c` → `ç` in a text editor and in Brave.
-- [ ] **Steam (Fedora, NVIDIA forced):** `grep ^Exec ~/.local/share/applications/steam.desktop` →
-      every line starts with `env __NV_PRIME_RENDER_OFFLOAD=1 …`.
 - [ ] **AI tools:** `claude --version`; `ls ~/.local/bin/agy`; the Antigravity IDE in the menu; `pipx list`
       → markitdown, notebooklm-py, pdf2docx.
 - [ ] **gh reminder:** the run's end printed "The GitHub CLI is not logged in"; after

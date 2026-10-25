@@ -5,12 +5,6 @@ in the commit that finishes it; a section goes once it is empty. Architecture, r
 decisions in `PROPOSAL.md`. Every item ships with its Molecule scenarios / unit tests (see
 `CLAUDE.md`).
 
-## 4. Parity
-
-- [ ] On noir: does Steam run on the NVIDIA GPU from its own launcher (`PrefersNonDefaultGPU`,
-      `X-KDE-RunOnDiscreteGpu`, via switcheroo-control) without ALPI's user launcher
-      (`feat(desktop): …`)? If so, drop the override.
-
 ## 5. New distros (after parity, only with a test VM)
 
 Debian 13, then Ubuntu 26.04 LTS as a delta. Decisions, targets and checked facts in `PROPOSAL.md`

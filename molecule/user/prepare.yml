@@ -172,19 +172,13 @@
         group: root
         mode: "0755"
 
-# Steam's launcher where Steam is installed (Fedora); on KDE, the copy AFPI left behind (only the
-# main Exec rewritten); on EL, a launcher the user made, without the offload
+# User Steam launchers left behind: on GNOME, the copy ALPI wrote until 2026-10-25 (every Exec
+# with the offload); on KDE, AFPI's (only the main Exec rewritten); on EL, a launcher the user
+# made, without the offload
 - name: Prepare | Steam launchers
   hosts: all
   gather_facts: false
   tasks:
-    - name: Prepare | System launcher (Fedora)
-      ansible.builtin.copy:
-        src: files/steam.desktop
-        dest: /usr/share/applications/steam.desktop
-        mode: "0644"
-      when: inventory_hostname != 'alpi-user-el10'
-
     - name: Prepare | The user's applications directory
       ansible.builtin.file:
         path: /home/alpi/.local/share/applications
@@ -192,7 +186,6 @@
         mode: "0755"
       become: true
       become_user: alpi
-      when: inventory_hostname != 'alpi-user-gnome'
 
     - name: Prepare | User launcher
       ansible.builtin.copy:
@@ -203,6 +196,15 @@
       become_user: alpi
       vars:
         _content:
+          alpi-user-gnome: |
+            [Desktop Entry]
+            Name=Steam
+            Exec=env __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0 /usr/bin/steam %U
+            PrefersNonDefaultGPU=true
+            X-KDE-RunOnDiscreteGpu=true
+
+            [Desktop Action Store]
+            Exec=env __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0 /usr/bin/steam steam://store
           alpi-user-kde: |
             [Desktop Entry]
             Name=Steam
@@ -211,7 +213,6 @@
             [Desktop Entry]
             Name=My Steam
             Exec=/opt/steam/steam
-      when: inventory_hostname != 'alpi-user-gnome'
 
 # The cedilla on XWayland (KDE): a stand-in kwin package, 6.6.4 installed (the workaround applies)
 # and 6.7.5 built for side_effect.yml (it no longer does); the system menu entries of Brave and VS
