@@ -41,6 +41,7 @@ alpi_catalog:
   unzip:         {all: unzip}
   uv:            {rpm: uv, deb: {pipx: uv}}
   vim:           {fedora: vim, el: vim-enhanced, deb: vim}
+  wl-clipboard:  {all: wl-clipboard}                   # EPEL on EL; Ubuntu's universe
   zsh:           {all: zsh}
 
   # --- Security ---

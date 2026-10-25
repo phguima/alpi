@@ -8,7 +8,7 @@
 picker_groups:
   - title: System tools
     ids: [7zip, curl, fastfetch, htop, hwinfo, lm-sensors, nvtop, testdisk, tmux, tuptime, unrar,
-          unzip, vim, zsh]
+          unzip, vim, wl-clipboard, zsh]
   - title: Security
     ids: [clamav, chkrootkit, lynis, rkhunter, unhide]
   - title: Internet & chat
@@ -48,6 +48,7 @@ picker_descriptions:
   unrar: RAR extractor
   unzip: ZIP extractor
   vim: Vim editor
+  wl-clipboard: Wayland clipboard from the terminal (wl-copy, wl-paste)
   zsh: Z shell, with Oh My Zsh
   # Security
   clamav: ClamAV antivirus, with signature updates

@@ -3,7 +3,7 @@
 # KDE, GNOME and all hardware are forced on in molecule.yml.
 _golden:
   native: [7zip, 7zip-standalone, curl, fastfetch, git, htop, hwinfo, ImageMagick, lm_sensors, nodejs, nvtop, pipx, potrace,
-    python3-pip, ShellCheck, testdisk, tmux, tuptime, unrar, unzip, uv, vim-enhanced, zsh, fira-code-fonts,
+    python3-pip, ShellCheck, testdisk, tmux, tuptime, unrar, unzip, uv, vim-enhanced, wl-clipboard, zsh, fira-code-fonts,
     ffmpeg, gstreamer1-plugins-bad-freeworld, gstreamer1-plugins-ugly, gstreamer1-plugin-libav, vlc-plugins-freeworld, libheif-freeworld, lynis, rkhunter,
     brave-browser, brave-origin, chromium, discord, gh, code, kde-gtk-config, ktorrent, plasma-sdk, flatseal,
     gnome-tweaks, clamav, clamav-freshclam, VirtualBox-7.2, kernel-devel, gcc, make, elfutils-libelf-devel,

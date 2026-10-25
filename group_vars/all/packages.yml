@@ -29,6 +29,7 @@ packages_base:
   - unzip
   - uv
   - vim
+  - wl-clipboard
   - zsh
   # Fonts
   - fira-code-fonts
