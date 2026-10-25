@@ -15,9 +15,9 @@ container or VM before code relies on them. Consequences to keep in mind:
   KVM only on 6.16+); on Ubuntu's 7.0 it is insurance, as on Fedora.
 - Ubuntu's major version (`26`) is the same for 26.04 and 26.10: its support entry compares the
   full `distribution_version`.
-- A third controller line: Debian's ansible-core 2.19 (Data Tagging) next to EL10's 2.16 and
-  Molecule's 2.21; `debian13-personal` resolves with the container's own ansible-core, as
-  `el10-work` does (`shared/verify_native_controller.yml`).
+- More controller lines: Debian's ansible-core 2.19 and Ubuntu's 2.20 (Data Tagging) next to
+  EL10's 2.16 and Molecule's 2.21; `debian13-personal` and `ubuntu2604-personal` resolve with the
+  container's own ansible-core, as `el10-work` does (`shared/verify_native_controller.yml`).
 
 ### Phase 5 — tests and release
 

@@ -193,6 +193,9 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
   and Steam are selected (`alpi_steam_launcher`, `steam_gpu_launcher` in `family_Debian`)
   (`feat(desktop): Steam's launcher asks for the NVIDIA GPU on Debian and Ubuntu`). Real hardware
   still to check.
+- **2026-10-25** `debian13-personal` and `ubuntu2604-personal` also resolve with the distro's own
+  ansible-core (2.19, 2.20), as `el10-work` does with EL10's 2.16: the controller `bootstrap.sh`
+  installs there (`test: resolution with Debian's and Ubuntu's own ansible-core`).
 
 ## 6. Swap (zram)
 

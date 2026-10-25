@@ -5,6 +5,18 @@
     - name: Verify | Installed
       ansible.builtin.include_tasks: ../shared/verify_installed.yml
 
+    # Debian 13's ansible-core 2.19, Ubuntu 26.04's 2.20: what bootstrap.sh installs there
+    - name: Verify | Same resolution with the distro's own ansible-core
+      ansible.builtin.include_tasks: ../shared/verify_native_controller.yml
+      vars:
+        _golden:
+          native: "{{ alpi_pkgs.native }}"
+          flatpak: "{{ alpi_pkgs.flatpak }}"
+          pipx: "{{ alpi_pkgs.pipx }}"
+          upstream: "{{ alpi_pkgs.upstream }}"
+          features: "{{ alpi_feature }}"
+          repos: "{{ alpi_repos_enabled | map(attribute='id') | list }}"
+
     - name: Verify | List the foreign architectures
       ansible.builtin.command: dpkg --print-foreign-architectures
       register: _deb_archs

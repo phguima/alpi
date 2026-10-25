@@ -357,7 +357,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `debian13-personal` (`site.yml` on Debian 13, skipping what `fedora44-personal` skips: real
     installs as in `fedora44-personal`, Steam with its i386 libraries; `prepare.yml` holds the dpkg lock
     for 150 s, which the apt module must wait out: with `apt_lock_timeout: 20` the converge fails),
-    `ubuntu2604-personal` (the same on Ubuntu 26.04, with `debian13-personal`'s playbooks),
+    `ubuntu2604-personal` (the same on Ubuntu 26.04, with `debian13-personal`'s playbooks; both
+    also resolve with the distro's own ansible-core, 2.19 and 2.20, through
+    `shared/verify_native_controller.yml`, as `el10-work` does with 2.16),
     `ubuntu2604` (as `debian13`, with its playbooks: each instance's sources file, components and
     candidates in its host_vars), `unsupported` (Debian 12, Ubuntu 26.10), `upstream` (`roles/upstream` on
     AlmaLinux 10 against a stand-in GitHub served by `http.server` on 127.0.0.1:8766: install v1,
