@@ -3,3 +3,5 @@ _desktop: GNOME
 # In real use, from the vault (group_vars/all/secrets.yml)
 api_keys: |
   export ALPI_TEST_KEY="secret"
+# As pick.py writes it: a root alias switched off
+zsh_aliases_selection: {clean-cache: false}

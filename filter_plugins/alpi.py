@@ -389,6 +389,26 @@ def alpi_invalid_luks(volumes):
             if not name_re.fullmatch(str(name)) or not uuid_re.fullmatch(str(uuid))]
 
 
+def alpi_zsh_aliases(definitions, enabled, installed, root=False):
+    """The alias lines for one .zshrc from the definitions ({name: {cmd, root, requires}},
+    group_vars/all/zsh.yml), in their order.
+
+    An alias is left out when switched off in enabled ({name: bool}, the picker's and custom.yml's
+    choices), when its requires (a catalog id or feature) is not in installed, and in root's
+    .zshrc (root=True) unless its definition says root: true. Single-quoted, so the command is
+    expanded when the alias runs.
+    """
+    lines = []
+    for name, d in (definitions or {}).items():
+        if not (enabled or {}).get(name, True) or (root and not d.get("root")):
+            continue
+        if d.get("requires") and d["requires"] not in (installed or []):
+            continue
+        cmd = str(d["cmd"]).replace("'", "'\\''")
+        lines.append(f"alias {name}='{cmd}'")
+    return "\n".join(lines)
+
+
 def alpi_pipx_name(spec):
     """The package name of a pipx/PyPI spec: "notebooklm-py[browser]" -> "notebooklm-py"."""
     return re.split(r"[\[<>=!~;@ ]", str(spec).strip(), maxsplit=1)[0]
@@ -475,6 +495,7 @@ class FilterModule(object):
             "alpi_xwayland_entries": alpi_xwayland_entries,
             "alpi_luks_aliases": alpi_luks_aliases,
             "alpi_invalid_luks": alpi_invalid_luks,
+            "alpi_zsh_aliases": alpi_zsh_aliases,
             "alpi_pipx_name": alpi_pipx_name,
             "alpi_appimage_release": alpi_appimage_release,
             "alpi_github_release": alpi_github_release,

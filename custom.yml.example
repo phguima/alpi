@@ -27,6 +27,11 @@ packages_skip: []
 packages_absent: []
 #  - "pkg:akregator"
 
+# ALPI's zsh aliases (group_vars/all/zsh.yml) switched on or off by name, over the picker's choice
+# (./pick.py, "Shell aliases"). An alias whose program is not installed is left out anyway.
+zsh_aliases_enabled: {}
+#  clean-cache: false
+
 # Zsh aliases for this machine only (roles/zsh, user's .zshrc). luks_volumes: name -> LUKS UUID
 # (as in /dev/mapper/luks-<UUID>, or 'lsblk -o NAME,UUID'), giving open-<name> (unlock + mount) and
 # close-<name> (unmount + lock) through udisksctl.

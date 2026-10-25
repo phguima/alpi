@@ -8,9 +8,11 @@
 #   alpi-user-kde:   Konsole profile, color scheme and konsolerc; no Ptyxis settings
 #   alpi-user-el10:  no desktop (C.utf8 locale: the cedilla falls back to en_US.UTF-8); the AI
 #                    tools' own packages under EL names
-# All: ~/wks and the cedilla fix in ~/.XCompose, owned by the user. zsh: root gets the common
-# aliases only, alpi everything; the API keys block (api_keys in host_vars, a vault in real use)
-# goes to alpi only; the legacy blocks pre-seeded by prepare.yml are removed from both.
+# All: ~/wks and the cedilla fix in ~/.XCompose, owned by the user. zsh: root gets the root: true
+# aliases that are on, alpi every alias that is on and installed (GNOME switches one off in its
+# selection, KDE's custom.yml overrides its selection both ways); the API keys block (api_keys in
+# host_vars, a vault in real use) goes to alpi only; the legacy blocks pre-seeded by prepare.yml
+# are removed from both.
 # AI tools (roles/ai_tools) from local stand-ins (prepare.yml): installed for alpi only, once;
 # the IDE's AppImage checked against the manifest, its icon and menu entry, the URL handler in
 # mimeinfo.cache. GNOME and EL: every tool; KDE: the Antigravity CLI and IDE (features in host_vars).

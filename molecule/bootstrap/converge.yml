@@ -91,10 +91,11 @@
         quiet: true
       when: not _saved.stat.exists
 
-    # Enter keeps the saved git identity and the saved selection (Steam stays off); one more skip.
+    # Enter keeps the saved git identity and the saved selection (Steam stays off); one more skip
+    # and an alias off.
     - name: Bootstrap | Second run
       ansible.builtin.shell:
-        cmd: printf 'noir\n\n\n-chkrootkit\n\n' | script -qec ./bootstrap.sh /dev/null
+        cmd: printf 'noir\n\n\n-chkrootkit -clean-cache\n\n' | script -qec ./bootstrap.sh /dev/null
         chdir: "{{ _dir }}"
       environment: "{{ _env }}"
       register: _run2
@@ -104,6 +105,6 @@
       ansible.builtin.assert:
         that:
           - "'Settings saved to' in _run2.stdout"
-          - "'2 skipped, features changed: steam=False' in _run2.stdout"
+          - "'2 skipped, features changed: steam=False; zsh aliases changed: clean-cache=False' in _run2.stdout"
         fail_msg: "{{ _run2.stdout }}"
         quiet: true

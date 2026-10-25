@@ -75,7 +75,7 @@
           - "'plugins=(git)' in _rc"
           - "'alias lls=' in _rc"
           - "'alias claudecli=' in _rc"
-          - "'dnf needs-restarting\"' in _rc"
+          - "\"dnf needs-restarting'\" in _rc"
           - "'alias open-thevoid=\"udisksctl unlock -b /dev/disk/by-uuid/ad99f7e6-cf3a-4581-9c46-de99119b00d4; udisksctl mount -b /dev/mapper/luks-ad99f7e6-cf3a-4581-9c46-de99119b00d4\"' in _rc"
           - "'alias close-thevoid=' in _rc"
           - "'alias alpi-test=\"echo custom\"' in _rc"

@@ -91,32 +91,46 @@
       register: _zshrc
       changed_when: false
 
-    - name: Verify | Root gets the common aliases only and no API keys
+    # Aliases switched off (host_vars): GNOME clean-cache in the picker's selection; KDE llsa in the
+    # selection but back on in custom.yml, which also switches ohmyzsh off. Managed block only:
+    # root's .zshrc has a pre-seeded alias outside it.
+    - name: Verify | Root gets the root aliases that are on, and no API keys
       ansible.builtin.assert:
         that:
-          - "'alias lls=' in _root"
-          - "'claudecli' not in _root and 'full-update' not in _root"
+          - _names == _expected
           - "'API CONFIGURATION' not in _root and 'ALPI_ROOT_KEY' not in _root"
           - "'NVIDIA AND API CONFIGURATION' not in _root"
-        fail_msg: "{{ _root }}"
+        fail_msg: "{{ _names }} {{ _root }}"
         quiet: true
       vars:
         _root: "{{ _zshrc.results[0].stdout }}"
+        _names: "{{ _root | regex_search('(?s)# BEGIN ANSIBLE MANAGED ALIASES.*# END ANSIBLE MANAGED ALIASES') | default('', true)
+                    | regex_findall('(?m)^alias ([^=]+)=') }}"
+        _expected: "{{ ['zshconfig', 'ohmyzsh', 'lls', 'llsa', 'clean-cache']
+                       | reject('in', {'GNOME': ['clean-cache'], 'KDE': ['ohmyzsh']}[_desktop] | default([])) | list }}"
 
-    - name: Verify | The user gets every alias and the API keys block, no legacy block
+    # Each alias on its own line, single-quoted (a folded join once wrote a literal backslash-n
+    # between layers, putting them on the previous layer's last line). claudecli needs Claude Code
+    # (off on KDE), nvidia-run the NVIDIA driver (GNOME only).
+    - name: Verify | The user gets the aliases that are on and installed, and the API keys block
       ansible.builtin.assert:
         that:
-          - "'alias lls=' in _user and 'alias claudecli=' in _user and 'alias full-update=' in _user"
-          # each layer's aliases start their own line (a folded join once wrote a literal
-          # backslash-n between layers, putting them on the previous layer's last line)
-          - _user.splitlines() | select('match', '^alias (lls|claudecli|full-update)=') | list | length == 3
+          - _names == _expected
+          - "\"alias lls='ls --color -lh --group-directories-first'\" in _user.splitlines()"
           - _user.count('# BEGIN API CONFIGURATION') == 1
           - "'export ALPI_TEST_KEY=\"secret\"' in _user"
           - "'NVIDIA AND API CONFIGURATION' not in _user and 'ALPI_LEGACY_NVIDIA_BLOCK' not in _user"
-        fail_msg: "{{ _user }}"
+        fail_msg: "{{ _names }} {{ _user }}"
         quiet: true
       vars:
         _user: "{{ _zshrc.results[1].stdout }}"
+        # the managed block only (the Antigravity CLI's own setup adds lines after it)
+        _names: "{{ _user | regex_search('(?s)# BEGIN ANSIBLE MANAGED ALIASES.*# END ANSIBLE MANAGED ALIASES') | default('', true)
+                    | regex_findall('(?m)^alias ([^=]+)=') }}"
+        _expected: "{{ ['zshconfig', 'ohmyzsh', 'lls', 'llsa', 'clean-cache', 'claudecli', 'agycli',
+                        'antigravity-ide', 'nvidia-run', 'full-update']
+                       | reject('in', {'GNOME': ['clean-cache'], 'KDE': ['ohmyzsh', 'claudecli']}[_desktop] | default([]))
+                       | reject('in', [] if _desktop == 'GNOME' else ['nvidia-run']) | list }}"
 
     # Checked when it runs, not at install time: the same alias everywhere (KDE has no Claude Code)
     - name: Verify | full-update runs each updater when its command is in PATH
@@ -129,7 +143,7 @@
       vars:
         _line: "{{ _zshrc.results[1].stdout_lines | select('match', '^alias full-update=') | list }}"
         _expected: >-
-          alias full-update="flatpak update -y; command -v npm >/dev/null && sudo npm update -g;
+          alias full-update='flatpak update -y; command -v npm >/dev/null && sudo npm update -g;
           command -v claude >/dev/null && claude update; command -v agy >/dev/null && agy update;
           sudo dnf upgrade
 
@@ -292,7 +306,7 @@
     - name: Verify | The nvidia-run alias only where NVIDIA is on (GNOME)
       ansible.builtin.assert:
         that: >-
-          ('alias nvidia-run="' ~ _steam_prime ~ '"' in _steam_rc)
+          ("alias nvidia-run='" ~ _steam_prime ~ "'" in _steam_rc)
           == (inventory_hostname == 'alpi-user-gnome')
         fail_msg: "{{ _steam_rc }}"
         quiet: true

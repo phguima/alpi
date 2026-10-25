@@ -50,8 +50,18 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   resolve on the running distro/desktop; hardware features are not listed (vetoes in
   `custom.yml`). Groups by purpose and labels in `group_vars/all/picker.yml` (`picker_groups`,
   `picker_descriptions`): a new catalog id or feature goes in a group there with a description
-  (a unit test fails otherwise). whiptail: menu of groups, a checklist per group, a review before
-  saving; text mode: one numbered list with group headers. Unit tests in
+  (a unit test fails otherwise). The zsh aliases (`zsh_aliases` + `zsh_aliases_os`) are the last
+  group, "Shell aliases (zsh)", their commands rendered with jinja2 (`show_command`: the user's
+  home as `~`, unknown names as `<name>`), saved as `zsh_aliases_selection`. `visible()`: an
+  item is hidden while an id in its `requires` (aliases: zsh and their own) is listed and
+  unchecked, keeping its check; the menu, the checklists and the text list (reprinted when the
+  numbers change) show only visible items. Rows: description,
+  then what it installs or the alias's command (`rows`; the description gets its width first,
+  whiptail rows padded to fill the box, which is up to 160 columns wide). whiptail: menu of
+  groups (its list as tall as its entries, or the text's second line disappears), a checklist
+  per group, a review before saving; text mode: one numbered list with group headers, each group
+  aligned on its own. Preview without whiptail on screen: a detached tmux on its own socket
+  (`tmux -L <name>`, never the user's server) and `capture-pane -p`. Unit tests in
   `tests/unit/test_pick.py` (fake `/etc/os-release`; whiptail replaced by scripted answers).
 - `roles/repos` (before `packages`): enables `alpi_repos_enabled` from `resolve.yml` (the distro's
   always-on repos, then the ones the selected catalog entries name with `repo:`). Repositories with
@@ -143,13 +153,18 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   unavailable). Roles gate their configuration on it (`clamav`, `asus`, `zsh`), never on a
   feature flag alone.
 - `roles/zsh`: Oh My Zsh, theme (`files/kali-like-alt.zsh-theme`), plugins, login shell and the
-  managed aliases block for `zsh_users` (root + the user); only when `zsh` is selected. Alias
-  layers in `group_vars/all/zsh.yml` (common for root; user, `zsh_aliases_os` per distro (its
-  `full-update` runs `zsh_full_update_tools`: each update in `zsh_full_update_cmds` (npm, claude,
-  agy) whose command is in `PATH` when it runs),
-  `zsh_aliases_nvidia` when `nvidia-driver` is selected, and the machine's `luks_volumes` +
-  `zsh_aliases_custom` from `custom.yml` for the user), joined in a double-quoted scalar: in a
-  folded one (`>-`) `join('\n')` gets a literal backslash-n. API keys block (`api_keys`, from the
+  managed aliases block for `zsh_users` (root + the user); only when `zsh` is selected. Aliases
+  are named definitions (decided 2026-10-25): `zsh_aliases` in `group_vars/all/zsh.yml` plus the
+  distro's `zsh_aliases_os` (`full-update`, which runs `zsh_full_update_tools`: each update in
+  `zsh_full_update_cmds` (npm, claude, agy) whose command is in `PATH` when it runs), each
+  `{cmd, description, root, requires}`. All on, unless switched off by name in
+  `zsh_aliases_selection` (picker) or `zsh_aliases_enabled` (`custom.yml`, wins), merged into
+  `alpi_zsh_aliases_on` and checked in `resolve.yml`; `alpi_zsh_aliases` writes
+  `alias <name>='<cmd>'` for those whose `requires` (catalog id or feature) is installed or on,
+  root's `.zshrc` only the `root: true` ones. An alias name must not be a catalog id or feature
+  (unit test). The user also gets `zsh_aliases_cedilla` (VS Code on XWayland, not a choice) and
+  the machine's `luks_volumes` + `zsh_aliases_custom` from `custom.yml`, joined in a
+  double-quoted scalar: in a folded one (`>-`) `join('\n')` gets a literal backslash-n. API keys block (`api_keys`, from the
   optional vault `group_vars/all/secrets.yml`; never defaulted in `group_vars/all/zsh.yml`, which
   loads after `secrets.yml` and would override it) in the user's `.zshrc` only, removed when
   empty; AFPI's legacy `NVIDIA AND API CONFIGURATION` block removed. `luks_volumes` is validated in
@@ -315,7 +330,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     stand-in installonly packages and a debug kernel built with rpmbuild into a local repository
     whose id has 'debug', `/etc/default/grub` and a logging `grub2-mkconfig`), `user`
     (`roles/zsh` + `roles/desktop` + `roles/ai_tools` for a regular user `alpi`, so root and the user differ: aliases
-    split, API keys block for alpi only, legacy `.zshrc` blocks removed from both; the converge play sets `environment:` SUDO_USER
+    split (exact lists per container: an alias off in GNOME's selection, KDE's custom.yml overriding its
+    selection both ways, `claudecli` gone where Claude Code is off), API keys block for alpi only, legacy `.zshrc` blocks removed from both; the converge play sets `environment:` SUDO_USER
     and XDG_CURRENT_DESKTOP, which fact gathering sees too, and becomes alpi through sudo; GNOME
     container with Ptyxis and a session bus started as alpi at `/run/user/1000/bus` and a pt_BR
     `/etc/locale.conf`; KDE container without one, for the fallback; AlmaLinux 10 container

@@ -11,6 +11,8 @@
     packages_absent: "{{ _case.packages_absent | default([]) }}"
     packages_selection_add: "{{ _case.packages_selection_add | default([]) }}"
     features_selection: "{{ _case.features_selection | default({}) }}"
+    zsh_aliases_selection: "{{ _case.zsh_aliases_selection | default({}) }}"
+    zsh_aliases_enabled: "{{ _case.zsh_aliases_enabled | default({}) }}"
     flatpak_overrides: "{{ _case.flatpak_overrides | default({}) }}"
     features: "{{ _case.features | default({}) }}"
     alpi_strict: "{{ _case.strict | default(false) }}"

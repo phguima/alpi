@@ -3,12 +3,14 @@
 # custom.yml means no zsh setup at all).
 zsh_selected: "{{ 'zsh' in alpi_ids_selected }}"
 
-# Managed aliases block: root gets the common aliases; the user who runs the playbook also gets the
-# user, distro, NVIDIA (driver selected) and machine's own (custom.yml) ones.
-zsh_block_root: "{{ zsh_aliases_common | trim }}"
+# Managed aliases block (group_vars/all/zsh.yml): the definitions that are on (alpi_zsh_aliases_on,
+# tasks/resolve.yml) and whose requirement is installed or on; root gets the root: true ones, the
+# user who runs the playbook all of them plus the cedilla's and the machine's own (custom.yml).
+zsh_alias_definitions: "{{ zsh_aliases | combine(zsh_aliases_os | default({})) }}"
+zsh_installed: "{{ alpi_ids_selected + (alpi_feature | dict2items | selectattr('value') | map(attribute='key') | list) }}"
+zsh_block_root: "{{ zsh_alias_definitions | alpi_zsh_aliases(alpi_zsh_aliases_on, zsh_installed, true) }}"
 # Double-quoted: YAML turns the \n into a newline. In a folded (>-) scalar Jinja got a literal
 # backslash-n and wrote every layer after the first on the previous one's last line.
-zsh_block_user: "{{ [zsh_aliases_common, zsh_aliases_user, zsh_aliases_os | default(''),
-    zsh_aliases_nvidia if 'nvidia-driver' in alpi_ids_selected else '',
-    luks_volumes | alpi_luks_aliases, zsh_aliases_custom]
+zsh_block_user: "{{ [zsh_alias_definitions | alpi_zsh_aliases(alpi_zsh_aliases_on, zsh_installed),
+    zsh_aliases_cedilla, luks_volumes | alpi_luks_aliases, zsh_aliases_custom]
   | map('trim') | select | join('\n') }}"

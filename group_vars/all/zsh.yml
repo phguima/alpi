@@ -1,10 +1,10 @@
 ---
 # Zsh + Oh My Zsh (roles/zsh, ported from AFPI/AAPI). Runs only when the 'zsh' catalog id is
-# selected. Aliases go in a managed block of each .zshrc; layers, each with its own key:
-#   zsh_aliases_common: every .zshrc (root included)
-#   zsh_aliases_user:   only the user who runs the playbook (workspace and tool shortcuts)
-#   zsh_aliases_os:     per distro, user only (group_vars/os_*)
-#   zsh_aliases_nvidia: user only, when the NVIDIA driver is selected
+# selected. Aliases go in a managed block of each .zshrc:
+#   zsh_aliases (here) + zsh_aliases_os (per distro, group_vars/os_*): name -> definition, each
+#     listed by pick.py and on unless switched off by name: zsh_aliases_selection (pick.py,
+#     selection.yml) then zsh_aliases_enabled (custom.yml), {name: bool}
+#   zsh_aliases_cedilla: user only, part of the cedilla workaround (not a choice)
 #   luks_volumes, zsh_aliases_custom: the machine's own (host_vars/127.0.0.1/custom.yml)
 omz_install_script_url: "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
 omz_theme_name: "kali-like-alt"
@@ -12,21 +12,53 @@ omz_theme_name: "kali-like-alt"
 omz_plugins:
   - git
 
-zsh_aliases_common: |
-  alias zshconfig="nano ~/.zshrc"
-  alias ohmyzsh="nano ~/.oh-my-zsh"
-  alias lls="ls --color -lh --group-directories-first"
-  alias llsa="ls --color -lha --group-directories-first"
-  alias clean-cache="sudo sync; echo 3 | sudo tee /proc/sys/vm/drop_caches"
-
+# A definition: cmd (written as alias <name>='<cmd>'), description (the picker's label), root:
+# true to write it to root's .zshrc too (otherwise the user's only), requires: a catalog id or
+# feature the alias runs, without which it is left out even when on. A name must not be a catalog
+# id or feature (the picker toggles them all by name; tests/unit/test_pick.py checks).
 # antigravity-ide, not antigravity: the Antigravity CLI's shell setup deletes any
 # 'alias antigravity=' line (antigravity_ide_dir is in group_vars/all/ai_tools.yml). With the
-# cedilla workaround (alpi_cedilla_xwayland), the IDE and VS Code start on XWayland from the shell
-# too.
-zsh_aliases_user: |
-  alias claudecli="cd ~/wks; clear; claude"
-  alias agycli="cd ~/wks; clear; agy"
-  alias antigravity-ide='"{{ antigravity_ide_dir }}/antigravity"{{ (' ' ~ cedilla_ozone_flag) if alpi_cedilla_xwayland | default(false) else '' }}'
+# cedilla workaround (alpi_cedilla_xwayland), the IDE starts on XWayland from the shell too.
+zsh_aliases:
+  zshconfig:
+    cmd: nano ~/.zshrc
+    description: Edit .zshrc
+    root: true
+  ohmyzsh:
+    cmd: nano ~/.oh-my-zsh
+    description: Open Oh My Zsh's directory
+    root: true
+  lls:
+    cmd: ls --color -lh --group-directories-first
+    description: Long listing, folders first
+    root: true
+  llsa:
+    cmd: ls --color -lha --group-directories-first
+    description: Long listing with hidden files, folders first
+    root: true
+  clean-cache:
+    cmd: sudo sync; echo 3 | sudo tee /proc/sys/vm/drop_caches
+    description: Drop the page cache
+    root: true
+  claudecli:
+    cmd: cd ~/wks; clear; claude
+    description: Claude Code in ~/wks
+    requires: claude_code
+  agycli:
+    cmd: cd ~/wks; clear; agy
+    description: Antigravity CLI in ~/wks
+    requires: antigravity_cli
+  antigravity-ide:
+    cmd: "\"{{ antigravity_ide_dir }}/antigravity\"{{ (' ' ~ cedilla_ozone_flag) if alpi_cedilla_xwayland | default(false) else '' }}"
+    description: Antigravity IDE from the shell
+    requires: antigravity_ide
+  nvidia-run:
+    cmd: "{{ nvidia_prime_env }}"
+    description: Run a program on the NVIDIA GPU
+    requires: nvidia-driver
+
+# VS Code on XWayland from the shell, with the cedilla workaround (group_vars/all/desktop.yml)
+zsh_aliases_cedilla: |
   {% if alpi_cedilla_xwayland | default(false) and 'vscode' in alpi_ids_selected | default([]) %}
   alias code='code {{ cedilla_ozone_flag }}'
   {% endif %}
@@ -39,9 +71,6 @@ zsh_full_update_cmds:
   claude: claude update
   agy: agy update
 zsh_full_update_tools: "{% for cmd, update in zsh_full_update_cmds.items() %}command -v {{ cmd }} >/dev/null && {{ update }}; {% endfor %}"
-
-zsh_aliases_nvidia: |
-  alias nvidia-run="{{ nvidia_prime_env }}"
 
 # API key exports for the user's .zshrc come from api_keys in the optional vault
 # group_vars/all/secrets.yml (see README). Not defaulted here: files in group_vars/all load in

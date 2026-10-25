@@ -2,6 +2,7 @@
 # Package and feature resolution (PROPOSAL.md, "Customization"). Every check runs here, before
 # any role changes the system. Results:
 #   alpi_feature:    feature name -> bool (resolved first: features add package sets)
+#   alpi_zsh_aliases_on: zsh alias name -> bool, the picker's and custom.yml's choices (roles/zsh)
 #   alpi_pkgs:       base set (repo defaults + distro + desktop + enabled features' packages +
 #                    the picker's additions, minus the picker's and the user's skips)
 #   alpi_pkgs_extra: the user's packages_add (installed in a separate step, after the base)
@@ -29,6 +30,19 @@
 - name: Resolve | Set feature flags
   ansible.builtin.set_fact:
     alpi_feature: "{{ alpi_features_merged | alpi_features(alpi_hardware_features, {'nvidia': is_nvidia | bool, 'asus': is_asus | bool, 'intel': is_intel | bool, 'amd': is_amd | bool}) }}"
+
+- name: Resolve | Merge zsh aliases
+  ansible.builtin.set_fact:
+    alpi_zsh_aliases_on: "{{ zsh_aliases_selection | default({}) | combine(zsh_aliases_enabled | default({})) }}"
+
+- name: Resolve | Check zsh alias names
+  ansible.builtin.assert:
+    that: _unknown | length == 0
+    fail_msg: "Unknown zsh aliases: {{ _unknown | join(', ') }}. Known: {{ _known | join(', ') }}."
+    quiet: true
+  vars:
+    _known: "{{ zsh_aliases.keys() | list + (zsh_aliases_os | default({})).keys() | list }}"
+    _unknown: "{{ alpi_zsh_aliases_on.keys() | difference(_known) }}"
 
 - name: Resolve | Select package ids
   ansible.builtin.set_fact:

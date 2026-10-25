@@ -8,8 +8,10 @@ mok_password: "fedora-alpi"
 kmod_signer: akmods
 
 # dnf5's needs-restarting says whether to reboot by default (-r is accepted but does nothing)
-zsh_aliases_os: |
-  alias full-update="flatpak update -y; {{ zsh_full_update_tools }}sudo dnf upgrade --refresh -y; dnf needs-restarting"
+zsh_aliases_os:
+  full-update:
+    cmd: "flatpak update -y; {{ zsh_full_update_tools }}sudo dnf upgrade --refresh -y; dnf needs-restarting"
+    description: Update the flatpaks, the AI tools and the system
 
 # DNF plugins (config-manager, copr, needs-restarting), installed first by roles/repos
 alpi_dnf_plugins: [dnf-plugins-core, dnf5-plugins]

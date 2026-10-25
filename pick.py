@@ -3,11 +3,13 @@
 
 Lists only what the running distro can install (catalog entries marked ~ are hidden, so are the
 other desktop's packages and features whose packages are all unavailable), in groups by purpose
-(group_vars/all/picker.yml): a menu of groups, each opened as a checklist, then a review of the
-changes before saving. The repository defaults start checked. The choice is saved to
-host_vars/127.0.0.1/selection.yml as differences from the defaults (packages_selection_add/_skip,
-features_selection), so defaults added to the repository later still arrive with git pull. Hardware features (NVIDIA, ASUS…) follow detection
-and are not listed; veto them in custom.yml.
+(group_vars/all/picker.yml), and the zsh aliases (group_vars/all/zsh.yml) as a last group: a menu of
+groups, each opened as a checklist (description, then what gets installed, or the alias's
+command), then a review of the changes before saving. The repository defaults start checked. The
+choice is saved to host_vars/127.0.0.1/selection.yml as differences from the defaults
+(packages_selection_add/_skip, features_selection, zsh_aliases_selection), so defaults added to
+the repository later still arrive with git pull. Hardware features (NVIDIA, ASUS…) follow
+detection and are not listed; veto them in custom.yml.
 
 ./bootstrap.sh runs it; run it again at any time to change the choice. ALPI_PICKER=text (or
 --ui text) uses plain prompts instead of whiptail.
@@ -30,6 +32,8 @@ ROOT = Path(__file__).resolve().parent
 DISTROS = {"fedora": "Fedora", "almalinux": "AlmaLinux"}
 # Ansible's os_family per distribution (group_vars/family_<family>)
 FAMILIES = {"Fedora": "RedHat", "AlmaLinux": "RedHat", "Debian": "Debian", "Ubuntu": "Debian"}
+# The zsh aliases' group, last in the menu (only for zsh: roles/zsh writes them)
+ZSH_GROUP = "Shell aliases (zsh)"
 HEADER = """---
 # Written by pick.py (./bootstrap.sh runs it; run ./pick.py again to change the choice). Only the
 # differences from the repository defaults, so new defaults still arrive with git pull.
@@ -49,6 +53,8 @@ class Choice:
     id: str
     label: str
     default: bool
+    detail: str = ""  # what it installs, or the alias's command
+    requires: tuple = ()  # ids it needs: hidden while one of them is listed and unchecked
 
 
 def load_yaml(path):
@@ -70,7 +76,8 @@ def load_data(root, distro, major):
     """The repository data the playbook would use on this distro."""
     gv = root / "group_vars"
     data = {}
-    for name in ("catalog", "packages", "features", "picker"):
+    # zsh: the aliases; ai_tools and desktop: values their commands show (antigravity_ide_dir…)
+    for name in ("catalog", "packages", "features", "picker", "zsh", "ai_tools", "desktop"):
         data.update(load_yaml(gv / "all" / f"{name}.yml"))
     # Same layering as group_by in env_setup: family_<os_family>, os_<distro>, os_<distro>_<major>
     for group in (f"family_{FAMILIES[distro]}", f"os_{distro}", f"os_{distro}_{major}"):
@@ -91,14 +98,12 @@ def _names(res):
                      + [f"upstream {n}" for n in res.get("upstream", [])])
 
 
-def _label(cid, res, descriptions):
-    """The id's description, with where it comes from when that is not the distro's packages;
-    the package names when there is no description."""
+def _choice(cid, res, descriptions, default):
+    """The id's description, and the names it installs as the detail; the names as the label
+    when there is no description."""
     if cid not in descriptions:
-        return _names(res)
-    source = ("Flathub" if res["flatpak"] else "pipx" if res.get("pipx")
-              else "upstream release" if res.get("upstream") else "")
-    return f"{descriptions[cid]} ({source})" if source and not res["native"] else descriptions[cid]
+        return Choice(cid, _names(res), default)
+    return Choice(cid, descriptions[cid], default, _names(res))
 
 
 def choices(data, des, filters):
@@ -117,7 +122,7 @@ def choices(data, des, filters):
         if feature_packages.get(name) and not (res["native"] or res["flatpak"] or res.get("pipx")
                                                or res.get("upstream")):
             continue  # nothing to install here (Steam on EL)
-        features.append(Choice(name, _label(name, res, descriptions), bool(value)))
+        features.append(_choice(name, res, descriptions, bool(value)))
 
     desktop_lists = {"kde": data.get("packages_kde") or [], "gnome": data.get("packages_gnome") or []}
     defaults = list(data.get("packages_base") or []) + list(data.get("packages_os") or [])
@@ -133,8 +138,73 @@ def choices(data, des, filters):
         res = resolve([pid])
         if res["unavailable"] or res["missing"]:
             continue
-        packages.append(Choice(pid, _label(pid, res, descriptions), pid in defaults))
+        packages.append(_choice(pid, res, descriptions, pid in defaults))
     return features, packages
+
+
+def show_command(cmd, data):
+    """An alias's command as the playbook would write it, for the picker: the templates rendered
+    with the repository's values (the user's home as ~); a name it cannot know shows as <name>.
+    Unrendered when Jinja is missing (it comes with ansible-core)."""
+    try:
+        import jinja2
+    except ImportError:
+        return cmd
+
+    class Placeholder(jinja2.Undefined):
+        def __str__(self):
+            return f"<{self._undefined_name}>"
+
+    env, context = jinja2.Environment(undefined=Placeholder), {**data, "user_home": "~"}
+    for _ in range(5):  # a value may hold templates of its own (zsh_full_update_tools)
+        if "{{" not in cmd and "{%" not in cmd:
+            break
+        try:
+            cmd = env.from_string(cmd).render(context)
+        except jinja2.TemplateError:
+            break
+    return cmd
+
+
+def zsh_choices(data):
+    """The zsh aliases (zsh_aliases + the distro's zsh_aliases_os), all on by default. Each needs
+    zsh, and its requires (the playbook leaves it out without them)."""
+    definitions = {**(data.get("zsh_aliases") or {}), **(data.get("zsh_aliases_os") or {})}
+    out = []
+    for name, d in definitions.items():
+        notes = (["root too"] if d.get("root") else []) + ([f"needs {d['requires']}"] if d.get("requires") else [])
+        label = d.get("description", name) + (f" ({', '.join(notes)})" if notes else "")
+        requires = ("zsh",) + ((d["requires"],) if d.get("requires") else ())
+        out.append(Choice(name, label, True, show_command(str(d["cmd"]), data), requires))
+    return out
+
+
+def rows(items, width, pad=False):
+    """Each item's text in a list width columns wide after its id column: the label padded to a
+    shared column, then the detail, cut to fit (pad: filled with spaces to the full width). The label comes first: it gets its full width
+    while the detail keeps 24 columns, and at least half the row otherwise."""
+    if not items:
+        return []
+    avail = max(width - max(len(c.id) for c in items) - 1, 20)
+    label_w = min(max(len(c.label) for c in items), max(avail - 26, avail // 2))
+    out = []
+    for c in items:
+        label = c.label if len(c.label) <= label_w else c.label[:label_w - 1] + "…"
+        text = f"{label:<{label_w}}  {c.detail}".rstrip() if c.detail else label
+        text = text if len(text) <= avail else text[:avail - 1] + "…"
+        out.append(f"{text:<{avail}}" if pad else text)
+    return out
+
+
+def visible(grouped, checked):
+    """The groups as shown now: an item is hidden while an id it requires is listed and unchecked
+    (an alias whose program is off; all aliases without zsh), and so is a group left empty. Its
+    own check stays, so it comes back as it was. An id the picker does not list (nvidia-driver,
+    from detection) hides nothing: the playbook decides."""
+    listed = {c.id for _, members in grouped for c in members}
+    shown = [(g, [c for c in members if all(r in checked or r not in listed for r in c.requires)])
+             for g, members in grouped]
+    return [(g, members) for g, members in shown if members]
 
 
 def groups(data, items):
@@ -159,27 +229,26 @@ def changes(items, checked):
             + [f"- {c.id}: {c.label}" for c in items if c.default and c.id not in checked])
 
 
-def initial(features, packages, saved, aliases=None):
-    """Checked ids for the pickers: the defaults with a saved selection applied."""
+def initial(features, packages, saved, aliases=None, zsh=()):
+    """Checked ids for the pickers: the defaults with a saved selection applied. Returns
+    (features, packages, zsh aliases)."""
     aliases = aliases or {}
     add = {aliases.get(i, i) for i in saved.get("packages_selection_add") or []}
     skip = {aliases.get(i, i) for i in saved.get("packages_selection_skip") or []}
-    feats = saved.get("features_selection") or {}
     pkgs_on = {c.id for c in packages if (c.default or c.id in add) and c.id not in skip}
-    feats_on = {c.id for c in features if bool(feats.get(c.id, c.default))}
-    return feats_on, pkgs_on
+    on = lambda items, key: {c.id for c in items if bool((saved.get(key) or {}).get(c.id, c.default))}
+    return on(features, "features_selection"), pkgs_on, on(zsh, "zsh_aliases_selection")
 
 
-def selection(features, packages, feats_on, pkgs_on, saved, catalog, aliases=None):
+def selection(features, packages, feats_on, pkgs_on, saved, catalog, aliases=None, zsh=(),
+              zsh_on=frozenset()):
     """The differences from the defaults, plus saved entries for ids not listed this time
     (another desktop's packages picked from that desktop), so a run elsewhere keeps them.
     Returns (selection, dropped ids no longer in the catalog)."""
     aliases = aliases or {}
     listed = {c.id for c in packages}
-    feats_listed = {c.id for c in features}
     out = {"packages_selection_add": [c.id for c in packages if c.id in pkgs_on and not c.default],
-           "packages_selection_skip": [c.id for c in packages if c.default and c.id not in pkgs_on],
-           "features_selection": {c.id: c.id in feats_on for c in features if (c.id in feats_on) != c.default}}
+           "packages_selection_skip": [c.id for c in packages if c.default and c.id not in pkgs_on]}
     dropped = []
     for key in ("packages_selection_add", "packages_selection_skip"):
         for raw in saved.get(key) or []:
@@ -188,9 +257,11 @@ def selection(features, packages, feats_on, pkgs_on, saved, catalog, aliases=Non
                 dropped.append(raw)
             elif pid not in listed and pid not in out[key]:
                 out[key].append(pid)
-    for name, value in (saved.get("features_selection") or {}).items():
-        if name not in feats_listed:
-            out["features_selection"].setdefault(name, value)
+    for key, items, on in (("features_selection", features, feats_on), ("zsh_aliases_selection", zsh, zsh_on)):
+        out[key] = {c.id: c.id in on for c in items if (c.id in on) != c.default}
+        for name, value in (saved.get(key) or {}).items():
+            if name not in {c.id for c in items}:
+                out[key].setdefault(name, value)
     return out, dropped
 
 
@@ -224,14 +295,17 @@ def text_pick(title, grouped, checked, read=None, write=print):
     """Every group in one numbered list; toggles by id or number until an empty line."""
     read = read or input  # looked up at call time, so tests can replace it
     items = [c for _, members in grouped for c in members]
+    shown = lambda: [c for _, members in visible(grouped, checked) for c in members]
     def show():
+        width = shutil.get_terminal_size((100, 30)).columns - 9  # after "nnn [x] "
         write(f"\n{title}")
         n = 0
-        for group, members in grouped:
+        for group, members in visible(grouped, checked):  # each aligned on its own, as in whiptail
             write(f"\n  {group}")
-            for c in members:
+            id_w = max(len(c.id) for c in members)
+            for c, text in zip(members, rows(members, width)):
                 n += 1
-                write(f"{n:3} [{'x' if c.id in checked else ' '}] {c.id:<26} {c.label}")
+                write(f"{n:3} [{'x' if c.id in checked else ' '}] {c.id:<{id_w}} {text}")
     show()
     while True:
         try:
@@ -245,7 +319,8 @@ def text_pick(title, grouped, checked, read=None, write=print):
         if line.strip() == "?":
             show()
             continue
-        new, unknown = parse_toggles(line, items, checked)
+        before = shown()
+        new, unknown = parse_toggles(line, before, checked)
         if unknown:
             write(f"Unknown: {' '.join(unknown)}. Nothing changed.")
             continue
@@ -253,17 +328,25 @@ def text_pick(title, grouped, checked, read=None, write=print):
             if (c.id in new) != (c.id in checked):
                 write(f"    {c.id}: {'on' if c.id in new else 'off'}")
         checked = new
+        if shown() != before:  # items appeared or went: the numbers changed
+            show()
 
 
 # Stand-ins for whiptail's box height, width and list height, filled in from the terminal's size
 HEIGHT, WIDTH, LIST = object(), object(), object()
 
 
-def _whiptail(*args):
-    """whiptail's answer (stderr), or None when cancelled (Esc, Cancel or No)."""
+def _sizes():
+    """whiptail's box height, width and list height for this terminal."""
     size = shutil.get_terminal_size((100, 30))
     height = max(size.lines - 2, 15)
-    sizes = {HEIGHT: str(height), WIDTH: str(min(size.columns - 4, 110)), LIST: str(height - 8)}
+    return height, max(min(size.columns - 4, 160), 60), height - 8
+
+
+def _whiptail(*args):
+    """whiptail's answer (stderr), or None when cancelled (Esc, Cancel or No)."""
+    height, width, list_height = _sizes()
+    sizes = {HEIGHT: str(height), WIDTH: str(width), LIST: str(list_height)}
     cmd = ["whiptail", "--title", "ALPI"] + [sizes.get(a, a) for a in args]
     r = subprocess.run(cmd, stderr=subprocess.PIPE, text=True)
     return r.stderr if r.returncode == 0 else None
@@ -273,8 +356,10 @@ def whiptail_checklist(title, items, checked):
     """The group's checked ids, or None when cancelled."""
     args = ["--separate-output", "--ok-button", "Done", "--cancel-button", "Back", "--checklist",
             f"{title}\nSpace toggles, Enter goes back to the groups.", HEIGHT, WIDTH, LIST]
-    for c in items:
-        args += [c.id, c.label[:70], "ON" if c.id in checked else "OFF"]
+    # The list is as wide as its longest row: the rows are padded to fill the box (borders, the
+    # "[*] " column and the gap after the ids take about 13 columns)
+    for c, text in zip(items, rows(items, _sizes()[1] - 13, pad=True)):
+        args += [c.id, text, "ON" if c.id in checked else "OFF"]
     answer = _whiptail(*args)
     return None if answer is None else set(answer.split())
 
@@ -285,11 +370,14 @@ def whiptail_pick(title, grouped, checked):
     save, current = "Review and save", None
     items = [c for _, members in grouped for c in members]
     while True:
+        shown = visible(grouped, checked)
         args = ["--ok-button", "Open", "--cancel-button", "Cancel"]
-        if current:
+        if current in dict(shown):
             args += ["--default-item", current]
-        args += ["--menu", f"{title}\nOpen a group to change it. Defaults are checked.", HEIGHT, WIDTH, LIST]
-        for group, members in grouped:
+        # The list as tall as its entries: a taller one hides the text's second line
+        args += ["--menu", f"{title}\nOpen a group to change it. Defaults are checked.", HEIGHT, WIDTH,
+                 str(len(shown) + 1)]
+        for group, members in shown:
             args += [group, f"{sum(c.id in checked for c in members)}/{len(members)} selected"]
         n = len(changes(items, checked))
         args += [save, f"{n} change{'' if n == 1 else 's'} from the defaults"]
@@ -304,7 +392,7 @@ def whiptail_pick(title, grouped, checked):
                          "Changes from the defaults:\n\n" + "\n".join(lines), HEIGHT, WIDTH) is not None:
                 return checked
             continue
-        members = dict(grouped)[current]
+        members = dict(shown)[current]
         picked = whiptail_checklist(f"{title}: {current}", members, checked)
         if picked is not None:
             checked = (checked - {c.id for c in members}) | picked
@@ -327,9 +415,10 @@ def main(argv=None):
     data = load_data(args.root, distro, rel.get("VERSION_ID", "").split(".")[0])
     des = desktops(os.environ.get("XDG_CURRENT_DESKTOP"))
     features, packages = choices(data, des, _load_filters(args.root))
+    zsh = zsh_choices(data)
     saved = load_yaml(output) if output.exists() else {}
     aliases = data.get("alpi_catalog_aliases") or {}
-    feats_on, pkgs_on = initial(features, packages, saved, aliases)
+    feats_on, pkgs_on, zsh_on = initial(features, packages, saved, aliases, zsh)
 
     ui = args.ui
     if ui == "auto":
@@ -337,20 +426,22 @@ def main(argv=None):
     pick = whiptail_pick if ui == "whiptail" else text_pick
     where = f"{rel.get('PRETTY_NAME', distro)}, desktop: {'/'.join(sorted(des)).upper() or 'none detected'}"
     print(f"==> Package picker ({where}). Hardware features follow detection; veto them in custom.yml.")
-    checked = pick(where, groups(data, features + packages), feats_on | pkgs_on)
+    grouped = groups(data, features + packages) + ([(ZSH_GROUP, zsh)] if zsh else [])
+    checked = pick(where, grouped, feats_on | pkgs_on | zsh_on)
     if checked is None:
         print(f"Cancelled: {output} left unchanged.")
         return 0
-    feats_on = {c.id for c in features if c.id in checked}
-    pkgs_on = {c.id for c in packages if c.id in checked}
+    feats_on, pkgs_on, zsh_on = ({c.id for c in items if c.id in checked} for items in (features, packages, zsh))
 
-    sel, dropped = selection(features, packages, feats_on, pkgs_on, saved, data["alpi_catalog"], aliases)
+    sel, dropped = selection(features, packages, feats_on, pkgs_on, saved, data["alpi_catalog"], aliases,
+                             zsh, zsh_on)
     for raw in dropped:
         print(f"WARNING: '{raw}' is no longer in the catalog; dropped from the selection.")
     write_selection(output, sel)
     print(f"Selection saved to {output}: {len(sel['packages_selection_add'])} added, "
           f"{len(sel['packages_selection_skip'])} skipped, features changed: "
-          f"{', '.join(f'{k}={v}' for k, v in sel['features_selection'].items()) or 'none'}.")
+          f"{', '.join(f'{k}={v}' for k, v in sel['features_selection'].items()) or 'none'}; zsh aliases "
+          f"changed: {', '.join(f'{k}={v}' for k, v in sel['zsh_aliases_selection'].items()) or 'none'}.")
     return 0
 
 

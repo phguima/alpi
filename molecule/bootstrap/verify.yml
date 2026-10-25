@@ -31,7 +31,8 @@
           - _sel.packages_selection_add == []
           - _sel.packages_selection_skip == ['tmux', 'chkrootkit']
           - "_sel.features_selection == {'steam': false}"
-          - _sel.keys() | list | sort == ['features_selection', 'packages_selection_add', 'packages_selection_skip']
+          - "_sel.zsh_aliases_selection == {'clean-cache': false}"
+          - _sel.keys() | list | sort == ['features_selection', 'packages_selection_add', 'packages_selection_skip', 'zsh_aliases_selection']
         fail_msg: "{{ _sel | to_json }}"
         quiet: true
       vars:

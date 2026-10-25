@@ -220,6 +220,7 @@ would resolve.
   review of the changes from the defaults before saving. The text mode lists every group in one
   numbered list. Only the picker reads `picker.yml`; ids it does not name fall under "Other". No terminal, no picker: the
   playbook uses the defaults (and Molecule never runs it).
+- **Rows and aliases (2026-10-25):** see "Decisions (2026-10-25)".
 
 ### Flatpak permissions (already in AFPI/AAPI)
 
@@ -410,3 +411,20 @@ Checked in `debian:13` and `ubuntu:26.04` containers on 2026-10-24: NVIDIA, Virt
    checked on noir (Plasma 6.7.5, Wayland), every Steam process had them and `nvidia-smi` listed
    Steam. ALPI's user copy with the PRIME variables (from AFPI) is dropped and removed where it
    exists; `nvidia_prime_env` remains for the `nvidia-run` alias.
+2. **Picker rows.** whiptail sizes a checklist to its longest row, so short descriptions left
+   most of the box empty. Each row now shows the description and then what it installs (package
+   names, `flatpak <app id>`, `pipx <spec>`, `upstream <source>`; the old "(Flathub)" suffix is
+   gone), padded to the box, which may be up to 160 columns wide.
+3. **zsh aliases are a choice.** Not everyone wants every alias, and some run programs that may
+   not be installed (`agycli` without the Antigravity CLI). Every alias in the repository is a
+   named definition (`zsh_aliases`, the distro's `zsh_aliases_os`) with a description, `root: true`
+   for root's `.zshrc` too, and `requires:` (a catalog id or feature). The picker lists them as
+   its last group, showing the command, with a "needs …" note. An alias is hidden while what it
+   needs (zsh, and its `requires`) is listed and unchecked, its own check kept for when it comes
+   back (first listed regardless, which left `claudecli` checked with Claude Code unchecked:
+   confusing in a real test); an id the picker does not list (`nvidia-driver`, from detection)
+   hides nothing. The playbook leaves out an alias whose requirement is not installed either way. Choices: `zsh_aliases_selection`
+   (picker) then `zsh_aliases_enabled` (`custom.yml`), `{name: bool}`, unknown names fail like
+   unknown features. Not choices: the cedilla's `code` alias (part of that workaround), and the
+   machine's own `luks_volumes`/`zsh_aliases_custom`. Aliases are single-quoted now, so the
+   command is expanded when the alias runs.

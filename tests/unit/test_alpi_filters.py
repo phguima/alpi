@@ -2,6 +2,7 @@
 
 import base64
 import importlib.util
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -205,7 +206,7 @@ class TestFeatures:
     def test_filters_are_registered(self):
         assert set(alpi.FilterModule().filters()) == {
             "alpi_resolve", "alpi_support", "alpi_apt_components", "alpi_canonical", "alpi_features", "alpi_repos", "alpi_feature_ids",
-            "alpi_flatpak_overrides", "alpi_cedilla_xwayland", "alpi_zram_plan", "alpi_xwayland_entries", "alpi_luks_aliases", "alpi_invalid_luks", "alpi_pipx_name",
+            "alpi_flatpak_overrides", "alpi_cedilla_xwayland", "alpi_zram_plan", "alpi_xwayland_entries", "alpi_luks_aliases", "alpi_invalid_luks", "alpi_zsh_aliases", "alpi_pipx_name",
             "alpi_appimage_release", "alpi_github_release", "alpi_upstream_missing",
         }
 
@@ -434,6 +435,43 @@ def test_luks_aliases_empty(volumes):
 ])
 def test_invalid_luks(volumes, bad):
     assert alpi.alpi_invalid_luks(volumes) == bad
+
+
+# --- alpi_zsh_aliases ----------------------------------------------------------------------------
+
+ZSH = {
+    "lls": {"cmd": "ls -lh", "root": True},
+    "agycli": {"cmd": "cd ~/wks; agy", "requires": "antigravity_cli"},
+    "say": {"cmd": "echo 'hi'"},
+    "full-update": {"cmd": "sudo dnf upgrade"},
+}
+SAY = "alias say='echo '\\''hi'\\'''"  # a quote in the command closes, escapes and reopens
+
+
+def test_zsh_aliases_user_gets_every_alias_on_in_order():
+    assert alpi.alpi_zsh_aliases(ZSH, {}, ["antigravity_cli"]).splitlines() == [
+        "alias lls='ls -lh'", "alias agycli='cd ~/wks; agy'", SAY, "alias full-update='sudo dnf upgrade'"]
+
+
+def test_zsh_aliases_root_gets_only_root_ones():
+    assert alpi.alpi_zsh_aliases(ZSH, {}, ["antigravity_cli"], True) == "alias lls='ls -lh'"
+
+
+def test_zsh_aliases_off_or_missing_their_requirement_are_left_out():
+    out = alpi.alpi_zsh_aliases(ZSH, {"lls": False, "say": True}, ["vim"])
+    assert out.splitlines() == [SAY, "alias full-update='sudo dnf upgrade'"]
+
+
+@pytest.mark.parametrize("definitions", [None, {}])
+def test_zsh_aliases_empty(definitions):
+    assert alpi.alpi_zsh_aliases(definitions, None, None) == ""
+
+
+def test_zsh_alias_quoting_survives_a_shell():
+    line = alpi.alpi_zsh_aliases(ZSH, {}, [])
+    out = subprocess.run(["bash", "-c", line.replace("\n", ";") + "\nshopt -s expand_aliases\nalias say"],
+                         capture_output=True, text=True, check=True).stdout
+    assert out.strip() == SAY
 
 
 # --- pipx --------------------------------------------------------------------------------------

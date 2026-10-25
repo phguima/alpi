@@ -79,7 +79,7 @@
     - name: Verify | EL's full-update (dnf4 needs -r); no nvidia-run (driver unavailable on EL)
       ansible.builtin.assert:
         that:
-          - "'dnf needs-restarting -r\"' in _zshrc.stdout"
+          - "\"dnf needs-restarting -r'\" in _zshrc.stdout"
           - "'nvidia-run' not in _zshrc.stdout"
           - "'open-' not in _zshrc.stdout"
         fail_msg: "{{ _zshrc.stdout }}"
