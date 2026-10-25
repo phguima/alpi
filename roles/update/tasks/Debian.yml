@@ -1,0 +1,36 @@
+---
+# apt (main.yml): full upgrade, then the reboot signals (alpi_reboot_needed).
+
+# dist: apt-get dist-upgrade (full-upgrade), which installs new dependencies and removes what an
+# upgrade replaces, as dnf's upgrade does; a plain upgrade would hold those packages back
+- name: Update | Upgrade all packages
+  ansible.builtin.apt:
+    upgrade: dist
+    update_cache: true
+
+# Ubuntu's update-notifier hooks write /run/reboot-required after a kernel or libc upgrade; Debian
+# has no such hook by default
+- name: Update | Look for the reboot flag
+  ansible.builtin.stat:
+    path: /run/reboot-required
+  register: _reboot_flag
+
+# As on dnf, no clock involved: the newest installed kernel image against the running kernel.
+# linux-image-<release> (6.12.48+deb13-amd64, 7.0.0-15-generic) is uname -r's release; the
+# metapackages (linux-image-amd64, -generic) and -unsigned builds do not match the pattern.
+- name: Update | Find the newest installed kernel
+  ansible.builtin.shell: >-
+    set -o pipefail;
+    { dpkg-query -W -f '${db:Status-Abbrev} ${Package}\n' 'linux-image-[0-9]*' 2>/dev/null || true; }
+    | awk '$1 == "ii" && $2 !~ /-unsigned$/ { sub(/^linux-image-/, "", $2); print $2 }' | sort -V | tail -n 1
+  args:
+    executable: /bin/bash
+  register: _newest_kernel
+  changed_when: false
+  check_mode: false
+
+- name: Update | Reboot signals
+  ansible.builtin.set_fact:
+    alpi_reboot_needed: >-
+      {{ _reboot_flag.stat.exists or
+         (_newest_kernel.stdout | length > 0 and _newest_kernel.stdout != ansible_facts['kernel']) }}

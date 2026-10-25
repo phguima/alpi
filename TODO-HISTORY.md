@@ -134,6 +134,10 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
   Steam and NVIDIA in `roles/repos`; `debian13` checks every name with apt, `brave-origin` and the
   other vendor names included (Phase 3's "Catalog on apt" with it); new `debian13-personal`
   installs for real through `site.yml` (`feat(packages): apt name check, i386, apt settings`).
+- **2026-10-25** Phase 2: `roles/update` on apt, the upgrade and reboot signals per family
+  (`alpi_reboot_needed`): `apt-get dist-upgrade`, then `/run/reboot-required` or a newer
+  `linux-image-<release>` than the running kernel stops the play; three Debian instances in
+  `update` (`feat(update): full upgrade and reboot gate on apt`).
 
 ## 6. Swap (zram)
 

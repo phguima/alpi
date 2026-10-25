@@ -3,7 +3,7 @@
   ansible.builtin.import_playbook: ../shared/prepare.yml
 
 - name: Prepare | Scripted reboot signals and an outdated dnf.conf
-  hosts: all
+  hosts: all:!apt
   gather_facts: false
   tasks:
     - name: Prepare | Test settings directory
@@ -66,3 +66,61 @@
       ansible.builtin.lineinfile:
         path: /etc/dnf/dnf.conf
         line: max_parallel_downloads=3
+
+- name: Prepare | Scripted reboot signals and a pending upgrade (apt)
+  hosts: apt
+  gather_facts: false
+  tasks:
+    - name: Prepare | Test settings directory
+      ansible.builtin.file:
+        path: /etc/alpi-test
+        state: directory
+        mode: "0755"
+
+    - name: Prepare | Newest kernel to report
+      ansible.builtin.copy:
+        dest: /etc/alpi-test/kernel
+        content: "{{ _test_newest_kernel | default('') }}\n"
+        mode: "0644"
+
+    - name: Prepare | Ubuntu's reboot flag
+      ansible.builtin.copy:
+        dest: /run/reboot-required
+        content: "*** System restart required ***\n"
+        mode: "0644"
+      when: _test_reboot_flag | default(false)
+
+    # The query roles/update makes for linux-image-[0-9]*, answered from the test setting
+    - name: Prepare | dpkg-query wrapper (kernel image query only)
+      ansible.builtin.copy:
+        dest: /usr/local/bin/dpkg-query
+        content: |
+          #!/bin/sh
+          case "$*" in
+              *linux-image-*)
+                  if [ -s /etc/alpi-test/kernel ]; then echo "ii  linux-image-$(cat /etc/alpi-test/kernel)"; exit 0; fi ;;
+          esac
+          exec /usr/bin/dpkg-query "$@"
+        mode: "0755"
+
+    - name: Prepare | apt-ftparchive for the local repository
+      ansible.builtin.apt:
+        name: apt-utils
+        state: present
+
+    - name: Prepare | Local repository with 1.0 and 2.0 of a stand-in, 1.0 installed
+      ansible.builtin.shell: |
+        set -e
+        mkdir -p /srv/alpi-repo
+        for v in 1.0 2.0; do
+            d=/tmp/alpi-test-upgrade_$v
+            mkdir -p $d/DEBIAN
+            printf 'Package: alpi-test-upgrade\nVersion: %s\nArchitecture: all\nMaintainer: ALPI <alpi@example.org>\nDescription: ALPI update test\n' $v > $d/DEBIAN/control
+            dpkg-deb --build $d /srv/alpi-repo/ >/dev/null
+        done
+        cd /srv/alpi-repo && apt-ftparchive packages . > Packages
+        echo 'deb [trusted=yes] file:/srv/alpi-repo ./' > /etc/apt/sources.list.d/alpi-test.list
+        dpkg -i /srv/alpi-repo/alpi-test-upgrade_1.0_all.deb >/dev/null
+      args:
+        executable: /bin/bash
+        creates: /srv/alpi-repo/Packages

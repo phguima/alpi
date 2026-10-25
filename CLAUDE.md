@@ -123,7 +123,12 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   fail the run until RPM Fusion rebuilds, so the library is held back instead), then the reboot
   gate: `dnf needs-restarting -r` rc 1, or the newest installed `kernel-core` is not the running
   kernel (noir's local-time RTC fools needs-restarting), ends the play for the host. Otherwise
-  it ends with `tasks/cedilla.yml` again (the upgrade may bring a newer KWin).
+  it ends with `tasks/cedilla.yml` again (the upgrade may bring a newer KWin). Per family
+  (`RedHat.yml`, `Debian.yml`, each setting `alpi_reboot_needed` for the shared gate); apt:
+  `upgrade: dist` (full-upgrade: new dependencies installed, replaced packages removed, as dnf
+  does), reboot when `/run/reboot-required` exists (Ubuntu's flag; Debian writes none) or the
+  newest installed `linux-image-<release>` is not `uname -r` (metapackages and `-unsigned` builds
+  left out).
 - `roles/boot` (after `update`): kernel maintenance (refuses to run on a debug kernel; removes
   debug kernels, disables enabled debug repositories (`debug_repos_dnf5.yml` / `_dnf4.yml` by
   `pkg_mgr`: dnf5's `config-manager setopt` writes `/etc/dnf/repos.override.d/`, not the .repo),
@@ -338,7 +343,10 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     kernel per instance, the dnf one still running the real needs-restarting: no reboot, reboot
     by needs-restarting (EL), reboot by a newer kernel; each also has an installed freeworld
     stand-in pinned to its library while a newer library is available, `shared/pinned_pair.yml`:
-    the upgrade holds the library back), `memory` (env_setup + `roles/memory` +
+    the upgrade holds the library back; Debian 13, group `apt`: a local repository offers 2.0 of
+    an installed stand-in, which every instance upgrades, and a `dpkg-query` wrapper names the
+    newest kernel: no reboot, reboot by `/run/reboot-required`, reboot by a newer kernel),
+    `memory` (env_setup + `roles/memory` +
     `tasks/reminders.yml`, `zram_apply` skipped; a `swapon` wrapper and a zswap file script the
     swap state per instance: no swap, Fedora's zram0 with `zram_size`, zswap on, `zram: false`
     after a run, the user's own config), `boot` (`roles/boot` on Fedora + Alma;

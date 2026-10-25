@@ -2,16 +2,24 @@
 - name: Verify | roles/update
   hosts: all
   gather_facts: false
+  vars:
+    _apt: "{{ 'apt' in group_names }}"
   tasks:
     - name: Verify | Read dnf.conf and look for the marker
       ansible.builtin.command: "{{ item }}"
-      loop:
-        - cat /etc/dnf/dnf.conf
-        - test -f /etc/alpi-test/after-update
-        - rpm -q alpi-test-lib alpi-test-lib-freeworld
+      loop: "{{ _apt | ternary(_apt_cmds, _dnf_cmds) }}"
       register: _q
       changed_when: false
       failed_when: false
+      vars:
+        _dnf_cmds:
+          - cat /etc/dnf/dnf.conf
+          - test -f /etc/alpi-test/after-update
+          - rpm -q alpi-test-lib alpi-test-lib-freeworld
+        _apt_cmds:
+          - echo
+          - test -f /etc/alpi-test/after-update
+          - dpkg-query -W -f=${Version} alpi-test-upgrade
 
     - name: Verify | dnf tuned, the outdated value replaced
       ansible.builtin.assert:
@@ -22,10 +30,11 @@
         quiet: true
       vars:
         _conf: "{{ _q.results[0].stdout_lines }}"
+      when: not _apt
 
     - name: Verify | The play went on only where no reboot was needed
       ansible.builtin.assert:
-        that: (_q.results[1].rc == 0) == (inventory_hostname == 'alpi-upd-fedora44-ok')
+        that: (_q.results[1].rc == 0) == (inventory_hostname in ['alpi-upd-fedora44-ok', 'alpi-upd-debian13-ok'])
         fail_msg: "marker rc {{ _q.results[1].rc }} on {{ inventory_hostname }}"
         quiet: true
 
@@ -34,3 +43,12 @@
         that: _q.results[2].stdout_lines == ['alpi-test-lib-1.0-1.noarch', 'alpi-test-lib-freeworld-1.0-1.noarch']
         fail_msg: "{{ _q.results[2].stdout_lines }}"
         quiet: true
+      when: not _apt
+
+    # Upgraded before the gate, whether or not the play went on
+    - name: Verify | apt upgraded the stand-in
+      ansible.builtin.assert:
+        that: _q.results[2].stdout == '2.0'
+        fail_msg: "version {{ _q.results[2].stdout }} (rc {{ _q.results[2].rc }}) {{ _q.results[2].stderr }}"
+        quiet: true
+      when: _apt

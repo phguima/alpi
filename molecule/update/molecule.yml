@@ -7,9 +7,15 @@
 #   alpi-upd-el10-reboot:      needs-restarting says reboot (dnf4): the play stops for the host
 #   alpi-upd-fedora44-kernel:  needs-restarting says no, but a newer kernel is installed (noir's
 #                              local-time RTC case): the play stops
-# Every instance also has an installed freeworld stand-in pinned to its library's exact version
-# while a newer library is available (shared/pinned_pair.yml): the upgrade must hold the library
-# back instead of failing (EL's dnf.conf has best=True).
+# Every dnf instance also has an installed freeworld stand-in pinned to its library's exact
+# version while a newer library is available (shared/pinned_pair.yml): the upgrade must hold the
+# library back instead of failing (EL's dnf.conf has best=True).
+# Debian 13 (group apt; Debian allowed in their host_vars): a local repository offers 2.0 of an
+# installed 1.0 stand-in, which every instance must upgrade; the newest kernel comes from a
+# dpkg-query wrapper:
+#   alpi-upd-debian13-ok:      no reboot flag, no linux-image installed: the play goes on
+#   alpi-upd-debian13-reboot:  /run/reboot-required (Ubuntu's flag): the play stops
+#   alpi-upd-debian13-kernel:  a newer linux-image installed: the play stops
 platforms:
   - name: alpi-upd-fedora44-ok
     image: registry.fedoraproject.org/fedora:44
@@ -26,6 +32,24 @@ platforms:
     pre_build_image: true
     command: sleep infinity
     volumes: ["alpi-dnf-upd-fedora44-kernel:/var/cache/libdnf5"]
+  - name: alpi-upd-debian13-ok
+    image: docker.io/library/debian:13
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-upd-debian13-ok:/var/cache/apt"]
+    groups: [apt]
+  - name: alpi-upd-debian13-reboot
+    image: docker.io/library/debian:13
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-upd-debian13-reboot:/var/cache/apt"]
+    groups: [apt]
+  - name: alpi-upd-debian13-kernel
+    image: docker.io/library/debian:13
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-upd-debian13-kernel:/var/cache/apt"]
+    groups: [apt]
 provisioner:
   playbooks:
     prepare: prepare.yml

@@ -21,8 +21,6 @@ container or VM before code relies on them. Consequences to keep in mind:
 
 ### Phase 2 — shared apt layer (`family_Debian`)
 
-- [ ] **`roles/update`:** `apt full-upgrade`. Reboot gate: newest installed `linux-image-*` vs the
-      running kernel, plus `/run/reboot-required` where present (Ubuntu). No `dnf_config`.
 - [ ] **`roles/boot`:** RedHat-only kernel tasks (`dnf repoquery`, debug kernels) gated off; handler
       `update-grub` instead of `grub2-mkconfig` (`roles/boot/handlers/main.yml`). Ubuntu's
       `/etc/default/grub.d/*.cfg` override `/etc/default/grub` and `GRUB_TIMEOUT_STYLE=hidden`
