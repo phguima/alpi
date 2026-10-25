@@ -21,13 +21,6 @@ container or VM before code relies on them. Consequences to keep in mind:
 
 ### Phase 3 — Debian 13
 
-- [ ] **Support:** `Debian: {min: 13, max: 13}`; `unsupported` moves to `debian:12`.
-- [ ] **`group_vars/os_Debian/`:** `zsh_aliases_os`, components (catalog keys, `mok_password` and the
-      `virtualbox` repository are there since the `debian13` scenario).
-- [ ] **`bootstrap.sh`:** a `debian)` branch. With a root password set at install, Debian installs no
-      `sudo` at all: detect it and print `su - -c "apt install sudo && usermod -aG sudo $USER"` (`su -`:
-      plain `su` lacks `/usr/sbin`), then log in again.
-- [ ] **`pick.py`:** `"debian": "Debian"` (its unit test's fake Debian changes from unsupported).
 - [ ] **NVIDIA:** DKMS key created and enrolled before `nvidia-driver` installs, then `nvidia.conf`.
       Debian's `steam.desktop` (steam-installer, checked 2026-10-25) has no `PrefersNonDefaultGPU`,
       unlike Fedora's: on a hybrid laptop Steam starts on the integrated GPU. Decide (a user copy
@@ -56,8 +49,7 @@ container or VM before code relies on them. Consequences to keep in mind:
       `unsupported`, `update`, `boot`, `memory`, `secureboot`, `user`, `bootstrap`, `services`), not
       every scenario. `full` takes ~15 min (4 at a time) and grows with each instance; give
       `tests/run.sh` an `apt` list to run those alone while working.
-- [ ] **New:** `ubuntu2604-personal` (real installs); `debian13-personal` exists and runs every role
-      once it is ported (its skip-tags shrink).
+- [ ] **New:** `ubuntu2604-personal` (real installs), as `debian13-personal`.
 - [ ] **`failures` on apt:** an unknown name and an unreadable source (`check_Debian.yml`; only
       the parser has unit tests).
 - [ ] **VM checklist:** Debian 13 GNOME and KDE, Ubuntu 26.04 and Kubuntu 26.04, EFI + Secure Boot:

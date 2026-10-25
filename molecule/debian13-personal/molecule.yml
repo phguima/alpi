@@ -1,11 +1,10 @@
 ---
-# Debian 13, personal machine (custom.yml + selection.yml) through site.yml, with the roles ported
-# to apt so far (TODO.md section 5; the module roles of Phase 3 are skipped by tag until then):
+# Debian 13, personal machine (custom.yml + selection.yml) through site.yml, as fedora44-personal:
 # repos (contrib/non-free, Brave, VS Code, GitHub CLI; i386 for Steam), packages (apt name check,
 # base with steam-installer and its i386 libraries, real Flatpaks, extra, explicit uninstall),
 # boot (no GRUB here: skipped), upstream, common, zsh (root's .zshrc with apt's full-update),
-# pipx; desktop and ai_tools skip themselves for root. Debian is allowed in host_vars (not in the
-# support matrix yet).
+# pipx, virtualbox (off: its kvm setting removed); no Secure Boot or NVIDIA here ('secureboot'
+# covers akmods_mok and nvidia on Debian); desktop and ai_tools skip themselves for root.
 # prepare.yml holds the dpkg lock for the start of the converge: the apt module must wait for it
 # (apt_lock_timeout), as it would for unattended-upgrades on a fresh install.
 platforms:
@@ -16,9 +15,9 @@ platforms:
     volumes: ["alpi-dnf-debian13-personal:/var/cache/apt"]
 provisioner:
   options:
-    # As fedora44-personal (no systemd, no upgrade or swap in a container; 'services', 'update',
-    # 'memory' cover them), plus the module roles not ported to apt yet. Setting skip-tags replaces
-    # Molecule's default, so its own tags are repeated.
-    skip-tags: molecule-notest,notest,clamav,supergfxd,update,memory,akmods_mok,virtualbox,nvidia
+    # As fedora44-personal: no systemd, no upgrade or swap in a container ('services', 'update',
+    # 'memory' cover them). Setting skip-tags replaces Molecule's default, so its own tags are
+    # repeated.
+    skip-tags: molecule-notest,notest,clamav,supergfxd,update,memory
   playbooks:
     prepare: prepare.yml

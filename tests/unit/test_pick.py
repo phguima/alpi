@@ -17,6 +17,7 @@ OS_RELEASE = {
     "fedora": 'ID=fedora\nVERSION_ID=44\nPRETTY_NAME="Fedora Linux 44"\n',
     "el10": 'ID="almalinux"\nVERSION_ID="10.0"\nPRETTY_NAME="AlmaLinux 10.0"\n',
     "debian": 'ID=debian\nVERSION_ID="13"\nPRETTY_NAME="Debian GNU/Linux 13"\n',
+    "ubuntu": 'ID=ubuntu\nVERSION_ID="26.04"\nPRETTY_NAME="Ubuntu 26.04 LTS"\n',
 }
 
 
@@ -433,5 +434,19 @@ def test_every_distro_has_a_family():
 
 
 def test_main_rejects_an_unsupported_distro(tmp_path, monkeypatch):
-    rc, sel = run_main(tmp_path, monkeypatch, "debian", [])
+    rc, sel = run_main(tmp_path, monkeypatch, "ubuntu", [])
     assert rc == 1 and sel is None
+
+
+def test_main_on_debian_lists_debian_names(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("COLUMNS", "400")
+    rc, sel = run_main(tmp_path, monkeypatch, "debian", ["-steam -tmux -full-update", ""])
+    assert rc == 0
+    assert sel == {"packages_selection_add": [], "packages_selection_skip": ["tmux"],
+                   "features_selection": {"steam": False}, "zsh_aliases_selection": {"full-update": False}}
+    shown = "".join(capsys.readouterr())
+    assert "steam-installer" in shown and "sudo apt full-upgrade -y" in shown
+
+
+def test_debian_tries_the_deb_key_before_all():
+    assert pick.load_data(ROOT, "Debian", "13")["alpi_catalog_keys"] == ["debian13", "debian", "deb", "all"]

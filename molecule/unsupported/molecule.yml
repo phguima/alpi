@@ -1,8 +1,9 @@
 ---
-# An unsupported distro must stop in env_setup before anything else runs.
+# An unsupported distro must stop in env_setup before anything else runs: Debian 12, a release of a
+# listed distro outside its range.
 platforms:
-  - name: alpi-unsupported-debian13
-    image: docker.io/library/debian:13
+  - name: alpi-unsupported-debian12
+    image: docker.io/library/debian:12
     pre_build_image: true
     command: sleep infinity
 provisioner:

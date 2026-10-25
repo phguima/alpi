@@ -1,6 +1,4 @@
 ---
-# Test-only: Debian 13 allowed while the apt layer is built
-alpi_supported: {Fedora: {min: 41, max: 44}, AlmaLinux: {min: 10, max: 10}, Debian: {min: 13, max: 13}}
 _test_swaps: ""
 _test_zswap: "N"
 zram_zswap_param: /etc/alpi-test/zswap

@@ -1,6 +1,6 @@
 ---
 - name: Bootstrap | Run bootstrap.sh with scripted answers
-  hosts: all
+  hosts: all:!alpi-bootstrap-debian13-nosudo
   vars:
     _dir: /opt/alpi
     _env:
@@ -12,10 +12,12 @@
       # would make that copy change on every run and fail idempotence
       PYTHONDONTWRITEBYTECODE: "1"
   tasks:
+    # Debian has it in bsdutils, which every system has
     - name: Bootstrap | Install script(1)
       ansible.builtin.package:
         name: util-linux-script
         state: present
+      when: ansible_facts['pkg_mgr'] != 'apt'
 
     - name: Bootstrap | Directories
       ansible.builtin.file:
@@ -70,6 +72,8 @@
       environment: "{{ _env }}"
       register: _run1
       changed_when: false
+      # A prompt that lost its answer waits forever (apt reading the terminal did): fail instead
+      timeout: 900
 
     - name: Bootstrap | First run asked again after the bad answers
       ansible.builtin.assert:
@@ -100,6 +104,7 @@
       environment: "{{ _env }}"
       register: _run2
       changed_when: false
+      timeout: 900
 
     - name: Bootstrap | Second run saved the settings and the selection
       ansible.builtin.assert:
@@ -107,4 +112,35 @@
           - "'Settings saved to' in _run2.stdout"
           - "'2 skipped, features changed: steam=False; zsh aliases changed: clean-cache=False' in _run2.stdout"
         fail_msg: "{{ _run2.stdout }}"
+        quiet: true
+
+# No sudo at all (Debian with a root password set at install): stop before anything is installed,
+# with the command that fixes it. Run as alpi, as a user would.
+- name: Bootstrap | Debian without sudo
+  hosts: alpi-bootstrap-debian13-nosudo
+  tasks:
+    - name: Bootstrap | Copy what bootstrap.sh reads
+      ansible.builtin.copy:
+        src: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/{{ item }}"
+        dest: /opt/alpi/
+        mode: preserve
+        owner: alpi
+      loop: [bootstrap.sh, site.yml, group_vars]
+
+    - name: Bootstrap | Run it as alpi
+      ansible.builtin.command:
+        cmd: su alpi -c ./bootstrap.sh
+        chdir: /opt/alpi
+      register: _nosudo
+      changed_when: false
+      failed_when: false
+
+    - name: Bootstrap | Stopped with the su - command, nothing installed
+      ansible.builtin.assert:
+        that:
+          - _nosudo.rc == 1
+          - "'sudo is not installed' in _nosudo.stdout"
+          - "'su - -c \"apt install sudo && usermod -aG sudo alpi\"' in _nosudo.stdout"
+          - "'Installing ansible-core' not in _nosudo.stdout"
+        fail_msg: "rc {{ _nosudo.rc }}: {{ _nosudo.stdout }} {{ _nosudo.stderr }}"
         quiet: true

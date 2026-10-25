@@ -1,10 +1,4 @@
 ---
-# Test-only: Debian 13 allowed while the apt layer is built (the repository's matrix leaves it out
-# until it passes on a VM, PROPOSAL decision 6 of 2026-10-05)
-alpi_supported:
-  Fedora: {min: 41, max: 44}
-  AlmaLinux: {min: 10, max: 10}
-  Debian: {min: 13, max: 13}
 # As in fedora44-personal: the heaviest downloads skipped (part here, part in selection.yml)
 packages_skip: [slack, spotify, zoom, zotero]
 packages_add: ["pkg:tree", "pipx:cowsay"]

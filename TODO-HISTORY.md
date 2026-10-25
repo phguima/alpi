@@ -157,6 +157,11 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
   `shared/Dockerfile-systemd-apt.j2` (systemd for Debian and Ubuntu, which publish no init
   image), first used by a Debian instance in `services`
   (`test(services): systemd image for apt, freshclam on Debian`). Phase 2 done.
+- **2026-10-25** Phase 3: Debian 13 in the support matrix (release after the VM checklist);
+  `pick.py` maps `debian`; `bootstrap.sh` installs Debian's ansible-core (apt kept off the
+  terminal, or debconf takes the piped answers) and stops with the `su -` command when there is
+  no sudo; `unsupported` moved to Debian 12; the tests' Debian overrides removed
+  (`feat(env): Debian 13 in the support matrix`).
 
 ## 6. Swap (zram)
 

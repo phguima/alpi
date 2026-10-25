@@ -1,0 +1,22 @@
+---
+- name: Prepare | Shared
+  ansible.builtin.import_playbook: ../shared/prepare.yml
+
+# Debian installed with a root password: no sudo, and a first user outside any admin group
+- name: Prepare | Debian without sudo
+  hosts: alpi-bootstrap-debian13-nosudo
+  gather_facts: false
+  tasks:
+    # sudo's prerm refuses while root has no password, unless told to
+    - name: Prepare | Remove sudo
+      ansible.builtin.apt:
+        name: sudo
+        state: absent
+        purge: true
+      environment:
+        SUDO_FORCE_REMOVE: "yes"
+
+    - name: Prepare | User alpi
+      ansible.builtin.user:
+        name: alpi
+        shell: /bin/bash

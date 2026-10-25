@@ -10,7 +10,7 @@
 # Every dnf instance also has an installed freeworld stand-in pinned to its library's exact
 # version while a newer library is available (shared/pinned_pair.yml): the upgrade must hold the
 # library back instead of failing (EL's dnf.conf has best=True).
-# Debian 13 (group apt; Debian allowed in their host_vars): a local repository offers 2.0 of an
+# Debian 13 (group apt): a local repository offers 2.0 of an
 # installed 1.0 stand-in, which every instance must upgrade; the newest kernel comes from a
 # dpkg-query wrapper:
 #   alpi-upd-debian13-ok:      no reboot flag, no linux-image installed: the play goes on

@@ -4,10 +4,12 @@
 # Ubuntu's major is the same for 26.04 and 26.10). Checked by the alpi_support filter. There is
 # no fallback by os_family: Rocky, CentOS Stream or Ubuntu are not "close enough" to a supported
 # distro.
-# Reserved, not supported yet (PROPOSAL.md, decision 6): Debian 13, Ubuntu 26.04.
+# Reserved, not supported yet (PROPOSAL.md, decision 6): Ubuntu 26.04. Debian 13 is listed for the
+# apt work; its first release waits for the VM checklist (TODO.md, Phase 5).
 alpi_supported:
   Fedora: {min: 41, max: 44}
   AlmaLinux: {min: 10, max: 10}
+  Debian: {min: 13, max: 13}
 
 # true: ids marked unavailable (~) on this distro stop the run instead of being skipped.
 alpi_strict: false

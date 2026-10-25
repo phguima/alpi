@@ -10,7 +10,7 @@
 #                    tools' own packages under EL names
 #   alpi-user-debian13: GNOME without Ptyxis (Debian's has gnome-terminal: Ptyxis left alone), the
 #                    locale in /etc/default/locale (pt_BR), apt's full-update, the AI tools' own
-#                    packages under Debian names (group apt; Debian allowed in its host_vars)
+#                    packages under Debian names (group apt)
 # All: ~/wks and the cedilla fix in ~/.XCompose, owned by the user. zsh: root gets the root: true
 # aliases that are on, alpi every alias that is on and installed (GNOME switches one off in its
 # selection, KDE's custom.yml overrides its selection both ways); the API keys block (api_keys in

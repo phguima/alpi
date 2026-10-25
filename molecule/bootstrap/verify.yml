@@ -1,6 +1,6 @@
 ---
 - name: Verify | bootstrap.sh results
-  hosts: all
+  hosts: all:!alpi-bootstrap-debian13-nosudo
   gather_facts: false
   tasks:
     - name: Verify | Read the saved settings

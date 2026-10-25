@@ -6,5 +6,5 @@
       ansible.builtin.include_tasks: ../shared/expect_failure.yml
       vars:
         _case:
-          name: Debian 13
-          expect: ["ALPI does not support Debian 13", "Supported: Fedora 41-44, AlmaLinux 10"]
+          name: Debian 12
+          expect: ["ALPI does not support Debian 12", "Supported: Fedora 41-44, AlmaLinux 10, Debian 13"]

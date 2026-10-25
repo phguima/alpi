@@ -1,6 +1,6 @@
 ---
-# Debian 13 (PROPOSAL.md, "Decisions (2026-10-24)"). Not in the support matrix yet: the debian13
-# Molecule scenario allows it in its own host_vars while the apt layer is built (TODO.md, section 5).
+# Debian 13 (PROPOSAL.md, "Decisions (2026-10-24)"). Shared with Ubuntu: group_vars/family_Debian
+# (apt settings, repositories, GRUB, zram, full-update).
 alpi_catalog_keys: [debian13, debian, deb, all]
 packages_os: []
 

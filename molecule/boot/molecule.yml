@@ -6,7 +6,7 @@
 # alpi-test-kernel and the debug kernel, and disable the repository. A /etc/default/grub and a
 # grub2-mkconfig that only logs its calls stand in for GRUB: the settings are written and the
 # config regenerated once (not again on the idempotence run).
-# Debian 13 (group apt; Debian allowed in its host_vars): no kernel maintenance (apt's
+# Debian 13 (group apt): no kernel maintenance (apt's
 # autoremove's job); the settings go to /etc/default/grub.d/99-alpi.cfg, which must win over
 # /etc/default/grub and an Ubuntu-style grub.d file hiding the menu, and update-grub (a logging
 # stand-in) runs once.

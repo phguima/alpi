@@ -32,6 +32,19 @@ case "$ID" in
         prompt "Installing ansible-core, pciutils, PyYAML and whiptail ($PRETTY_NAME)..."
         sudo dnf install -y ansible-core pciutils python3-pyyaml newt
         ;;
+    debian)
+        # A root password set at install leaves Debian without sudo (the first user gets it only
+        # when root has none). 'su -': plain su keeps the user's PATH, which lacks /usr/sbin.
+        if ! command -v sudo >/dev/null; then
+            error "sudo is not installed. Install it and give yourself sudo rights, then log in again:"
+            echo -e "      ${C_YELLOW}su - -c \"apt install sudo && usermod -aG sudo ${USER:-$(id -un)}\"${C_RESET}"
+            exit 1
+        fi
+        # No terminal for apt: debconf would read it, and take the answers meant for the questions
+        prompt "Installing ansible-core, pciutils, PyYAML and whiptail ($PRETTY_NAME)..."
+        sudo apt-get update </dev/null
+        sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y ansible-core pciutils python3-yaml whiptail </dev/null
+        ;;
     *)
         error "$PRETTY_NAME is not supported (yet). See group_vars/all/support.yml."
         exit 1

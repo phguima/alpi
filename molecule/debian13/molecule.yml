@@ -1,8 +1,6 @@
 ---
-# Debian 13 while the apt layer is built (TODO.md section 5): Debian is not in the support matrix
-# yet, so host_vars/ allows it for this instance only. Resolution with KDE, GNOME and all hardware
-# forced on, compared with reviewed golden values (verify.yml); the apt roles join converge.yml
-# as they are ported:
+# Debian 13 resolution with KDE, GNOME and all hardware forced on, compared with reviewed golden
+# values (verify.yml), as 'catalog' does for Fedora and EL:
 #   roles/repos: Debian's contrib/non-free components, the vendor repositories under their own
 #   file and keyring names (prepare.yml plants VS Code's own vscode.sources, which must be
 #   rewritten, not duplicated), apt update clean afterwards; i386 added (Steam and NVIDIA selected)

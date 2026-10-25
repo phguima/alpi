@@ -15,7 +15,7 @@
 #   alpi-mem-fedora44-own:   the user's own /etc/systemd/zram-generator.conf: left alone
 #   alpi-mem-debian13-none:  Debian 13, no swap: systemd-zram-generator installed, kernel settings
 #   alpi-mem-debian13-off:   Debian 13, zram: false after an earlier run (as el10-off)
-# (group apt: Debian allowed in their host_vars)
+# (group apt)
 platforms:
   - name: alpi-mem-el10-none
     image: docker.io/library/almalinux:10

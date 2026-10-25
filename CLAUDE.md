@@ -328,18 +328,18 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     set_fact, saved and restored; its `prepare.yml` builds a freeworld stand-in that cannot be
     installed, `shared/pinned_pair.yml`), `flags` (env_setup on Fedora 44 with the hardware flags as
     key=value extra vars, i.e. strings: `is_nvidia=true` turns NVIDIA on, `=false` keeps the
-    others off), `debian13` (env_setup + resolution on Debian 13, allowed in its own host_vars
-    while the apt layer is built; golden values like `catalog`; `roles/repos`, then every name of
-    the golden set checked with apt, nothing installed), `debian13-personal` (`site.yml` on
-    Debian 13 with the roles ported to apt, the others skipped by tag until they are: real installs
-    as in `fedora44-personal`, Steam with its i386 libraries; `prepare.yml` holds the dpkg lock
+    others off), `debian13` (env_setup + resolution on Debian 13; golden values like `catalog`;
+    `roles/repos`, then every name of the golden set checked with apt, nothing installed),
+    `debian13-personal` (`site.yml` on Debian 13, skipping what `fedora44-personal` skips: real
+    installs as in `fedora44-personal`, Steam with its i386 libraries; `prepare.yml` holds the dpkg lock
     for 150 s, which the apt module must wait out: with `apt_lock_timeout: 20` the converge fails),
-    `unsupported` (Debian 13), `upstream` (`roles/upstream` on
+    `unsupported` (Debian 12), `upstream` (`roles/upstream` on
     AlmaLinux 10 against a stand-in GitHub served by `http.server` on 127.0.0.1:8766: install v1,
     `side_effect.yml` publishes v2 and runs again (Molecule's side_effect step, added to the
     scenario's test_sequence), GitHub unreachable keeps v0, `packages_absent` removes it;
     `el10-work` installs the real release), `bootstrap`
-    (bootstrap.sh with scripted answers, picker in text mode), `common` (env_setup +
+    (bootstrap.sh with scripted answers, picker in text mode, on Fedora 44 and Debian 13; a Debian
+    13 without sudo must stop before installing anything and print the `su -` command), `common` (env_setup +
     `roles/common` on `almalinux/10-init` with systemd: static hostname via hostnamectl, git),
     `secureboot` (env_setup + `akmods_mok`, `virtualbox`, `nvidia`, nothing downloaded; converge
     renames EL's VirtualBox and Fedora's NVIDIA native packages, so the roles must gate on ids; Secure Boot
