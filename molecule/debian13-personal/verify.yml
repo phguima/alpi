@@ -16,3 +16,18 @@
           - "'steam-installer' in alpi_pkgs.native"
           - "'i386' in _deb_archs.stdout_lines"
         quiet: true
+
+    # root is the user here (no SUDO_USER): its block has every alias, apt's full-update among them
+    - name: Verify | Read root's .zshrc
+      ansible.builtin.command: cat /root/.zshrc
+      register: _deb_zshrc
+      changed_when: false
+
+    - name: Verify | zsh set up, with apt's full-update
+      ansible.builtin.assert:
+        that:
+          - "'ZSH_THEME=\"kali-like-alt\"' in _deb_zshrc.stdout"
+          - _deb_zshrc.stdout_lines | select('match', "^alias full-update='flatpak update -y; .*sudo apt full-upgrade -y;") | list | length == 1
+          - "'alias lls=' in _deb_zshrc.stdout"
+        fail_msg: "{{ _deb_zshrc.stdout }}"
+        quiet: true
