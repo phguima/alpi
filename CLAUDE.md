@@ -207,11 +207,15 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   gnome-terminal), cedilla (`~/.XCompose` from the Compose file of the locale in
   `/etc/locale.conf` or Debian's and Ubuntu's `/etc/default/locale`, fallback `en_US.UTF-8`). Ansible runs modules with `LANG=C.utf8`, so
   `ansible_facts['env']['LANG']` never shows the session's locale (AFPI/AAPI's lookup found
-  nothing because of that). Steam needs no launcher of ALPI's: its own `PrefersNonDefaultGPU`
-  gets switcheroo-control's NVIDIA offload from the desktop (checked on noir, 2026-10-25), so
-  `tasks/steam.yml` only removes a user `steam.desktop` carrying `env __NV_PRIME_RENDER_OFFLOAD=1`
-  (ALPI's old one or AFPI's); any other one is the user's own. `nvidia_prime_env`
-  (`group_vars/all/desktop.yml`) is the `nvidia-run` alias.
+  nothing because of that). Steam on the NVIDIA GPU: a launcher with `PrefersNonDefaultGPU` gets
+  switcheroo-control's offload from the desktop (checked on noir, 2026-10-25). Fedora's own
+  launcher has it; Debian's and Ubuntu's (steam-installer) do not, so with `steam_gpu_launcher`
+  (`group_vars/family_Debian`) and Steam and the NVIDIA driver selected, `tasks/steam.yml`
+  writes a user copy of the system launcher with `PrefersNonDefaultGPU` and
+  `X-KDE-RunOnDiscreteGpu` and a marker, rebuilt on every run and removed otherwise
+  (`alpi_steam_launcher`). A user `steam.desktop` carrying `env __NV_PRIME_RENDER_OFFLOAD=1`
+  (ALPI's old one or AFPI's) goes or becomes that copy; any other one is the user's own.
+  `nvidia_prime_env` (`group_vars/all/desktop.yml`) is the `nvidia-run` alias.
 - `roles/asus` (after `packages`): `/etc/asusd` (`asusctl`), `supergfxd.service` (`supergfxctl`,
   tagged `supergfxd`), ROG Control Center autostart (`asusctl-rog-gui`), each gated on its
   resolved id (`asus_selected` in `vars/main.yml`).
@@ -413,7 +417,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     the stand-in AppImage's real sha512; converge's play vars point the URLs there): every tool on
     GNOME and EL, the Antigravity CLI and IDE on KDE; each stand-in refuses root and logs its runs; `is_nvidia`
     pinned true: GNOME loses ALPI's old Steam launcher and gets the `nvidia-run` alias, KDE vetoes
-    NVIDIA and loses AFPI's leftover launcher, EL keeps a user's own; `tasks/reminders.yml`: gh logged in on GNOME, reminded on KDE,
+    NVIDIA and loses AFPI's leftover launcher, EL keeps a user's own, Debian and Ubuntu turn the old
+    launcher into ALPI's copy of steam-installer's (a stand-in) with the GPU keys; `tasks/reminders.yml`: gh logged in on GNOME, reminded on KDE,
     skipped on EL, the fact recorded in `/root/alpi-gh-login-needed` for verify). That recipe
     is the way to test any user-specific step (root and the user differ there).
   - `fedora44-personal` and `el10-work` have no systemd: they skip service roles by tag

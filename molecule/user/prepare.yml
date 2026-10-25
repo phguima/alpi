@@ -181,13 +181,35 @@
         group: root
         mode: "0755"
 
-# User Steam launchers left behind: on GNOME and Debian, the copy ALPI wrote until 2026-10-25
-# (every Exec with the offload); on KDE, AFPI's (only the main Exec rewritten); on EL, a launcher the user
-# made, without the offload
+# User Steam launchers left behind: on GNOME, Debian and Ubuntu, the copy ALPI wrote until
+# 2026-10-25 (every Exec with the offload); on KDE, AFPI's (only the main Exec rewritten); on EL, a
+# launcher the user made, without the offload. Debian and Ubuntu also get steam-installer's system
+# launcher (as checked on both, 2026-10-25: no GPU keys), which ALPI's new copy is built from.
 - name: Prepare | Steam launchers
   hosts: all
   gather_facts: false
   tasks:
+    - name: Prepare | System applications directory (apt)
+      ansible.builtin.file:
+        path: /usr/share/applications
+        state: directory
+        mode: "0755"
+      when: "'apt' in group_names"
+
+    - name: Prepare | steam-installer's system launcher (apt)
+      ansible.builtin.copy:
+        dest: /usr/share/applications/steam.desktop
+        content: |
+          [Desktop Entry]
+          Name=Steam
+          Exec=/usr/games/steam %U
+          Type=Application
+
+          [Desktop Action Store]
+          Name=Store
+          Exec=/usr/games/steam steam://store
+        mode: "0644"
+      when: "'apt' in group_names"
     - name: Prepare | The user's applications directory
       ansible.builtin.file:
         path: /home/alpi/.local/share/applications

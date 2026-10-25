@@ -1,19 +1,52 @@
 ---
-# Steam's own launcher runs it on the NVIDIA GPU: it sets PrefersNonDefaultGPU and
-# X-KDE-RunOnDiscreteGpu, and the desktop applies switcheroo-control's offload variables (checked
-# on noir, 2026-10-25: every Steam process had them and nvidia-smi listed Steam). The user copy
-# with the PRIME variables on every Exec that AFPI (and ALPI until then) wrote only shadows Steam's
-# updates, and without the NVIDIA driver __GLX_VENDOR_LIBRARY_NAME=nvidia breaks Steam's OpenGL:
-# a user launcher that carries the offload goes. Any other steam.desktop is the user's own.
+# Steam on the NVIDIA GPU of a hybrid laptop through the desktop: a launcher with
+# PrefersNonDefaultGPU and X-KDE-RunOnDiscreteGpu makes GNOME and KDE apply switcheroo-control's
+# offload variables (checked on noir, 2026-10-25: every Steam process had them and nvidia-smi
+# listed Steam). Fedora's own launcher asks for it. Debian's and Ubuntu's do not
+# (steam_gpu_launcher): while the NVIDIA driver and Steam are selected, ALPI writes a user copy of
+# the system launcher with both keys and a marker, rebuilt on every run (a package update reaches
+# it), and removes it otherwise. The copy with the PRIME variables on every Exec that AFPI (and ALPI
+# until 2026-10-25) wrote shadows Steam's updates, and without the NVIDIA driver
+# __GLX_VENDOR_LIBRARY_NAME=nvidia breaks Steam's OpenGL: it goes, or becomes the new copy. Any
+# other steam.desktop is the user's own. Plan: alpi_steam_launcher.
 
-- name: Steam | Read the user's launcher
+- name: Steam | Read the system and the user's launchers
   ansible.builtin.slurp:
-    src: "{{ user_home }}/.local/share/applications/steam.desktop"
-  register: _steam_user
+    src: "{{ item }}"
+  loop:
+    - /usr/share/applications/steam.desktop
+    - "{{ user_home }}/.local/share/applications/steam.desktop"
+  register: _steam_files
   failed_when: false
 
-- name: Steam | Remove the launcher with the PRIME offload
+- name: Steam | Plan
+  ansible.builtin.set_fact:
+    _steam_plan: >-
+      {{ _sys | alpi_steam_launcher(_usr, steam_gpu_launcher | bool
+                                          and alpi_ids_selected | intersect(['steam', 'nvidia-driver']) | length == 2,
+                                    steam_gpu_launcher_marker) }}
+  vars:
+    _sys: "{{ (_steam_files.results[0].content | b64decode) if _steam_files.results[0].content is defined else none }}"
+    _usr: "{{ (_steam_files.results[1].content | b64decode) if _steam_files.results[1].content is defined else none }}"
+
+- name: Steam | Applications directory
+  ansible.builtin.file:
+    path: "{{ user_home }}/.local/share/applications"
+    state: directory
+    mode: "0755"
+  become_user: "{{ user_name }}"
+  when: _steam_plan.state == 'present'
+
+- name: Steam | Launcher asking for the NVIDIA GPU
+  ansible.builtin.copy:
+    dest: "{{ user_home }}/.local/share/applications/steam.desktop"
+    content: "{{ _steam_plan.content }}"
+    mode: "0644"
+  become_user: "{{ user_name }}"
+  when: _steam_plan.state == 'present'
+
+- name: Steam | Remove ALPI's launcher
   ansible.builtin.file:
     path: "{{ user_home }}/.local/share/applications/steam.desktop"
     state: absent
-  when: "'Exec=env __NV_PRIME_RENDER_OFFLOAD=1 ' in (_steam_user.content | default('') | b64decode)"
+  when: _steam_plan.state == 'absent'

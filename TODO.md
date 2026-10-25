@@ -26,10 +26,10 @@ container or VM before code relies on them. Consequences to keep in mind:
       (MOK enrollment and signed modules, `update-grub` and the menu, the reboot gate, the
       unattended-upgrades lock, the installer's own `sources.list`, cedilla and terminals in a
       session, the Antigravity IDE under AppArmor, `bootstrap.sh` without sudo). Fix what fails.
-- [ ] **Steam on a hybrid NVIDIA laptop (Debian, Ubuntu):** Debian's `steam.desktop`
-      (steam-installer, checked 2026-10-25) has no `PrefersNonDefaultGPU`, unlike Fedora's, so it
-      starts on the integrated GPU; decide (a user copy with the key added, or nothing) on real
-      hardware.
+- [ ] **Steam on a hybrid NVIDIA laptop (Debian, Ubuntu):** ALPI's launcher copy with
+      `PrefersNonDefaultGPU` (steam-installer's has none) starts Steam on the NVIDIA GPU: check on
+      real hardware (`nvidia-smi` lists Steam) with Debian's 550 and Ubuntu's 615 drivers; drop the
+      copy if switcheroo's offload does not work there.
 - [ ] **Release:** after `tests/run.sh full` and the VM checklist per distro: Debian 13 as `v1.2.0`,
       Ubuntu 26.04 as `v1.3.0` (or one release if both land together).
 

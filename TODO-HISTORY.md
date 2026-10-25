@@ -188,6 +188,11 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
   Debian 13 (unknown names, unmet dependencies from a local repository, an unreachable source:
   the apt message now starts as dnf's); new `ubuntu2604-personal`; `tests/vm-checklist-apt.md`
   for the four VMs (`test: apt failure cases, ubuntu2604-personal, the apt VM checklist`).
+- **2026-10-25** Steam on the NVIDIA GPU on Debian and Ubuntu: steam-installer's launcher has no
+  `PrefersNonDefaultGPU` (unlike Fedora's), so ALPI writes a user copy with it while the driver
+  and Steam are selected (`alpi_steam_launcher`, `steam_gpu_launcher` in `family_Debian`)
+  (`feat(desktop): Steam's launcher asks for the NVIDIA GPU on Debian and Ubuntu`). Real hardware
+  still to check.
 
 ## 6. Swap (zram)
 

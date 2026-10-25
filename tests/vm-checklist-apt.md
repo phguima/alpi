@@ -126,9 +126,10 @@ ansible-playbook site.yml -K 2>&1 | tee run2.log
 - [ ] **Codecs:** Debian `dpkg -l ffmpeg gstreamer1.0-libav libheif-plugin-libde265`; Ubuntu
       `dpkg -l ubuntu-restricted-addons libavcodec-extra`, and no `ttf-mscorefonts-installer`
       (no EULA question appeared). A video plays in the default player.
-- [ ] **Steam:** `steam-installer` installed with its i386 libraries; on a hybrid NVIDIA laptop
-      later: Debian's `steam.desktop` has no `PrefersNonDefaultGPU` (Ubuntu's: check), so Steam
-      starts on the integrated GPU; decide (TODO, Phase 5).
+- [ ] **Steam:** `steam-installer` installed with its i386 libraries; on the NVIDIA VMs (forced
+      on) `~/.local/share/applications/steam.desktop` is ALPI's copy (marker on the first line,
+      `PrefersNonDefaultGPU=true`, no `env` on the Exec lines), on the KDE VMs none. On a hybrid
+      NVIDIA laptop later: Steam from the menu shows up in `nvidia-smi`.
 - [ ] **ClamAV:** `systemctl is-active clamav-freshclam` → active.
 - [ ] **Flatpaks:** `flatpak list --app` has the defaults (Ubuntu: Chromium among them).
 - [ ] **Shell** (new login): `echo $SHELL` → zsh; kali-like-alt prompt; `alias full-update` →

@@ -394,6 +394,39 @@ def alpi_xwayland_entries(system, user, flag, enabled, marker):
     return plan
 
 
+_STEAM_GPU_KEYS = ["PrefersNonDefaultGPU=true", "X-KDE-RunOnDiscreteGpu=true"]
+
+
+def alpi_steam_launcher(system, user, enabled, marker):
+    """What to do with the user's Steam launcher (~/.local/share/applications/steam.desktop).
+
+    system, user: the system and user steam.desktop texts (None when missing). enabled: Steam
+    should start on the NVIDIA GPU through the desktop (the driver selected, and a system launcher
+    that does not ask for it, as Debian's and Ubuntu's). A launcher is ALPI's when it has the
+    marker, or carries the PRIME offload variables (ALPI's and AFPI's old copies). Wanted: ALPI's
+    copy is the system launcher plus PrefersNonDefaultGPU and X-KDE-RunOnDiscreteGpu in its
+    [Desktop Entry], no variables; a user's own launcher is left alone. Not wanted: ALPI's goes.
+    Returns {"state": "present"|"absent"|"keep", "content"}.
+    """
+    ours = user is not None and (marker in user or "Exec=env __NV_PRIME_RENDER_OFFLOAD=1 " in user)
+    wanted = enabled and system is not None and _STEAM_GPU_KEYS[0] not in system
+    if wanted and (user is None or ours):
+        out, group = [f"# {marker}"], None
+        for line in system.splitlines():
+            if line.startswith("["):
+                group = line.strip()
+            if group == "[Desktop Entry]" and line.split("=", 1)[0] in ("PrefersNonDefaultGPU", "X-KDE-RunOnDiscreteGpu"):
+                continue
+            out.append(line)
+            if line.strip() == "[Desktop Entry]":
+                out.extend(_STEAM_GPU_KEYS)
+        content = "\n".join(out) + "\n"
+        return {"state": "keep" if content == user else "present", "content": content}
+    if ours and not wanted:
+        return {"state": "absent", "content": ""}
+    return {"state": "keep", "content": ""}
+
+
 def alpi_luks_aliases(volumes):
     """open-<name> / close-<name> zsh aliases for LUKS volumes ({name: LUKS UUID}).
 
@@ -522,6 +555,7 @@ class FilterModule(object):
             "alpi_cedilla_xwayland": alpi_cedilla_xwayland,
             "alpi_zram_plan": alpi_zram_plan,
             "alpi_xwayland_entries": alpi_xwayland_entries,
+            "alpi_steam_launcher": alpi_steam_launcher,
             "alpi_luks_aliases": alpi_luks_aliases,
             "alpi_invalid_luks": alpi_invalid_luks,
             "alpi_zsh_aliases": alpi_zsh_aliases,

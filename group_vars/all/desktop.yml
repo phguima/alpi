@@ -28,6 +28,12 @@ ptyxis_opacity: 0.95
 # alias in group_vars/all/zsh.yml; Steam needs none, see roles/desktop/tasks/steam.yml)
 nvidia_prime_env: "__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0"
 
+# Steam on the NVIDIA GPU through the desktop (roles/desktop/tasks/steam.yml): where Steam's own
+# launcher does not ask for it (true in group_vars/family_Debian), a user copy with
+# PrefersNonDefaultGPU, rebuilt on every run while the NVIDIA driver is selected
+steam_gpu_launcher: false
+steam_gpu_launcher_marker: "ALPI: Steam's launcher asking for the NVIDIA GPU (steam_gpu_launcher), rebuilt on every run"
+
 # Cedilla on KDE (ported from AAPI): under KWin 6.6 (EL10; Fedora 44 before its 6.7 update),
 # Chromium/Electron apps on native Wayland ignore ~/.XCompose and type "ć". On XWayland they read
 # it through GTK, so on such a KWin they run on X11 (resolved into alpi_cedilla_xwayland by

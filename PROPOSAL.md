@@ -438,3 +438,9 @@ Checked in `debian:13` and `ubuntu:26.04` containers on 2026-10-24: NVIDIA, Virt
    Steam's 32-bit NVIDIA libraries (`libnvidia-gl-NNN:i386`; Debian's `nvidia-driver-libs:i386`)
    are in the catalog, as Fedora's `.i686`. The Antigravity IDE gets an AppArmor profile granting
    `userns` *(check on the VM: it attaches to the binary in the AppImage's mount)*.
+5. **Steam's launcher on Debian and Ubuntu.** steam-installer's `steam.desktop` has no
+   `PrefersNonDefaultGPU` (checked on both, 2026-10-25), so Steam would start on the integrated
+   GPU of a hybrid laptop. With the NVIDIA driver and Steam selected, ALPI writes a user copy of
+   it with `PrefersNonDefaultGPU` and `X-KDE-RunOnDiscreteGpu` and no variables, the mechanism
+   decision 1 checked on noir, rebuilt on every run and removed when NVIDIA or Steam goes. Not
+   checked on real NVIDIA hardware with Debian's or Ubuntu's driver yet (TODO, Phase 5).

@@ -206,7 +206,7 @@ class TestFeatures:
     def test_filters_are_registered(self):
         assert set(alpi.FilterModule().filters()) == {
             "alpi_resolve", "alpi_support", "alpi_apt_components", "alpi_apt_simulation", "alpi_canonical", "alpi_features", "alpi_repos", "alpi_feature_ids",
-            "alpi_flatpak_overrides", "alpi_cedilla_xwayland", "alpi_zram_plan", "alpi_xwayland_entries", "alpi_luks_aliases", "alpi_invalid_luks", "alpi_zsh_aliases", "alpi_pipx_name",
+            "alpi_flatpak_overrides", "alpi_cedilla_xwayland", "alpi_zram_plan", "alpi_xwayland_entries", "alpi_steam_launcher", "alpi_luks_aliases", "alpi_invalid_luks", "alpi_zsh_aliases", "alpi_pipx_name",
             "alpi_appimage_release", "alpi_github_release", "alpi_upstream_missing",
         }
 
@@ -447,6 +447,43 @@ def test_xwayland_nothing_without_the_app():
     assert plan(None, None, False) == []
     assert plan(None, f"# {MARK}\n" + SYS_X11, True) == [{"name": "c.desktop", "state": "absent", "content": ""}]
     assert plan(None, OWN, True) == [{"name": "c.desktop", "state": "present", "content": OWN.replace("code/code", "code/code " + FLAG)}]
+
+
+# --- alpi_steam_launcher -------------------------------------------------------------------------
+# Debian's and Ubuntu's steam-installer launcher (checked 2026-10-25): no GPU keys
+DEB_STEAM = "[Desktop Entry]\nName=Steam\nExec=/usr/games/steam %U\n\n[Desktop Action Store]\nExec=/usr/games/steam steam://store\n"
+FEDORA_STEAM = "[Desktop Entry]\nName=Steam\nExec=/usr/bin/steam %U\nPrefersNonDefaultGPU=true\nX-KDE-RunOnDiscreteGpu=true\n"
+MARK = "ALPI: Steam on the NVIDIA GPU"
+OLD_ALPI = "[Desktop Entry]\nExec=env __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia /usr/bin/steam %U\n"
+
+
+def test_steam_launcher_copy_asks_for_the_gpu_in_the_entry_group_only():
+    plan = alpi.alpi_steam_launcher(DEB_STEAM, None, True, MARK)
+    assert plan["state"] == "present"
+    assert plan["content"] == (f"# {MARK}\n[Desktop Entry]\nPrefersNonDefaultGPU=true\nX-KDE-RunOnDiscreteGpu=true\n"
+                               "Name=Steam\nExec=/usr/games/steam %U\n\n[Desktop Action Store]\n"
+                               "Exec=/usr/games/steam steam://store\n")
+    # rebuilt the same: nothing to do; the old offload copy is replaced by it
+    assert alpi.alpi_steam_launcher(DEB_STEAM, plan["content"], True, MARK)["state"] == "keep"
+    assert alpi.alpi_steam_launcher(DEB_STEAM, OLD_ALPI, True, MARK) == plan
+
+
+def test_steam_launcher_a_false_key_is_replaced():
+    plan = alpi.alpi_steam_launcher(DEB_STEAM.replace("Name=Steam\n", "Name=Steam\nPrefersNonDefaultGPU=false\n"), None, True, MARK)
+    assert "PrefersNonDefaultGPU=false" not in plan["content"] and plan["content"].count("PrefersNonDefaultGPU=true") == 1
+
+
+def test_steam_launcher_users_own_kept_ours_removed_when_not_wanted():
+    own = "[Desktop Entry]\nName=My Steam\nExec=/opt/steam/steam\n"
+    assert alpi.alpi_steam_launcher(DEB_STEAM, own, True, MARK)["state"] == "keep"
+    ours = alpi.alpi_steam_launcher(DEB_STEAM, None, True, MARK)["content"]
+    assert alpi.alpi_steam_launcher(DEB_STEAM, ours, False, MARK)["state"] == "absent"
+    assert alpi.alpi_steam_launcher(DEB_STEAM, own, False, MARK)["state"] == "keep"
+    # Fedora's launcher already asks: the old offload copy goes, no new one
+    assert alpi.alpi_steam_launcher(FEDORA_STEAM, OLD_ALPI, True, MARK)["state"] == "absent"
+    assert alpi.alpi_steam_launcher(FEDORA_STEAM, None, True, MARK)["state"] == "keep"
+    # Steam gone: ours goes
+    assert alpi.alpi_steam_launcher(None, ours, True, MARK)["state"] == "absent"
 
 
 # --- alpi_luks_aliases ---------------------------------------------------------------------------

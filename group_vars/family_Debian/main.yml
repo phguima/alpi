@@ -7,3 +7,7 @@ fuse2_package: libfuse2t64
 # (nvidia.conf; nvidia-options.conf through alternatives), Ubuntu ships nvidia-graphics-drivers-
 # kms.conf. The module name is per distro (nvidia_module in group_vars/os_*).
 nvidia_modprobe_conf: /etc/modprobe.d/alpi-nvidia.conf
+
+# roles/desktop: Debian's and Ubuntu's steam-installer launcher has no PrefersNonDefaultGPU (checked
+# 2026-10-25), unlike Fedora's: Steam gets a user copy asking for the NVIDIA GPU
+steam_gpu_launcher: true

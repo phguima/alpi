@@ -345,12 +345,21 @@
       loop: "{{ ([_steam_launcher] if _steam.stat.exists else []) + ['/home/alpi/.zshrc'] }}"
       register: _steam_files
 
-    - name: Verify | GNOME, Debian and Ubuntu lost ALPI's old launcher (NVIDIA on), KDE AFPI's; EL kept the user's own
+    # Fedora's system launcher asks for the GPU itself; Debian's and Ubuntu's does not (prepare.yml)
+    - name: Verify | GNOME and KDE lost the old launchers; EL kept the user's own; Debian and Ubuntu got ALPI's copy
       ansible.builtin.assert:
         that:
-          - _steam.stat.exists == (inventory_hostname == 'alpi-user-el10')
-          - not _steam.stat.exists or 'Name=My Steam' in (_steam_files.results[0].content | b64decode)
+          - _steam.stat.exists == (inventory_hostname in ['alpi-user-el10', 'alpi-user-debian13', 'alpi-user-ubuntu2604'])
+          - >-
+            _text == ('# ALPI: Steam\'s launcher asking for the NVIDIA GPU (steam_gpu_launcher), rebuilt on every run\n'
+                      '[Desktop Entry]\nPrefersNonDefaultGPU=true\nX-KDE-RunOnDiscreteGpu=true\nName=Steam\n'
+                      'Exec=/usr/games/steam %U\nType=Application\n\n[Desktop Action Store]\nName=Store\n'
+                      'Exec=/usr/games/steam steam://store\n')
+            if 'apt' in group_names else (not _steam.stat.exists or 'Name=My Steam' in _text)
+        fail_msg: "{{ _text }}"
         quiet: true
+      vars:
+        _text: "{{ (_steam_files.results[0].content | b64decode) if _steam.stat.exists else '' }}"
 
     - name: Verify | The nvidia-run alias only where NVIDIA is on (GNOME, Debian, Ubuntu)
       ansible.builtin.assert:
