@@ -4,6 +4,10 @@
 alpi_catalog_keys: [debian13, debian, deb, all]
 packages_os: []
 
+# roles/nvidia: Debian renames the module nvidia-current (its own modprobe files map nvidia to it,
+# and its options go to nvidia-current)
+nvidia_module: nvidia-current
+
 # MOK enrollment password (see group_vars/all/secureboot.yml)
 mok_password: "debian-alpi"
 # DKMS builds and signs the NVIDIA module (its key from roles/akmods_mok, kmod_signers in

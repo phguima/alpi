@@ -18,6 +18,7 @@ OS_RELEASE = {
     "el10": 'ID="almalinux"\nVERSION_ID="10.0"\nPRETTY_NAME="AlmaLinux 10.0"\n',
     "debian": 'ID=debian\nVERSION_ID="13"\nPRETTY_NAME="Debian GNU/Linux 13"\n',
     "ubuntu": 'ID=ubuntu\nVERSION_ID="26.04"\nPRETTY_NAME="Ubuntu 26.04 LTS"\n',
+    "arch": 'ID=arch\nPRETTY_NAME="Arch Linux"\n',
 }
 
 
@@ -114,7 +115,7 @@ def test_a_name_the_picker_cannot_know_shows_as_a_placeholder():
     assert pick.show_command("{{ nope }}/x {{ 'a' | upper }}", {}) == "<nope>/x A"
 
 
-@pytest.mark.parametrize("distro, major", [("Fedora", "44"), ("AlmaLinux", "10"), ("Debian", "13")])
+@pytest.mark.parametrize("distro, major", [("Fedora", "44"), ("AlmaLinux", "10"), ("Debian", "13"), ("Ubuntu", "26")])
 def test_zsh_alias_names_clash_with_nothing_and_require_known_ids(distro, major):
     # The picker toggles packages, features and aliases by name in one list
     data = pick.load_data(ROOT, distro, major)
@@ -434,8 +435,16 @@ def test_every_distro_has_a_family():
 
 
 def test_main_rejects_an_unsupported_distro(tmp_path, monkeypatch):
-    rc, sel = run_main(tmp_path, monkeypatch, "ubuntu", [])
+    rc, sel = run_main(tmp_path, monkeypatch, "arch", [])
     assert rc == 1 and sel is None
+
+
+def test_main_on_ubuntu_lists_ubuntu_names(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("COLUMNS", "400")
+    rc, sel = run_main(tmp_path, monkeypatch, "ubuntu", ["-chromium", ""])
+    assert rc == 0 and sel["packages_selection_skip"] == ["chromium"]
+    shown = "".join(capsys.readouterr())
+    assert "flatpak org.chromium.Chromium" in shown and "ubuntu-restricted-addons" in shown
 
 
 def test_main_on_debian_lists_debian_names(tmp_path, monkeypatch, capsys):
@@ -450,3 +459,4 @@ def test_main_on_debian_lists_debian_names(tmp_path, monkeypatch, capsys):
 
 def test_debian_tries_the_deb_key_before_all():
     assert pick.load_data(ROOT, "Debian", "13")["alpi_catalog_keys"] == ["debian13", "debian", "deb", "all"]
+    assert pick.load_data(ROOT, "Ubuntu", "26")["alpi_catalog_keys"] == ["ubuntu2604", "ubuntu", "deb", "all"]

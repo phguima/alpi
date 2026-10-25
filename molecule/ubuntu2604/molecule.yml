@@ -1,0 +1,20 @@
+---
+# Ubuntu 26.04 as debian13 does Debian 13, with debian13's playbooks (each instance's expected
+# values in its host_vars): resolution with KDE, GNOME and all hardware forced on, compared with
+# reviewed golden values; roles/repos (Ubuntu's components are all there already; VS Code's own
+# vscode.sources rewritten, not duplicated; Oracle's resolute suite); every name of the golden set
+# checked with apt, nothing installed.
+platforms:
+  - name: alpi-ubuntu2604
+    image: docker.io/library/ubuntu:26.04
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-ubuntu2604:/var/cache/apt"]
+provisioner:
+  options:
+    # kwin_version: Kubuntu 26.04's (4:6.6.6-0ubuntu0.1): the cedilla's XWayland layer is on
+    extra-vars: '{"is_kde": true, "is_gnome": true, "is_nvidia": true, "is_asus": true, "is_intel": true, "is_amd": true, "kwin_version": "6.6.6"}'
+  playbooks:
+    prepare: ../debian13/prepare.yml
+    converge: ../debian13/converge.yml
+    verify: ../debian13/verify.yml

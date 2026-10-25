@@ -3,8 +3,7 @@
 # 13 and Ubuntu 24.04 (64-bit time_t transition)
 fuse2_package: libfuse2t64
 
-# roles/nvidia: Debian renames the module nvidia-current (its own modprobe files map nvidia to it,
-# and its options go to nvidia-current), and links its own files into /etc/modprobe.d through
-# alternatives (nvidia-options.conf): ALPI's options in a file of its own
+# roles/nvidia: ALPI's options in a file of its own. Debian links its files into /etc/modprobe.d
+# (nvidia.conf; nvidia-options.conf through alternatives), Ubuntu ships nvidia-graphics-drivers-
+# kms.conf. The module name is per distro (nvidia_module in group_vars/os_*).
 nvidia_modprobe_conf: /etc/modprobe.d/alpi-nvidia.conf
-nvidia_module: nvidia-current

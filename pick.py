@@ -29,7 +29,7 @@ import yaml
 ROOT = Path(__file__).resolve().parent
 # /etc/os-release ID -> Ansible's distribution name (group_vars/os_<name>). The playbook's support
 # matrix (group_vars/all/support.yml) is the authoritative check.
-DISTROS = {"fedora": "Fedora", "almalinux": "AlmaLinux", "debian": "Debian"}
+DISTROS = {"fedora": "Fedora", "almalinux": "AlmaLinux", "debian": "Debian", "ubuntu": "Ubuntu"}
 # Ansible's os_family per distribution (group_vars/family_<family>)
 FAMILIES = {"Fedora": "RedHat", "AlmaLinux": "RedHat", "Debian": "Debian", "Ubuntu": "Debian"}
 # The zsh aliases' group, last in the menu (only for zsh: roles/zsh writes them)

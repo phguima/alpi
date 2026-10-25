@@ -1,5 +1,5 @@
 ---
-- name: Verify | Debian 13 resolution
+- name: Verify | Resolution (debian13, ubuntu2604)
   hosts: all
   tasks:
     - name: Verify | Resolution matches the reviewed golden sets
@@ -43,10 +43,10 @@
         set -o pipefail;
         apt-get update 2>&1 | grep -E '^(E|W):' || true;
         echo "== files"; grep -l 'packages.microsoft.com/repos/code' /etc/apt/sources.list.d/* /etc/apt/sources.list 2>/dev/null || true;
-        echo "== components"; grep '^Components:' /etc/apt/sources.list.d/debian.sources;
+        echo "== components"; grep '^Components:' /etc/apt/sources.list.d/{{ _apt_sources }};
         echo "== archs"; dpkg --print-foreign-architectures;
         echo "== candidates";
-        for p in brave-browser code gh virtualbox-7.2 steam-installer nvidia-driver; do
+        for p in {{ _apt_candidates | join(' ') }}; do
         echo "$p $(apt-cache policy $p | sed -n 's/ *Candidate: //p')"; done
       args:
         executable: /bin/bash
@@ -58,7 +58,7 @@
         that:
           - _lines | select('match', '^(E|W):') | list == []
           - _files == ['/etc/apt/sources.list.d/vscode.sources']
-          - "_lines | select('match', '^Components:') | list | unique == ['Components: main contrib non-free non-free-firmware']"
+          - "_lines | select('match', '^Components:') | list | unique == ['Components: ' ~ _apt_components]"
           - _archs == ['i386']
           - _candidates | select('match', '^\\S+ (|\\(none\\))$') | list == []
         fail_msg: "{{ _apt_state.stdout }}"

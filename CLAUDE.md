@@ -241,16 +241,21 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   no answer only warns). Installed by root, so it runs for root-only runs too.
 - Catalog values per distro may be `{native: …, repo: …}`: a repository only that distro needs
   (Oracle VirtualBox on EL). Catalog keys (`alpi_catalog_keys` per distro): Fedora
-  `fedora, rpm, all`, EL `el10, el, rpm, all`; `rpm` holds RPM names both share, `all` only
-  names that also exist on Debian and Ubuntu (check a new `all:` name there). Debian 13
-  (`group_vars/os_Debian`; in the matrix, first release after the VM checklist): `debian13, debian, deb, all`; a new
-  catalog id needs a `debian` (or `deb`/`all`) value, or `debian13` stops on it.
-- `roles/nvidia` (after `packages`): power options in `nvidia_modprobe_conf` for `nvidia_module`
-  (`group_vars/family_*/main.yml`: `/etc/modprobe.d/nvidia.conf` and `nvidia` on Fedora;
-  `/etc/modprobe.d/alpi-nvidia.conf` and `nvidia-current` on Debian, which renames the module and
-  links its own modprobe files, `nvidia.conf` among them); when no module exists for the running
-  kernel, akmods rebuild + `dracut`, or `dkms autoinstall`. Runs only when the `nvidia-driver` id
-  is selected (NVIDIA detected, Fedora or Debian, not skipped).
+  `fedora, rpm, all`, EL `el10, el, rpm, all`, Debian 13 `debian13, debian, deb, all`, Ubuntu
+  26.04 `ubuntu2604, ubuntu, deb, all` (both in the matrix; first releases after the VM
+  checklist); `rpm` holds RPM names Fedora and EL share, `deb` those Debian and Ubuntu share,
+  `all` only names that exist on all four (check a new `all:` name there). A new catalog id
+  needs a value for each (or `deb`/`all`), or `debian13`/`ubuntu2604` stop on it. Ubuntu's
+  NVIDIA branch is pinned in its `ubuntu2604` value (`nvidia-driver-NNN-open` with Canonical's
+  signed `linux-modules-nvidia-NNN-open-generic`, which provide `nvidia-dkms-NNN-open`: nothing
+  is built), bumped on purpose; a literal, since `pick.py` reads the catalog untemplated.
+- `roles/nvidia` (after `packages`): power options in `nvidia_modprobe_conf`
+  (`group_vars/family_*/main.yml`: `/etc/modprobe.d/nvidia.conf` on Fedora,
+  `/etc/modprobe.d/alpi-nvidia.conf` on apt, where the packages bring their own modprobe files,
+  Debian's `nvidia.conf` among them) for `nvidia_module` (`nvidia`; `nvidia-current` in
+  `group_vars/os_Debian`, which renames it); when no module exists for the running kernel,
+  akmods rebuild + `dracut`, or `dkms autoinstall` where `kmod_signer` is `dkms`. Runs only when
+  the `nvidia-driver` id is selected (NVIDIA detected, Fedora, Debian or Ubuntu, not skipped).
 - Hardware features (`alpi_hardware_features`: nvidia, asus, intel, amd) follow detection and can
   only be vetoed; their packages come from `feature_packages`.
 - `roles/common`: hostname (only when `system_hostname` is set) and the git
@@ -338,12 +343,13 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `debian13-personal` (`site.yml` on Debian 13, skipping what `fedora44-personal` skips: real
     installs as in `fedora44-personal`, Steam with its i386 libraries; `prepare.yml` holds the dpkg lock
     for 150 s, which the apt module must wait out: with `apt_lock_timeout: 20` the converge fails),
-    `unsupported` (Debian 12), `upstream` (`roles/upstream` on
+    `ubuntu2604` (as `debian13`, with its playbooks: each instance's sources file, components and
+    candidates in its host_vars), `unsupported` (Debian 12, Ubuntu 26.10), `upstream` (`roles/upstream` on
     AlmaLinux 10 against a stand-in GitHub served by `http.server` on 127.0.0.1:8766: install v1,
     `side_effect.yml` publishes v2 and runs again (Molecule's side_effect step, added to the
     scenario's test_sequence), GitHub unreachable keeps v0, `packages_absent` removes it;
     `el10-work` installs the real release), `bootstrap`
-    (bootstrap.sh with scripted answers, picker in text mode, on Fedora 44 and Debian 13; a Debian
+    (bootstrap.sh with scripted answers, picker in text mode, on Fedora 44, Debian 13 and Ubuntu 26.04; a Debian
     13 without sudo must stop before installing anything and print the `su -` command), `common` (env_setup +
     `roles/common` on `almalinux/10-init` with systemd: static hostname via hostnamectl, git),
     `secureboot` (env_setup + `akmods_mok`, `virtualbox`, `nvidia`, nothing downloaded; converge

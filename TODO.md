@@ -21,14 +21,6 @@ container or VM before code relies on them. Consequences to keep in mind:
 
 ### Phase 4 — Ubuntu 26.04 LTS
 
-- [ ] **Support:** `Ubuntu: {version: "26.04"}` (`alpi_support` takes exact versions);
-      `unsupported` adds a 26.10 case (faked `os-release` if no image).
-- [ ] **`group_vars/os_Ubuntu/`:** catalog keys, `mok_password`, `zsh_aliases_os`, `universe` and
-      `multiverse`, the `virtualbox` repository (`resolute`).
-- [ ] **`bootstrap.sh`, `pick.py`:** `ubuntu` branches (the picker's tests already fake Ubuntu).
-- [ ] **Catalog `ubuntu` values** where they differ from `deb`: `chromium` → Flatpak, restricted
-      codecs (decision 6: `ubuntu-restricted-addons` + `libavcodec-extra`), NVIDIA (decision 4:
-      `nvidia-driver-NNN-open`, NNN pinned in `group_vars/os_Ubuntu`).
 - [ ] **DKMS key = VirtualBox's key file.** Ubuntu's DKMS signs with
       `/var/lib/shim-signed/mok/MOK.{priv,der}`, the path `roles/virtualbox` already uses; when it is
       missing at build time DKMS runs `update-secureboot-policy`, a debconf prompt. Create and enroll

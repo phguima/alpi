@@ -169,6 +169,14 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
   with `dkms autoinstall` when the module is missing; a Debian instance in `secureboot`
   (`feat(secureboot): DKMS key and NVIDIA settings on Debian`). The Steam GPU question and the
   real enrollment went to Phase 5's VM checklist. Phase 3 done.
+- **2026-10-25** Phase 4: Ubuntu 26.04 in the catalog and the support matrix (release after the
+  VM checklist). `deb` key for the 34 names Debian and Ubuntu share (checked in `ubuntu:26.04`);
+  Ubuntu's own values: Chromium as a Flatpak, codecs (`ubuntu-restricted-addons`,
+  `libavcodec-extra`), the pinned NVIDIA 615 open branch with Canonical's signed modules, generic
+  headers; Steam's 32-bit NVIDIA libraries on both apt distros; `group_vars/os_Ubuntu`
+  (components, Oracle's resolute suite, `ubuntu-alpi`); `pick.py` and `bootstrap.sh` branches;
+  new `ubuntu2604` scenario on `debian13`'s playbooks; `unsupported` adds Ubuntu 26.10
+  (`feat(ubuntu): catalog, repositories and support for Ubuntu 26.04`).
 
 ## 6. Swap (zram)
 

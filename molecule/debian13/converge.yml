@@ -1,26 +1,26 @@
 ---
-- name: Debian 13 | Guard against running on the host
+- name: apt | Guard against running on the host
   hosts: all
   gather_facts: false
   tasks:
-    - name: Debian 13 | Require ALPI_TARGET
+    - name: apt | Require ALPI_TARGET
       ansible.builtin.assert:
         that: lookup('env', 'ALPI_TARGET') | length > 0
         fail_msg: ALPI_TARGET is not set; this scenario must target its containers. Set it in molecule.yml.
         quiet: true
 
-- name: Debian 13 | Environment setup, then the apt roles ported so far
+- name: apt | Environment setup, repositories, every name checked
   hosts: all
   tasks:
-    - name: Debian 13 | Environment setup
+    - name: apt | Environment setup
       ansible.builtin.import_tasks: ../../tasks/env_setup.yml
 
-    - name: Debian 13 | Repositories
+    - name: apt | Repositories
       ansible.builtin.import_role:
         name: repos
 
     # Every name, everything on (nothing installed): steam-installer resolves only with i386
-    - name: Debian 13 | Check every name
+    - name: apt | Check every name
       ansible.builtin.include_role:
         name: packages
         tasks_from: check.yml

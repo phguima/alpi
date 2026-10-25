@@ -16,9 +16,9 @@ set -u
 cd "$(dirname "$0")/.." || exit 1
 
 # Longest first (times of the 2026-10-23 full run), so a long one does not start last
-QUICK=(user failures catalog secureboot memory upstream boot flags asus common services debian13
+QUICK=(user failures catalog secureboot memory upstream boot flags asus common services debian13 ubuntu2604
        unsupported)
-FULL=(debian13-personal user el10-work bootstrap fedora44-personal failures catalog update secureboot memory upstream
+FULL=(debian13-personal user el10-work bootstrap fedora44-personal failures catalog update secureboot memory upstream ubuntu2604
       boot flags asus common services debian13 unsupported)
 JOBS=${ALPI_JOBS:-4}
 

@@ -32,9 +32,10 @@ case "$ID" in
         prompt "Installing ansible-core, pciutils, PyYAML and whiptail ($PRETTY_NAME)..."
         sudo dnf install -y ansible-core pciutils python3-pyyaml newt
         ;;
-    debian)
-        # A root password set at install leaves Debian without sudo (the first user gets it only
-        # when root has none). 'su -': plain su keeps the user's PATH, which lacks /usr/sbin.
+    debian|ubuntu)
+        # A root password set at Debian's install leaves it without sudo (the first user gets it
+        # only when root has none; Ubuntu always has it). 'su -': plain su keeps the user's PATH,
+        # which lacks /usr/sbin.
         if ! command -v sudo >/dev/null; then
             error "sudo is not installed. Install it and give yourself sudo rights, then log in again:"
             echo -e "      ${C_YELLOW}su - -c \"apt install sudo && usermod -aG sudo ${USER:-$(id -un)}\"${C_RESET}"

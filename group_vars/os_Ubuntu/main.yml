@@ -1,0 +1,34 @@
+---
+# Ubuntu 26.04 LTS "Resolute Raccoon" (PROPOSAL.md, "Decisions (2026-10-24)"). Shared with
+# Debian: group_vars/family_Debian (apt settings, repositories, GRUB, zram, full-update).
+alpi_catalog_keys: [ubuntu2604, ubuntu, deb, all]
+# Its codecs (catalog: multimedia), as Fedora's @multimedia
+packages_os: [multimedia]
+
+# roles/nvidia: Canonical's modules keep upstream's name
+nvidia_module: nvidia
+
+# MOK enrollment password (see group_vars/all/secureboot.yml)
+mok_password: "ubuntu-alpi"
+# The NVIDIA modules are Canonical's, already signed; DKMS (any DKMS package) and Oracle's
+# vboxdrv.sh both sign with /var/lib/shim-signed/mok/MOK.*, which roles/akmods_mok creates and
+# enrolls first (kmod_signers in group_vars/all/secureboot.yml): one key, one enrollment
+kmod_signer: shim
+
+# Components roles/repos adds to Ubuntu's own sources (its images and installs have all four:
+# steam-installer and the NVIDIA driver come from multiverse and restricted)
+apt_components: [main, restricted, universe, multiverse]
+
+alpi_repos_always: []
+alpi_repos_os:
+  # Ubuntu's multiverse has VirtualBox 7.2.6 with its own signing path; Oracle's 7.2 instead, as on
+  # Debian (PROPOSAL decision 3 of 2026-10-24)
+  virtualbox:
+    type: deb822
+    description: Oracle VirtualBox
+    file: virtualbox
+    uris: https://download.virtualbox.org/virtualbox/debian
+    suites: resolute
+    components: contrib
+    key_url: https://www.virtualbox.org/download/oracle_vbox_2016.asc
+    keyring: /usr/share/keyrings/oracle-virtualbox-2016.gpg

@@ -1,4 +1,10 @@
 ---
+# verify.yml (shared with ubuntu2604): the distro's own sources file, its components after
+# roles/repos, and packages that must have a candidate
+_apt_sources: debian.sources
+_apt_components: main contrib non-free non-free-firmware
+_apt_candidates: [brave-browser, code, gh, virtualbox-7.2, steam-installer, nvidia-driver, "nvidia-driver-libs:i386"]
+
 # Expected full resolved sets (verify.yml), reviewed 2026-10-24: Debian 13 names checked with
 # apt-cache (main, contrib, non-free); KDE, GNOME and all hardware forced on in molecule.yml.
 _golden:
@@ -8,7 +14,7 @@ _golden:
     chkrootkit, lynis, rkhunter, unhide, argyll, brave-browser, brave-origin, chromium, gh, inkscape, code,
     kde-config-gtk-style, kpat, ktorrent, plasma-sdk, flatseal, gnome-tweaks, steam-installer, clamav,
     clamav-freshclam, virtualbox-7.2, linux-headers-amd64, gcc, make, i965-va-driver, intel-media-va-driver-non-free,
-    vainfo, vdpauinfo, nvidia-driver, dkms, nvidia-vulkan-icd, nvidia-vaapi-driver]
+    vainfo, vdpauinfo, nvidia-driver, "nvidia-driver-libs:i386", dkms, nvidia-vulkan-icd, nvidia-vaapi-driver]
   # ffmpeg's entry-wide swap: harmless, the allowerasing install is dnf only
   swap: [ffmpeg]
   flatpak: [com.discordapp.Discord, org.kde.drawy, org.telegram.desktop, com.bitwarden.desktop, net.displaycal.DisplayCAL,
