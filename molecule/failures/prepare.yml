@@ -5,9 +5,37 @@
 # The 'unresolvable dependencies' case: a freeworld build that lags behind its library
 # (alpi-test-lib 2.0 only, alpi-test-lib-freeworld 1.0 requires = 1.0)
 - name: Prepare | Freeworld stand-in that cannot be installed
-  hosts: all
+  hosts: all:!apt
   vars:
     _pinned_lib_versions: ["2.0"]
   tasks:
     - name: Prepare | Pinned pair
       ansible.builtin.import_tasks: ../shared/pinned_pair.yml
+
+# The same pair on apt: a local repository with alpi-test-lib 2.0 only and alpi-test-lib-freeworld
+# 1.0, which depends on alpi-test-lib (= 1.0)
+- name: Prepare | Freeworld stand-in that cannot be installed (apt)
+  hosts: apt
+  gather_facts: false
+  tasks:
+    - name: Prepare | apt-ftparchive for the local repository
+      ansible.builtin.apt:
+        name: apt-utils
+        state: present
+
+    - name: Prepare | Local repository with the pair
+      ansible.builtin.shell: |
+        set -e
+        mkdir -p /srv/alpi-repo
+        build() {
+            d=/tmp/$1_$2; mkdir -p $d/DEBIAN
+            printf 'Package: %s\nVersion: %s\nArchitecture: all\nMaintainer: ALPI <alpi@example.org>\nDescription: ALPI test stand-in\n%b' "$1" "$2" "$3" > $d/DEBIAN/control
+            dpkg-deb --build $d /srv/alpi-repo/ >/dev/null
+        }
+        build alpi-test-lib 2.0 ''
+        build alpi-test-lib-freeworld 1.0 'Depends: alpi-test-lib (= 1.0)\n'
+        cd /srv/alpi-repo && apt-ftparchive packages . > Packages
+        echo 'deb [trusted=yes] file:/srv/alpi-repo ./' > /etc/apt/sources.list.d/alpi-test.list
+      args:
+        executable: /bin/bash
+        creates: /srv/alpi-repo/Packages

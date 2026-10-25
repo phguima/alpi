@@ -1,5 +1,5 @@
 ---
-- name: Verify | Debian 13, personal
+- name: Verify | Personal machine on apt (debian13-personal, ubuntu2604-personal)
   hosts: all
   tasks:
     - name: Verify | Installed

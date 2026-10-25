@@ -1,6 +1,7 @@
 ---
 # Every validation must stop the run with a clear message (the assertions live in converge.yml).
-# Both supported distros; a case with 'only' runs on that distro alone.
+# Fedora, AlmaLinux and Debian (the apt check: unknown names, unmet dependencies, a source apt
+# cannot fetch); a case with 'only' runs on that distro alone.
 platforms:
   - name: alpi-failures-fedora44
     image: registry.fedoraproject.org/fedora:44
@@ -12,6 +13,12 @@ platforms:
     pre_build_image: true
     command: sleep infinity
     volumes: ["alpi-dnf-failures-el10:/var/cache/dnf"]
+  - name: alpi-failures-debian13
+    image: docker.io/library/debian:13
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-failures-debian13:/var/cache/apt"]
+    groups: [apt]
 provisioner:
   playbooks:
     prepare: prepare.yml

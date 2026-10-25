@@ -21,27 +21,15 @@ container or VM before code relies on them. Consequences to keep in mind:
 
 ### Phase 5 — tests and release
 
-- [ ] **Scope:** an apt instance only where an apt code path exists (`catalog`, `failures`,
-      `unsupported`, `update`, `boot`, `memory`, `secureboot`, `user`, `bootstrap`, `services`), not
-      every scenario. `full` takes ~15 min (4 at a time) and grows with each instance; give
-      `tests/run.sh` an `apt` list to run those alone while working.
-- [ ] **New:** `ubuntu2604-personal` (real installs), as `debian13-personal`.
-- [ ] **`failures` on apt:** an unknown name and an unreadable source (`check_Debian.yml`; only
-      the parser has unit tests).
-- [ ] **VM checklist:** Debian 13 GNOME and KDE, Ubuntu 26.04 and Kubuntu 26.04, EFI + Secure Boot:
-      MOK enrollment, `update-grub` and the GRUB menu, the reboot gate, VirtualBox next to KVM on
-      Debian's 6.12, cedilla on KDE, the first run with unattended-upgrades still busy, the
-      Antigravity IDE under AppArmor (Ubuntu), the installer's own `sources.list` (one-line, maybe
-      a `cdrom:` line) getting `contrib`/`non-free` (only the images' deb822 file is tested).
-      Debian: DKMS's key enrolled and the NVIDIA module loading signed, ALPI's options applied to
-      `nvidia-current` (`/sys/module/nvidia/parameters`), Oracle's VirtualBox modules signed with
-      ALPI's key; `bootstrap.sh` on an install with a root password (no sudo). Steam on a hybrid
-      laptop: Debian's `steam.desktop` (steam-installer, checked 2026-10-25) has no
-      `PrefersNonDefaultGPU`, unlike Fedora's, so it starts on the integrated GPU; decide (a user
-      copy with the key added, or nothing).
-      Ubuntu: the shim-signed key enrolled once for DKMS and VirtualBox, Canonical's NVIDIA 615
-      modules loading, the Antigravity IDE starting with its sandbox under ALPI's AppArmor profile
-      (`/tmp/.mount_antigr*/antigravity`; if not, the attachment is wrong), Ubuntu's codecs.
+- [ ] **VM checklist:** run `tests/vm-checklist-apt.md` on Debian 13 GNOME and KDE, Ubuntu 26.04
+      and Kubuntu 26.04 (EFI + Secure Boot) and send the results: what containers cannot check
+      (MOK enrollment and signed modules, `update-grub` and the menu, the reboot gate, the
+      unattended-upgrades lock, the installer's own `sources.list`, cedilla and terminals in a
+      session, the Antigravity IDE under AppArmor, `bootstrap.sh` without sudo). Fix what fails.
+- [ ] **Steam on a hybrid NVIDIA laptop (Debian, Ubuntu):** Debian's `steam.desktop`
+      (steam-installer, checked 2026-10-25) has no `PrefersNonDefaultGPU`, unlike Fedora's, so it
+      starts on the integrated GPU; decide (a user copy with the key added, or nothing) on real
+      hardware.
 - [ ] **Release:** after `tests/run.sh full` and the VM checklist per distro: Debian 13 as `v1.2.0`,
       Ubuntu 26.04 as `v1.3.0` (or one release if both land together).
 

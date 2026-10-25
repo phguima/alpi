@@ -1,0 +1,18 @@
+---
+# Ubuntu 26.04, personal machine, as debian13-personal (its playbooks; the same custom.yml and
+# selection.yml in host_vars): site.yml with real installs, Ubuntu's codecs, steam-installer and
+# its i386 libraries, real Flatpaks, the dpkg lock held at the start of the converge.
+platforms:
+  - name: alpi-ubuntu2604-personal
+    image: docker.io/library/ubuntu:26.04
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-ubuntu2604-personal:/var/cache/apt"]
+provisioner:
+  options:
+    # As fedora44-personal and debian13-personal
+    skip-tags: molecule-notest,notest,clamav,supergfxd,update,memory
+  playbooks:
+    prepare: ../debian13-personal/prepare.yml
+    converge: ../shared/converge.yml
+    verify: ../debian13-personal/verify.yml

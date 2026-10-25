@@ -1,0 +1,8 @@
+---
+# As pick.py writes it. Skipped: the large pipx apps and downloads (ubuntu2604 checks the names),
+# and VirtualBox (Oracle's package builds its modules at install, which a container cannot do:
+# the VM checklist).
+packages_selection_add: []
+packages_selection_skip: [chromium, discord, telegram, drawy, displaycal, gpu-screen-recorder, markitdown,
+                          notebooklm-py, pdf2docx, inkscape]
+features_selection: {virtualbox: false}

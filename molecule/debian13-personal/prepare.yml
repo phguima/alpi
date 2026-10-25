@@ -2,7 +2,7 @@
 - name: Prepare | Shared
   ansible.builtin.import_playbook: ../shared/prepare.yml
 
-- name: Prepare | Debian 13, personal
+- name: Prepare | Personal machine on apt (debian13-personal, ubuntu2604-personal)
   hosts: all
   gather_facts: false
   tasks:

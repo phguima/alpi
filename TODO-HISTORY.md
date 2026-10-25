@@ -183,6 +183,11 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
 - **2026-10-25** Phase 4: an AppArmor profile granting `userns` to the Antigravity IDE on Ubuntu,
   whose sandbox needs user namespaces (`feat(ai_tools): AppArmor profile for the Antigravity IDE
   on Ubuntu`). Phase 4 done; the VM checks are in Phase 5.
+- **2026-10-25** Phase 5, the container part: apt instances in every scenario with an apt code
+  path (`catalog`'s job done by `debian13`/`ubuntu2604`), `tests/run.sh apt`; `failures` on
+  Debian 13 (unknown names, unmet dependencies from a local repository, an unreachable source:
+  the apt message now starts as dnf's); new `ubuntu2604-personal`; `tests/vm-checklist-apt.md`
+  for the four VMs (`test: apt failure cases, ubuntu2604-personal, the apt VM checklist`).
 
 ## 6. Swap (zram)
 

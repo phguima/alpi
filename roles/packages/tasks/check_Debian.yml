@@ -19,7 +19,8 @@
   ansible.builtin.assert:
     that: _errors | length == 0
     fail_msg: >-
-      Could not read every apt source, so the package names were not checked: {{ _errors | join(' ') }}
+      Could not read the repository metadata (apt sources), so the package names were not checked:
+      {{ _errors | join(' ') }}
     quiet: true
   vars:
     _errors: >-

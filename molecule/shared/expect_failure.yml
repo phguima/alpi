@@ -55,7 +55,17 @@
           gpgcheck=0
           skip_if_unavailable=0
         mode: "0644"
-      when: _case.broken_repo | default(false)
+      when: _case.broken_repo | default(false) and ansible_facts['pkg_mgr'] != 'apt'
+      # Test scaffolding, added and removed on every run: not a change under test (idempotence)
+      changed_when: false
+
+    # apt reads it without complaint, but cannot fetch it (apt-get update still exits 0)
+    - name: "Case | {{ _case.name }} | Add a broken repository (apt)"
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/alpi-broken.list
+        content: "deb [trusted=yes] http://127.0.0.1:9/alpi-broken ./\n"
+        mode: "0644"
+      when: _case.broken_repo | default(false) and ansible_facts['pkg_mgr'] == 'apt'
       # Test scaffolding, added and removed on every run: not a change under test (idempotence)
       changed_when: false
 
@@ -84,7 +94,8 @@
 
     - name: "Case | {{ _case.name }} | Remove the broken repository"
       ansible.builtin.file:
-        path: /etc/yum.repos.d/alpi-broken.repo
+        path: "{{ item }}"
         state: absent
+      loop: [/etc/yum.repos.d/alpi-broken.repo, /etc/apt/sources.list.d/alpi-broken.list]
       when: _case.broken_repo | default(false)
       changed_when: false
