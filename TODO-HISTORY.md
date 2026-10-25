@@ -200,6 +200,9 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
   launcher for Fedora and EL, Debian 13 and Ubuntu 26.04 in the matrix as a preview, not
   VM-checked; their real releases move to `v1.3.0`/`v1.4.0`
   (`docs(todo): v1.2.0 tagged, Debian and Ubuntu releases renumbered`).
+- **2026-10-25** `v1.3.0` tagged on `64351c8` (full green): `wl-clipboard`; Debian and Ubuntu
+  still a preview. Their VM-checked release is now "the next minor one" in `TODO.md`, so new tags
+  stop renumbering it (`docs(todo): v1.3.0 tagged`).
 
 ## 6. Swap (zram)
 
