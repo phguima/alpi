@@ -196,6 +196,10 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
 - **2026-10-25** `debian13-personal` and `ubuntu2604-personal` also resolve with the distro's own
   ansible-core (2.19, 2.20), as `el10-work` does with EL10's 2.16: the controller `bootstrap.sh`
   installs there (`test: resolution with Debian's and Ubuntu's own ansible-core`).
+- **2026-10-25** `v1.2.0` tagged on `f0ca853` (full green): the picker's aliases and Steam's own
+  launcher for Fedora and EL, Debian 13 and Ubuntu 26.04 in the matrix as a preview, not
+  VM-checked; their real releases move to `v1.3.0`/`v1.4.0`
+  (`docs(todo): v1.2.0 tagged, Debian and Ubuntu releases renumbered`).
 
 ## 6. Swap (zram)
 

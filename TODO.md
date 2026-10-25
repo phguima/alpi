@@ -30,8 +30,9 @@ container or VM before code relies on them. Consequences to keep in mind:
       `PrefersNonDefaultGPU` (steam-installer's has none) starts Steam on the NVIDIA GPU: check on
       real hardware (`nvidia-smi` lists Steam) with Debian's 550 and Ubuntu's 615 drivers; drop the
       copy if switcheroo's offload does not work there.
-- [ ] **Release:** after `tests/run.sh full` and the VM checklist per distro: Debian 13 as `v1.2.0`,
-      Ubuntu 26.04 as `v1.3.0` (or one release if both land together).
+- [ ] **Release:** after `tests/run.sh full` and the VM checklist per distro: Debian 13 as `v1.3.0`,
+      Ubuntu 26.04 as `v1.4.0` (or one release if both land together), the tag message saying
+      they are VM-checked (`v1.2.0` shipped them as a preview, decided 2026-10-25).
 
 ## Maintenance
 
