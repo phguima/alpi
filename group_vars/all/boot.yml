@@ -1,7 +1,8 @@
 ---
 # roles/boot: kernel maintenance and GRUB settings (ported from AFPI/AAPI's common role).
-# Written to /etc/default/grub as KEY="value" (replaced when present); the GRUB config is then
-# regenerated. Skipped when /etc/default/grub does not exist (systemd-boot, containers).
+# Written as KEY="value": edited in /etc/default/grub (Fedora, EL) or as a grub.d drop-in (Debian,
+# Ubuntu; group_vars/family_*/boot.yml); the GRUB config is then regenerated. Skipped when
+# /etc/default/grub does not exist (systemd-boot, containers).
 grub_settings:
   GRUB_TIMEOUT: 5
   GRUB_TERMINAL_OUTPUT: gfxterm

@@ -138,6 +138,11 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
   (`alpi_reboot_needed`): `apt-get dist-upgrade`, then `/run/reboot-required` or a newer
   `linux-image-<release>` than the running kernel stops the play; three Debian instances in
   `update` (`feat(update): full upgrade and reboot gate on apt`).
+- **2026-10-25** Phase 2: `roles/boot` on apt. Kernel maintenance is dnf's only; GRUB settings
+  as the drop-in `/etc/default/grub.d/99-alpi.cfg` with `GRUB_TIMEOUT_STYLE=menu`, handler
+  `update-grub` (`grub_regenerate`, `grub_dropin` per family). On an Ubuntu VM: check that its
+  installed `grub.d` files sort before `99-alpi` (Phase 5 checklist)
+  (`feat(boot): GRUB drop-in and update-grub on apt`).
 
 ## 6. Swap (zram)
 

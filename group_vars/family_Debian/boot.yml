@@ -1,0 +1,10 @@
+---
+# roles/boot on Debian and Ubuntu. grub-mkconfig reads /etc/default/grub, then every
+# /etc/default/grub.d/*.cfg in order, so a drop-in there wins over both (Ubuntu's images and
+# packages put settings in grub.d). update-grub is grub-mkconfig -o /boot/grub/grub.cfg.
+grub_regenerate: [update-grub]
+grub_dropin: /etc/default/grub.d/99-alpi.cfg
+# On top of grub_settings: Ubuntu's /etc/default/grub has GRUB_TIMEOUT_STYLE=hidden, which skips
+# the menu whatever the timeout (Debian sets none, which shows it)
+grub_settings_family:
+  GRUB_TIMEOUT_STYLE: menu

@@ -135,8 +135,13 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   removes installonly packages older than the newest, never the running kernel, with
   `allowerasing` for the akmods' kmods) and `grub_settings` into `/etc/default/grub` (skipped
   when it does not exist; `grub_settings_absent` removes dead keys, AFPI's `GRUB_GFXPAYLOAD`),
-  handler `grub2-mkconfig -o /boot/grub2/grub.cfg`. On BLS (Fedora, EL) `10_linux` only emits
-  `blscfg`: settings read by `linux_entry` (`GRUB_GFXPAYLOAD_LINUX`) do nothing there.
+  handler `grub_regenerate` (`grub2-mkconfig -o /boot/grub2/grub.cfg`). On BLS (Fedora, EL) `10_linux` only emits
+  `blscfg`: settings read by `linux_entry` (`GRUB_GFXPAYLOAD_LINUX`) do nothing there. Debian and
+  Ubuntu (`group_vars/family_Debian/boot.yml`): no kernel maintenance (apt's autoremove keeps the
+  running and newest kernels); the settings plus `grub_settings_family` (`GRUB_TIMEOUT_STYLE=menu`:
+  Ubuntu's `hidden` skips the menu whatever the timeout) go to `grub_dropin`
+  (`/etc/default/grub.d/99-alpi.cfg`, read after `/etc/default/grub` and the other drop-ins, where
+  Ubuntu's packages put settings), handler `update-grub`.
 - `roles/memory` (after `boot`; installs its own package): swap on zram through zram-generator
   (`group_vars/all/memory.yml`, PROPOSAL "Decisions (2026-10-14)"). Reads `swapon --show --raw
   --bytes`, zswap (`zram_zswap_param`), `rpm -q zram-generator` and
@@ -351,7 +356,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     swap state per instance: no swap, Fedora's zram0 with `zram_size`, zswap on, `zram: false`
     after a run, the user's own config), `boot` (`roles/boot` on Fedora + Alma;
     stand-in installonly packages and a debug kernel built with rpmbuild into a local repository
-    whose id has 'debug', `/etc/default/grub` and a logging `grub2-mkconfig`), `user`
+    whose id has 'debug', `/etc/default/grub` and a logging `grub2-mkconfig`; Debian 13, group
+    `apt`: the values grub-mkconfig would source from `/etc/default/grub` and `grub.d`, with an
+    Ubuntu-style drop-in hiding the menu before ALPI's, and a logging `update-grub`), `user`
     (`roles/zsh` + `roles/desktop` + `roles/ai_tools` for a regular user `alpi`, so root and the user differ: aliases
     split (exact lists per container: an alias off in GNOME's selection, KDE's custom.yml overriding its
     selection both ways, `claudecli` gone where Claude Code is off), API keys block for alpi only, legacy `.zshrc` blocks removed from both; the converge play sets `environment:` SUDO_USER

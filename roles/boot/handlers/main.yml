@@ -1,6 +1,6 @@
 ---
-# The real config for both UEFI and BIOS: the ESP grub.cfg is a stub that loads it, and
-# /etc/grub2-efi.cfg is only a symlink to it (missing on BIOS installs).
+# grub_regenerate per family (group_vars/family_*/boot.yml)
 - name: Regenerate GRUB
-  ansible.builtin.command: grub2-mkconfig -o /boot/grub2/grub.cfg
+  ansible.builtin.command:
+    argv: "{{ grub_regenerate }}"
   changed_when: true

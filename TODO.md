@@ -21,10 +21,6 @@ container or VM before code relies on them. Consequences to keep in mind:
 
 ### Phase 2 — shared apt layer (`family_Debian`)
 
-- [ ] **`roles/boot`:** RedHat-only kernel tasks (`dnf repoquery`, debug kernels) gated off; handler
-      `update-grub` instead of `grub2-mkconfig` (`roles/boot/handlers/main.yml`). Ubuntu's
-      `/etc/default/grub.d/*.cfg` override `/etc/default/grub` and `GRUB_TIMEOUT_STYLE=hidden`
-      hides the menu: write ALPI's settings as a `grub.d` drop-in there *(check)*.
 - [ ] **`roles/memory`:** `systemd-zram-generator` (it ships `/usr/lib/systemd/zram-generator.conf`
       with `[zram0]`, Fedora's `-defaults` role); `rpm -q` → per-family lookup.
 - [ ] **`roles/desktop`:**

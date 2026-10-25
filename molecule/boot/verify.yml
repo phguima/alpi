@@ -1,6 +1,6 @@
 ---
 - name: Verify | roles/boot
-  hosts: all
+  hosts: all:!apt
   gather_facts: false
   tasks:
     - name: Verify | Query packages, the repository, GRUB and the mkconfig log
@@ -38,3 +38,24 @@
         quiet: true
       vars:
         _grub: "{{ _q.results[3].stdout_lines }}"
+
+# grub-mkconfig sources /etc/default/grub, then each grub.d/*.cfg in order: the values it would see
+- name: Verify | roles/boot on Debian
+  hosts: apt
+  gather_facts: false
+  tasks:
+    - name: Verify | Effective GRUB values and the update-grub log
+      ansible.builtin.shell: >-
+        . /etc/default/grub; for f in /etc/default/grub.d/*.cfg; do . "$f"; done;
+        echo "timeout=$GRUB_TIMEOUT style=$GRUB_TIMEOUT_STYLE output=$GRUB_TERMINAL_OUTPUT gfxmode=$GRUB_GFXMODE";
+        cat /etc/alpi-test/grub-mkconfig.log
+      register: _boot_deb
+      changed_when: false
+
+    - name: Verify | ALPI's drop-in wins, the menu shows, update-grub ran once
+      ansible.builtin.assert:
+        that: _boot_deb.stdout_lines == [
+            'timeout=5 style=menu output=gfxterm gfxmode=1920x1080x32,1280x720x32,auto',
+            'update-grub ']
+        fail_msg: "{{ _boot_deb.stdout_lines }}"
+        quiet: true

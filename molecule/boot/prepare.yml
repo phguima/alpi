@@ -3,7 +3,7 @@
   ansible.builtin.import_playbook: ../shared/prepare.yml
 
 - name: Prepare | Stand-in kernels, debug repository and GRUB
-  hosts: all
+  hosts: all:!apt
   vars:
     _rpms:
       - { name: alpi-test-kernel, version: "1.0" }
@@ -97,4 +97,43 @@
         content: |
           #!/bin/sh
           echo "$*" >> /etc/alpi-test/grub2-mkconfig.log
+        mode: "0755"
+
+- name: Prepare | GRUB on Debian
+  hosts: apt
+  gather_facts: false
+  tasks:
+    - name: Prepare | Directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop: [/etc/alpi-test, /etc/default/grub.d]
+
+    # Debian's own file, with a value ALPI changes, and a grub.d file as Ubuntu's would hide the menu
+    - name: Prepare | /etc/default/grub and a grub.d file before ALPI's
+      ansible.builtin.copy:
+        dest: "{{ item.dest }}"
+        content: "{{ item.content }}"
+        mode: "0644"
+      loop:
+        - dest: /etc/default/grub
+          content: |
+            GRUB_DEFAULT=0
+            GRUB_TIMEOUT=1
+            GRUB_DISTRIBUTOR=`( . /etc/os-release && echo ${NAME} )`
+            GRUB_CMDLINE_LINUX_DEFAULT="quiet"
+        - dest: /etc/default/grub.d/50-hidden.cfg
+          content: |
+            GRUB_TIMEOUT_STYLE=hidden
+            GRUB_TIMEOUT=0
+      loop_control:
+        label: "{{ item.dest }}"
+
+    - name: Prepare | update-grub that only logs its calls
+      ansible.builtin.copy:
+        dest: /usr/local/sbin/update-grub
+        content: |
+          #!/bin/sh
+          echo "update-grub $*" >> /etc/alpi-test/grub-mkconfig.log
         mode: "0755"

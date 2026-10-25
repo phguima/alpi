@@ -1,4 +1,7 @@
 ---
+# grub_settings (+ the family's grub_settings_family) as KEY="value": edited in /etc/default/grub
+# (Fedora, EL), or written as the drop-in grub_dropin (Debian, Ubuntu). Skipped without
+# /etc/default/grub (systemd-boot, containers).
 - name: GRUB | Look for /etc/default/grub
   ansible.builtin.stat:
     path: /etc/default/grub
@@ -9,11 +12,34 @@
     path: /etc/default/grub
     regexp: "^{{ item.key }}="
     line: '{{ item.key }}="{{ item.value }}"'
-  loop: "{{ grub_settings | dict2items }}"
+  loop: "{{ _grub_settings | dict2items }}"
   loop_control:
     label: "{{ item.key }}"
-  when: _grub_defaults.stat.exists
+  when: _grub_defaults.stat.exists and grub_dropin | length == 0
   notify: Regenerate GRUB
+  vars:
+    _grub_settings: "{{ grub_settings | combine(grub_settings_family | default({})) }}"
+
+- name: GRUB | Drop-in directory
+  ansible.builtin.file:
+    path: "{{ grub_dropin | dirname }}"
+    state: directory
+    mode: "0755"
+  when: _grub_defaults.stat.exists and grub_dropin | length > 0
+
+- name: GRUB | Apply settings (drop-in)
+  ansible.builtin.copy:
+    dest: "{{ grub_dropin }}"
+    content: |
+      # Written by ALPI (grub_settings in group_vars/all/boot.yml), read after /etc/default/grub
+      {% for key, value in _grub_settings.items() %}
+      {{ key }}="{{ value }}"
+      {% endfor %}
+    mode: "0644"
+  when: _grub_defaults.stat.exists and grub_dropin | length > 0
+  notify: Regenerate GRUB
+  vars:
+    _grub_settings: "{{ grub_settings | combine(grub_settings_family | default({})) }}"
 
 - name: GRUB | Remove obsolete settings
   ansible.builtin.lineinfile:
