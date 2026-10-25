@@ -1,0 +1,23 @@
+---
+# Test-only: Debian 13 allowed while the apt layer is built
+alpi_supported: {Fedora: {min: 41, max: 44}, AlmaLinux: {min: 10, max: 10}, Debian: {min: 13, max: 13}}
+_test_swaps: "/dev/zram0 partition 8589934592 100\n"
+_test_zswap: "N"
+_test_preinstall: true
+_test_files:
+  - path: /etc/systemd/zram-generator.conf.d/50-alpi.conf
+    content: "# Managed by ALPI (roles/memory)\n[zram0]\nzram-size = ram\n"
+  - path: /etc/sysctl.d/99-alpi-zram.conf
+    content: "# Managed by ALPI (roles/memory)\nvm.swappiness = 180\nvm.page-cluster = 0\n"
+zram_zswap_param: /etc/alpi-test/zswap
+zram: false
+
+_expect_state: "off"
+_expect_reminder: false
+_expect_notes: []
+_expect_installed: true
+_expect_files:
+  /etc/systemd/zram-generator.conf: ["Managed by ALPI (roles/memory)", "zram is off"]
+_expect_absent:
+  - /etc/systemd/zram-generator.conf.d/50-alpi.conf
+  - /etc/sysctl.d/99-alpi-zram.conf

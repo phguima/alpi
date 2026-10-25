@@ -17,8 +17,10 @@
   register: _memory_zswap
   failed_when: false
 
+# zram_generator_query per family (group_vars/family_*/memory.yml)
 - name: Memory | Check for zram-generator
-  ansible.builtin.command: rpm -q zram-generator
+  ansible.builtin.command:
+    argv: "{{ zram_generator_query }}"
   register: _memory_generator
   changed_when: false
   failed_when: false
@@ -34,7 +36,7 @@
   ansible.builtin.set_fact:
     alpi_memory: >-
       {{ zram | alpi_zram_plan(_memory_swaps.stdout, _memory_zswap.content | default('') | b64decode,
-                               _memory_generator.rc == 0, _memory_etc_conf, zram_marker, hibernate,
+                               _memory_generator.stdout == 'installed', _memory_etc_conf, zram_marker, hibernate,
                                ansible_facts['memtotal_mb']) }}
 
 - name: Memory | Stop when the zram setting cannot be applied

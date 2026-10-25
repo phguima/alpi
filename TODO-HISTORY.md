@@ -143,6 +143,10 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
   `update-grub` (`grub_regenerate`, `grub_dropin` per family). On an Ubuntu VM: check that its
   installed `grub.d` files sort before `99-alpi` (Phase 5 checklist)
   (`feat(boot): GRUB drop-in and update-grub on apt`).
+- **2026-10-25** Phase 2: `roles/memory` on apt: `systemd-zram-generator` (generator and its
+  `[zram0]` file in one package; default size min(ram / 2, 4096)), found through `dpkg-query`
+  (`zram_generator_query`, `zram_package` per family); two Debian instances in `memory`
+  (`feat(memory): zram on apt`).
 
 ## 6. Swap (zram)
 

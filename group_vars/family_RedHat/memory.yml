@@ -1,0 +1,5 @@
+---
+# roles/memory on Fedora and EL: zram-generator, and zram-generator-defaults for zram0 (Fedora
+# installs it by default, EL lacks it). The query prints "installed" when the generator is there.
+zram_generator_query: [rpm, -q, --qf, installed, zram-generator]
+zram_package: zram-generator-defaults

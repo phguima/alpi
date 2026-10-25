@@ -1,5 +1,5 @@
 ---
-# zram switched off: zram-generator-defaults stays installed (ALPI uninstalls only what
+# zram switched off: zram_package stays installed (ALPI uninstalls only what
 # packages_absent lists); an /etc/systemd/zram-generator.conf without devices overrides its file,
 # as that file itself says. ALPI's drop-in and kernel settings go.
 

@@ -1,10 +1,11 @@
 ---
-# zram0 from zram-generator-defaults (the same file Fedora installs by default, which EL lacks),
-# its size from a drop-in when zram_size is set, and the sysctl values for swap on zram.
+# zram0 from zram_package (zram-generator-defaults: the same file Fedora installs by default,
+# which EL lacks; systemd-zram-generator on Debian and Ubuntu), its size from a drop-in when
+# zram_size is set, and the sysctl values for swap on zram.
 
 - name: Memory | Install zram-generator and its default device
   ansible.builtin.package:
-    name: zram-generator-defaults
+    name: "{{ zram_package }}"
     state: present
 
 - name: Memory | Remove ALPI's switch-off file

@@ -33,7 +33,7 @@
 
     - name: Prepare | zram-generator already installed
       ansible.builtin.package:
-        name: zram-generator-defaults
+        name: "{{ 'systemd-zram-generator' if 'apt' in group_names else 'zram-generator-defaults' }}"
         state: present
       when: _test_preinstall | default(false)
 

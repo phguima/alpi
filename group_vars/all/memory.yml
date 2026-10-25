@@ -8,7 +8,8 @@
 zram: auto
 
 # zram0's size as a zram-generator expression (MiB, 'ram' = RAM size). Empty: the distro's
-# default from zram-generator-defaults, min(ram, 8192). The size is the uncompressed capacity:
+# default (zram_package, group_vars/family_*/memory.yml): min(ram, 8192) on Fedora and EL,
+# min(ram / 2, 4096) on Debian and Ubuntu. The size is the uncompressed capacity:
 # RAM is only used as pages are swapped out, about a third of that at zstd's usual ratio.
 zram_size: ""
 

@@ -21,8 +21,6 @@ container or VM before code relies on them. Consequences to keep in mind:
 
 ### Phase 2 — shared apt layer (`family_Debian`)
 
-- [ ] **`roles/memory`:** `systemd-zram-generator` (it ships `/usr/lib/systemd/zram-generator.conf`
-      with `[zram0]`, Fedora's `-defaults` role); `rpm -q` → per-family lookup.
 - [ ] **`roles/desktop`:**
       - Cedilla: locale from `/etc/default/locale` (Debian/Ubuntu), not `/etc/locale.conf`, or pt_BR
         users silently get the en_US Compose file.

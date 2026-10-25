@@ -8,8 +8,9 @@
         src: /root/alpi-memory.json
       register: _mem_decision
 
-    - name: Verify | Check zram-generator-defaults
-      ansible.builtin.command: rpm -q zram-generator-defaults
+    - name: Verify | Check zram-generator-defaults (systemd-zram-generator on apt)
+      ansible.builtin.command: >-
+        {{ 'dpkg-query -W systemd-zram-generator' if 'apt' in group_names else 'rpm -q zram-generator-defaults' }}
       register: _mem_rpm
       changed_when: false
       failed_when: false

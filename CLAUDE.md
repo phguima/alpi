@@ -144,11 +144,14 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   Ubuntu's packages put settings), handler `update-grub`.
 - `roles/memory` (after `boot`; installs its own package): swap on zram through zram-generator
   (`group_vars/all/memory.yml`, PROPOSAL "Decisions (2026-10-14)"). Reads `swapon --show --raw
-  --bytes`, zswap (`zram_zswap_param`), `rpm -q zram-generator` and
+  --bytes`, zswap (`zram_zswap_param`), `zram_generator_query` (`rpm -q`, or `dpkg-query`'s
+  status on apt, printing "installed") and
   `/etc/systemd/zram-generator.conf`; `alpi_zram_plan` decides on/off/skip and prints the swap
   summary. `zram: auto` skips (with a note) a zram device zram-generator did not make, the user's
   own `/etc` config (no `zram_marker`) and zswap on; `true`/`false` fail there instead. On:
-  `zram-generator-defaults` (Fedora's default, EL lacks it), `zram_size` as the drop-in
+  `zram_package` (`zram-generator-defaults`: Fedora's default, EL lacks it;
+  `systemd-zram-generator` on Debian and Ubuntu, which ships the `[zram0]` file itself;
+  `group_vars/family_*/memory.yml`), `zram_size` as the drop-in
   `zram-generator.conf.d/50-alpi.conf` (not `/etc/systemd/zram-generator.conf`, which replaces
   the vendor file), `/etc/sysctl.d/99-alpi-zram.conf` from `zram_sysctl`. Off: the package
   stays, a marker-only `/etc/systemd/zram-generator.conf` switches it off. Disk swap is never
@@ -354,7 +357,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `memory` (env_setup + `roles/memory` +
     `tasks/reminders.yml`, `zram_apply` skipped; a `swapon` wrapper and a zswap file script the
     swap state per instance: no swap, Fedora's zram0 with `zram_size`, zswap on, `zram: false`
-    after a run, the user's own config), `boot` (`roles/boot` on Fedora + Alma;
+    after a run, the user's own config; Debian 13, group `apt`: no swap, and `zram: false` after
+    a run), `boot` (`roles/boot` on Fedora + Alma;
     stand-in installonly packages and a debug kernel built with rpmbuild into a local repository
     whose id has 'debug', `/etc/default/grub` and a logging `grub2-mkconfig`; Debian 13, group
     `apt`: the values grub-mkconfig would source from `/etc/default/grub` and `grub.d`, with an

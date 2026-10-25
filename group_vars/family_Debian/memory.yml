@@ -1,0 +1,7 @@
+---
+# roles/memory on Debian and Ubuntu: systemd-zram-generator ships the generator and the
+# zram-generator.conf with [zram0] (Fedora's -defaults package; its default size is min(ram / 2,
+# 4096), Fedora's min(ram, 8192)). The query prints "installed" when it is (not when only its
+# configuration is left).
+zram_generator_query: [dpkg-query, -W, "-f=${db:Status-Status}", systemd-zram-generator]
+zram_package: systemd-zram-generator
