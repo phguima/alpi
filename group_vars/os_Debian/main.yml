@@ -6,8 +6,8 @@ packages_os: []
 
 # MOK enrollment password (see group_vars/all/secureboot.yml)
 mok_password: "debian-alpi"
-# DKMS builds and signs the NVIDIA module (its own key, TODO.md Phase 3); VirtualBox's vboxdrv.sh
-# signs with roles/virtualbox's key
+# DKMS builds and signs the NVIDIA module (its key from roles/akmods_mok, kmod_signers in
+# group_vars/all/secureboot.yml); VirtualBox's vboxdrv.sh signs with roles/virtualbox's key
 kmod_signer: dkms
 
 # Components roles/repos adds to Debian's own sources (steam-installer is in contrib, the NVIDIA

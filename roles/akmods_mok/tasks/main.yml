@@ -1,30 +1,31 @@
 ---
-# Secure Boot signing key for akmod-built modules (ported from AFPI). Runs before roles/packages:
-# akmods signs the modules it builds with this key, so it must exist before any akmod-* package is
-# installed. Only with Secure Boot, on a distro whose modules akmods builds (kmod_signer), and
-# when a catalog id that builds modules was selected (kmod_ids: NVIDIA, VirtualBox). Idempotent;
-# the enrollment itself is confirmed by hand in MokManager on the next boot.
+# Secure Boot signing key for the modules akmods (Fedora) or DKMS (Debian) build, ported from
+# AFPI's akmods key. Runs before roles/packages: the signer signs the modules as it builds them, so
+# its key must exist before any package that builds one is installed. Only with Secure Boot, on a
+# distro with a signer (kmod_signer, group_vars/os_*), and when one of its ids was selected
+# (kmod_signers in group_vars/all/secureboot.yml). Idempotent; the enrollment itself is confirmed
+# by hand in MokManager on the next boot.
 
-- name: MOK | Prepare the akmods signing key
+- name: MOK | Prepare the module signing key
   when:
     - is_secure_boot
-    - kmod_signer == 'akmods'
-    - alpi_ids_selected | select('in', kmod_ids) | list | length > 0
+    - kmod_signer in kmod_signers
+    - alpi_ids_selected | intersect(_signer.ids | default([])) | length > 0
+  vars:
+    _signer: "{{ kmod_signers[kmod_signer] | default({}) }}"
   block:
     - name: MOK | Install signing tools
       ansible.builtin.package:
-        name: [akmods, mokutil, openssl]
+        name: "{{ _signer.packages }}"
         state: present
 
-    # No --force: that creates a brand-new pair on every run and repoints the symlinks to it,
-    # leaving the already-enrolled key unused.
-    - name: MOK | Generate akmods signing key pair
+    - name: MOK | Generate the {{ _signer.label }} signing key pair
       ansible.builtin.command:
-        cmd: kmodgenca -a
-        creates: /etc/pki/akmods/certs/public_key.der
+        argv: "{{ _signer.generate }}"
+        creates: "{{ _signer.key_der }}"
 
-    - name: MOK | Enroll the akmods key
+    - name: MOK | Enroll the {{ _signer.label }} key
       ansible.builtin.include_tasks: enroll.yml
       vars:
-        mok_key_der: /etc/pki/akmods/certs/public_key.der
-        mok_key_label: akmods
+        mok_key_der: "{{ _signer.key_der }}"
+        mok_key_label: "{{ _signer.label }}"

@@ -7,10 +7,13 @@
 #   alpi-nosb-fedora44: no Secure Boot, NVIDIA on: modprobe settings, no key, no mokutil call;
 #                       VirtualBox off: its stale kvm setting removed
 #   alpi-sb-el10:       Secure Boot: Oracle VirtualBox key (no akmod on EL), NVIDIA unavailable
+#   alpi-sb-debian13:   Secure Boot, NVIDIA and VirtualBox on: the DKMS key (real dkms
+#                       generate_mok) and the Oracle key, each enrolled; NVIDIA's options under
+#                       Debian's module name in a file of ALPI's, Debian's own nvidia.conf kept
 # Where VirtualBox is on, /etc/modprobe.d/alpi-kvm.conf keeps VMX off until a KVM guest runs.
 # converge.yml renames the native packages on two instances (EL's VirtualBox as apt's
 # virtualbox-7.2, the NVIDIA driver without akmod-nvidia): the roles gate on catalog ids.
-# mokutil is a fake that logs calls (files/mokutil); kmodgenca and openssl are real. A container
+# mokutil is a fake that logs calls (files/mokutil); kmodgenca, dkms and openssl are real. A container
 # cannot build or load modules: that, and the real enrollment, are left to the VM.
 platforms:
   - name: alpi-sb-fedora44
@@ -30,6 +33,12 @@ platforms:
     command: sleep infinity
     security_opts: [unmask=/sys/firmware, label=disable]
     volumes: ["${MOLECULE_SCENARIO_DIRECTORY}/firmware:/sys/firmware:ro", "alpi-dnf-sb-el10:/var/cache/dnf"]
+  - name: alpi-sb-debian13
+    image: docker.io/library/debian:13
+    pre_build_image: true
+    command: sleep infinity
+    security_opts: [unmask=/sys/firmware, label=disable]
+    volumes: ["${MOLECULE_SCENARIO_DIRECTORY}/firmware:/sys/firmware:ro", "alpi-dnf-sb-debian13:/var/cache/apt"]
 provisioner:
   options:
     extra-vars: '{"is_nvidia": true, "is_asus": false, "is_intel": false, "is_amd": false}'

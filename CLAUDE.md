@@ -158,13 +158,15 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   created or removed. Runtime steps (sysctl values, starting/stopping zram0) are tagged
   `zram_apply`.
 - `roles/akmods_mok` (before `packages`): Secure Boot signing key + MOK enrollment request, only
-  when Secure Boot is on, the distro's `kmod_signer` is `akmods` (Fedora; `none` on EL) and a
-  catalog id in `kmod_ids` (`nvidia-driver`, `virtualbox`) was selected (akmods signs at build
-  time, so the key must exist first). `mok_password` per distro (`fedora-alpi` in `group_vars/os_Fedora`,
-  `alma-alpi` in `group_vars/os_AlmaLinux_10`; notes in `group_vars/all/secureboot.yml`). `tasks/enroll.yml`
+  when Secure Boot is on, the distro's `kmod_signer` is one of `kmod_signers`
+  (`group_vars/all/secureboot.yml`: `akmods` on Fedora for `nvidia-driver` and `virtualbox`,
+  key from `kmodgenca -a`; `dkms` on Debian for `nvidia-driver`, key from `dkms generate_mok`
+  (DKMS 3.2 would create it at the first build otherwise); `none` on EL) and one of its ids was
+  selected (the signer signs at build time, so the key must exist first). `mok_password` per distro (`fedora-alpi` in `group_vars/os_Fedora`,
+  `alma-alpi` in `group_vars/os_AlmaLinux_10`, `debian-alpi` in `group_vars/os_Debian`; notes in `group_vars/all/secureboot.yml`). `tasks/enroll.yml`
   (MOK enrollment of one key) is shared with `roles/virtualbox`.
 - `roles/virtualbox` (before `packages`; runs when the `virtualbox` id is selected, whatever the
-  native names): on a non-akmod build (Oracle, EL) with Secure Boot, its
+  native names): on a non-akmod build (Oracle, EL and Debian) with Secure Boot, its
   own key in `/var/lib/shim-signed/mok` (vboxdrv.sh signs with it); `vboxusers`/`vboxsf` groups;
   `/etc/modprobe.d/alpi-kvm.conf` (`options kvm enable_virt_at_load=0`: since kernel 6.12 kvm
   holds VT-x/AMD-V from load and VirtualBox fails with `VERR_VMX_IN_VMX_ROOT_MODE`; VirtualBox
@@ -241,11 +243,14 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   (Oracle VirtualBox on EL). Catalog keys (`alpi_catalog_keys` per distro): Fedora
   `fedora, rpm, all`, EL `el10, el, rpm, all`; `rpm` holds RPM names both share, `all` only
   names that also exist on Debian and Ubuntu (check a new `all:` name there). Debian 13
-  (`group_vars/os_Debian`, not in the support matrix yet): `debian13, debian, deb, all`; a new
+  (`group_vars/os_Debian`; in the matrix, first release after the VM checklist): `debian13, debian, deb, all`; a new
   catalog id needs a `debian` (or `deb`/`all`) value, or `debian13` stops on it.
-- `roles/nvidia` (after `packages`): `/etc/modprobe.d/nvidia.conf`; akmods rebuild + `dracut` only
-  when no module exists for the running kernel. Runs only when the `nvidia-driver` id is selected
-  (NVIDIA detected, Fedora, not skipped).
+- `roles/nvidia` (after `packages`): power options in `nvidia_modprobe_conf` for `nvidia_module`
+  (`group_vars/family_*/main.yml`: `/etc/modprobe.d/nvidia.conf` and `nvidia` on Fedora;
+  `/etc/modprobe.d/alpi-nvidia.conf` and `nvidia-current` on Debian, which renames the module and
+  links its own modprobe files, `nvidia.conf` among them); when no module exists for the running
+  kernel, akmods rebuild + `dracut`, or `dkms autoinstall`. Runs only when the `nvidia-driver` id
+  is selected (NVIDIA detected, Fedora or Debian, not skipped).
 - Hardware features (`alpi_hardware_features`: nvidia, asus, intel, amd) follow detection and can
   only be vetoed; their packages come from `feature_packages`.
 - `roles/common`: hostname (only when `system_hostname` is set) and the git
@@ -344,8 +349,10 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `secureboot` (env_setup + `akmods_mok`, `virtualbox`, `nvidia`, nothing downloaded; converge
     renames EL's VirtualBox and Fedora's NVIDIA native packages, so the roles must gate on ids; Secure Boot
     detected from a fake EFI variable mounted over `/sys/firmware`: Fedora with Secure Boot and
-    NVIDIA vetoed, Fedora without (and VirtualBox off: a stale `alpi-kvm.conf` removed), EL with;
-    fake `mokutil` in `files/`, real `kmodgenca`/openssl),
+    NVIDIA vetoed, Fedora without (and VirtualBox off: a stale `alpi-kvm.conf` removed), EL with,
+    Debian with (DKMS key and Oracle key both enrolled, NVIDIA options for `nvidia-current`, a
+    stand-in for Debian's own `nvidia.conf` left alone); fake `mokutil` in `files/` (state per
+    key), real `kmodgenca`/`dkms`/openssl),
     `services` (env_setup + service roles on `almalinux/10-init` with systemd; prepare installs
     the packages: freshclam enabled and running, and skipped cleanly when its id is skipped; on
     Debian 13 too, built from `shared/Dockerfile-systemd-apt.j2`, the systemd image for any apt

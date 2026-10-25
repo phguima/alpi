@@ -1,6 +1,6 @@
 #!/bin/sh
-# Fake mokutil for Molecule: logs every call and simulates the enrollment state of one key.
-state=/var/lib/fake-mokutil.requested
+# Fake mokutil for Molecule: logs every call and simulates the enrollment state of each key.
+state=/var/lib/fake-mokutil.requested$(echo "$2" | tr / _)
 log=/var/log/fake-mokutil.log
 echo "$*" >> "$log"
 case "$1" in

@@ -2,6 +2,8 @@
 # NVIDIA driver configuration (ported from AFPI's nvidia and hardware roles). The packages come
 # from the catalog (feature_packages.nvidia, installed by roles/packages) and roles/akmods_mok
 # prepared the Secure Boot key before that. Everything here takes effect on the next reboot.
+# The options file and module name per family (group_vars/family_*/main.yml); the module is built
+# by the distro's kmod_signer (akmods on Fedora, DKMS on Debian).
 
 - name: NVIDIA | Configure the driver
   when: nvidia_driver_selected
@@ -9,7 +11,7 @@
     # Installed systems have it (kmod); a minimal one may not yet, before the driver arrives.
     - name: NVIDIA | Ensure /etc/modprobe.d exists
       ansible.builtin.file:
-        path: /etc/modprobe.d
+        path: "{{ nvidia_modprobe_conf | dirname }}"
         state: directory
         owner: root
         group: root
@@ -17,14 +19,14 @@
 
     - name: NVIDIA | Configure power management
       ansible.builtin.copy:
-        dest: /etc/modprobe.d/nvidia.conf
+        dest: "{{ nvidia_modprobe_conf }}"
         content: |
           # Enable deep power management
-          options nvidia NVreg_DynamicPowerManagement=0x02
-          options nvidia NVreg_EnableS0ixPowerManagement=1
+          options {{ nvidia_module }} NVreg_DynamicPowerManagement=0x02
+          options {{ nvidia_module }} NVreg_EnableS0ixPowerManagement=1
 
-          # Improve suspend/resume stability (Fedora uses tmpfs for /tmp)
-          options nvidia NVreg_TemporaryFilePath=/var/tmp
+          # Improve suspend/resume stability (/tmp is a tmpfs on Fedora and Debian 13)
+          options {{ nvidia_module }} NVreg_TemporaryFilePath=/var/tmp
         owner: root
         group: root
         mode: '0644'
@@ -32,7 +34,7 @@
     # AFPI rebuilt on every run until the reboot; a module already built for the running kernel
     # means there is nothing to do.
     - name: NVIDIA | Check for a module built for the running kernel
-      ansible.builtin.command: modinfo -k {{ ansible_facts['kernel'] }} nvidia
+      ansible.builtin.command: modinfo -k {{ ansible_facts['kernel'] }} {{ nvidia_module }}
       register: nvidia_modinfo
       changed_when: false
       failed_when: false
@@ -49,24 +51,41 @@
           async: 1200
           poll: 10
           changed_when: false
+          when: kmod_signer == 'akmods'
 
         - name: NVIDIA | Build and sign the module (akmods)
           ansible.builtin.command: akmods --force --kernel {{ ansible_facts['kernel'] }} --akmod nvidia
           register: nvidia_akmods
           changed_when: nvidia_akmods.rc == 0
           failed_when: false
+          when: kmod_signer == 'akmods'
 
         - name: NVIDIA | Update the initramfs
           ansible.builtin.command: dracut --force
           when: nvidia_akmods is changed
           changed_when: true
 
+        # The install builds for every kernel with headers (linux-headers-amd64 follows the newest,
+        # the running one after roles/update's gate); this catches a build that did not happen.
+        # autoinstall exits 0 when it builds nothing: built means the module is there now.
+        - name: NVIDIA | Build and sign the module (DKMS)
+          ansible.builtin.shell: >-
+            dkms autoinstall -k {{ ansible_facts['kernel'] }} &&
+            modinfo -k {{ ansible_facts['kernel'] }} {{ nvidia_module }} >/dev/null
+          register: nvidia_dkms
+          changed_when: nvidia_dkms.rc == 0
+          failed_when: false
+          when: kmod_signer == 'dkms'
+
         - name: NVIDIA | Report a failed build
           ansible.builtin.debug:
             msg: >-
-              akmods could not build the NVIDIA module now (rc {{ nvidia_akmods.rc }}); akmods.service
-              retries at boot. {{ nvidia_akmods.stderr | default('') | trim }}
-          when: nvidia_akmods is not changed
+              {{ kmod_signer }} could not build the NVIDIA module now (rc {{ _build.rc | default('n/a') }});
+              {{ 'akmods.service retries at boot.' if kmod_signer == 'akmods' else 'DKMS retries for each new kernel.' }}
+              {{ _build.stderr | default('') | trim }}
+          when: _build is not changed
+          vars:
+            _build: "{{ nvidia_akmods if kmod_signer == 'akmods' else nvidia_dkms | default({}) }}"
 
         - name: NVIDIA | Recommend a reboot
           ansible.builtin.debug:
@@ -75,4 +94,4 @@
               - "A system REBOOT is REQUIRED to load the NVIDIA driver."
               - "Vulkan, VA-API and power settings are already in place."
               - "=================================================="
-          when: nvidia_akmods is changed
+          when: nvidia_akmods is changed or nvidia_dkms is changed

@@ -19,13 +19,6 @@ container or VM before code relies on them. Consequences to keep in mind:
   Molecule's 2.21; `debian13-personal` resolves with the container's own ansible-core, as
   `el10-work` does (`shared/verify_native_controller.yml`).
 
-### Phase 3 — Debian 13
-
-- [ ] **NVIDIA:** DKMS key created and enrolled before `nvidia-driver` installs, then `nvidia.conf`.
-      Debian's `steam.desktop` (steam-installer, checked 2026-10-25) has no `PrefersNonDefaultGPU`,
-      unlike Fedora's: on a hybrid laptop Steam starts on the integrated GPU. Decide (a user copy
-      with the key added, or nothing) after checking on a VM.
-
 ### Phase 4 — Ubuntu 26.04 LTS
 
 - [ ] **Support:** `Ubuntu: {version: "26.04"}` (`alpi_support` takes exact versions);
@@ -57,6 +50,12 @@ container or VM before code relies on them. Consequences to keep in mind:
       Debian's 6.12, cedilla on KDE, the first run with unattended-upgrades still busy, the
       Antigravity IDE under AppArmor (Ubuntu), the installer's own `sources.list` (one-line, maybe
       a `cdrom:` line) getting `contrib`/`non-free` (only the images' deb822 file is tested).
+      Debian: DKMS's key enrolled and the NVIDIA module loading signed, ALPI's options applied to
+      `nvidia-current` (`/sys/module/nvidia/parameters`), Oracle's VirtualBox modules signed with
+      ALPI's key; `bootstrap.sh` on an install with a root password (no sudo). Steam on a hybrid
+      laptop: Debian's `steam.desktop` (steam-installer, checked 2026-10-25) has no
+      `PrefersNonDefaultGPU`, unlike Fedora's, so it starts on the integrated GPU; decide (a user
+      copy with the key added, or nothing).
 - [ ] **Release:** after `tests/run.sh full` and the VM checklist per distro: Debian 13 as `v1.2.0`,
       Ubuntu 26.04 as `v1.3.0` (or one release if both land together).
 

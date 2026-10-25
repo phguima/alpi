@@ -14,6 +14,8 @@
         - /var/lib/shim-signed/mok/MOK.der
         - /var/lib/shim-signed/mok/MOK.priv
         - /etc/modprobe.d/alpi-kvm.conf
+        - /var/lib/dkms/mok.pub
+        - /etc/modprobe.d/alpi-nvidia.conf
       register: _files
 
     - name: Verify | Read the kvm setting
@@ -82,3 +84,24 @@
         fail_msg: "mokutil log: {{ _mok_log.stdout_lines | default([]) }}"
         quiet: true
       when: inventory_hostname == 'alpi-sb-el10'
+
+    - name: Verify | Read the NVIDIA modprobe files (Debian)
+      ansible.builtin.slurp:
+        src: "{{ item }}"
+      loop: [/etc/modprobe.d/nvidia.conf, /etc/modprobe.d/alpi-nvidia.conf]
+      register: _sb_deb_conf
+      when: inventory_hostname == 'alpi-sb-debian13'
+
+    - name: Verify | Secure Boot on Debian - DKMS and Oracle keys, NVIDIA options for nvidia-current
+      ansible.builtin.assert:
+        that:
+          - is_secure_boot and alpi_feature.nvidia and 'virtualbox' in alpi_ids_selected
+          - _files.results[5].stat.exists and _oracle_key and _oracle_priv_mode == '0600' and not _akmods_key
+          - _imports == ['--import /var/lib/dkms/mok.pub', '--import /var/lib/shim-signed/mok/MOK.der']
+          - "'password: debian-alpi / debian-alpi' in _mok_log.stdout_lines"
+          - (_sb_deb_conf.results[0].content | b64decode) == 'install nvidia modprobe -i nvidia-current $CMDLINE_OPTS\n'
+          - "'options nvidia-current NVreg_DynamicPowerManagement=0x02' in (_sb_deb_conf.results[1].content | b64decode)"
+          - "'options nvidia ' not in (_sb_deb_conf.results[1].content | b64decode)"
+        fail_msg: "mokutil log: {{ _mok_log.stdout_lines | default([]) }}"
+        quiet: true
+      when: inventory_hostname == 'alpi-sb-debian13'

@@ -13,6 +13,22 @@
         dest: /usr/local/bin/mokutil
         mode: "0755"
 
+    # What Debian's NVIDIA packages link there (a stand-in): ALPI must not overwrite it
+    - name: Prepare | Debian's own nvidia.conf
+      when: inventory_hostname == 'alpi-sb-debian13'
+      block:
+        - name: Prepare | Create /etc/modprobe.d (Debian)
+          ansible.builtin.file:
+            path: /etc/modprobe.d
+            state: directory
+            mode: "0755"
+
+        - name: Prepare | Write the stand-in
+          ansible.builtin.copy:
+            dest: /etc/modprobe.d/nvidia.conf
+            content: "install nvidia modprobe -i nvidia-current $CMDLINE_OPTS\n"
+            mode: "0644"
+
     - name: Prepare | Plant a stale kvm setting where VirtualBox is off
       when: inventory_hostname == 'alpi-nosb-fedora44'
       block:

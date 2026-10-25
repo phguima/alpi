@@ -1,12 +1,33 @@
 ---
-# MOK enrollment password, used only with Secure Boot (roles/akmods_mok signs the akmod-built
-# modules, e.g. NVIDIA). One-time: typed once in the blue MokManager screen on the next boot.
+# MOK enrollment password, used only with Secure Boot (roles/akmods_mok's key signs the modules
+# akmods or DKMS build, e.g. NVIDIA). One-time: typed once in the blue MokManager screen on the next boot.
 # MokManager uses a US keyboard layout, so stick to plain letters, digits and '-'. Set per distro,
 # so the screen's password names the system being installed: mok_password is "fedora-alpi" in
-# group_vars/os_Fedora and "alma-alpi" in group_vars/os_AlmaLinux_10. Override it in
-# host_vars/127.0.0.1/custom.yml.
+# group_vars/os_Fedora, "alma-alpi" in group_vars/os_AlmaLinux_10 and "debian-alpi" in
+# group_vars/os_Debian. Override it in host_vars/127.0.0.1/custom.yml.
 
-# Catalog ids whose packages build kernel modules that must be signed under Secure Boot. Who
-# signs them is per distro (kmod_signer in group_vars/os_*): akmods (Fedora, roles/akmods_mok),
-# none (EL: VirtualBox's vboxdrv.sh signs with roles/virtualbox's key, NVIDIA is unavailable).
-kmod_ids: [nvidia-driver, virtualbox]
+# Who builds and signs kernel modules is per distro (kmod_signer in group_vars/os_*): a signer
+# here, or none (EL: VirtualBox's vboxdrv.sh signs with roles/virtualbox's key, NVIDIA is
+# unavailable). roles/akmods_mok creates the signer's key before any of its ids is installed (it
+# signs at build time) and requests its MOK enrollment:
+#   ids:      catalog ids whose modules it builds
+#   packages: what creating the key needs
+#   generate: the command that creates the key pair, once (key_der: its public key, DER)
+# Oracle's VirtualBox on Debian builds with its own vboxdrv.sh, not DKMS: roles/virtualbox's key.
+kmod_signers:
+  akmods:
+    ids: [nvidia-driver, virtualbox]
+    packages: [akmods, mokutil, openssl]
+    # No --force: that creates a brand-new pair on every run and repoints the symlinks to it,
+    # leaving the already-enrolled key unused
+    generate: [kmodgenca, -a]
+    key_der: /etc/pki/akmods/certs/public_key.der
+    label: akmods
+  # DKMS 3.2 (Debian 13) signs with /var/lib/dkms/mok.key, and creates the pair at the first build
+  # if missing: created here first, so it can be enrolled before the driver builds
+  dkms:
+    ids: [nvidia-driver]
+    packages: [dkms, mokutil, openssl]
+    generate: [dkms, generate_mok]
+    key_der: /var/lib/dkms/mok.pub
+    label: DKMS

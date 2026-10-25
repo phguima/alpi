@@ -2,3 +2,9 @@
 # FUSE 2, what AppImages run on (roles/ai_tools: the Antigravity IDE); the t64 name since Debian
 # 13 and Ubuntu 24.04 (64-bit time_t transition)
 fuse2_package: libfuse2t64
+
+# roles/nvidia: Debian renames the module nvidia-current (its own modprobe files map nvidia to it,
+# and its options go to nvidia-current), and links its own files into /etc/modprobe.d through
+# alternatives (nvidia-options.conf): ALPI's options in a file of its own
+nvidia_modprobe_conf: /etc/modprobe.d/alpi-nvidia.conf
+nvidia_module: nvidia-current

@@ -162,6 +162,13 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
   terminal, or debconf takes the piped answers) and stops with the `su -` command when there is
   no sudo; `unsupported` moved to Debian 12; the tests' Debian overrides removed
   (`feat(env): Debian 13 in the support matrix`).
+- **2026-10-25** Phase 3: Secure Boot and NVIDIA on Debian. `kmod_signers` replaces `kmod_ids`:
+  `roles/akmods_mok` creates DKMS's key (`dkms generate_mok`, `/var/lib/dkms/mok.pub`) for
+  `nvidia-driver` and enrolls it; `roles/nvidia` writes its options for Debian's renamed module
+  (`nvidia-current`) to `alpi-nvidia.conf`, leaving Debian's own `nvidia.conf` alone, and builds
+  with `dkms autoinstall` when the module is missing; a Debian instance in `secureboot`
+  (`feat(secureboot): DKMS key and NVIDIA settings on Debian`). The Steam GPU question and the
+  real enrollment went to Phase 5's VM checklist. Phase 3 done.
 
 ## 6. Swap (zram)
 
