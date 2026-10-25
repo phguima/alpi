@@ -19,11 +19,6 @@ container or VM before code relies on them. Consequences to keep in mind:
   Molecule's 2.21; `debian13-personal` resolves with the container's own ansible-core, as
   `el10-work` does (`shared/verify_native_controller.yml`).
 
-### Phase 4 — Ubuntu 26.04 LTS
-
-- [ ] **AppArmor:** Ubuntu restricts unprivileged user namespaces, so Electron AppImages (Antigravity
-      IDE) fail their sandbox; `roles/ai_tools` adds an AppArmor profile with `userns,` *(check)*.
-
 ### Phase 5 — tests and release
 
 - [ ] **Scope:** an apt instance only where an apt code path exists (`catalog`, `failures`,
@@ -44,6 +39,9 @@ container or VM before code relies on them. Consequences to keep in mind:
       laptop: Debian's `steam.desktop` (steam-installer, checked 2026-10-25) has no
       `PrefersNonDefaultGPU`, unlike Fedora's, so it starts on the integrated GPU; decide (a user
       copy with the key added, or nothing).
+      Ubuntu: the shim-signed key enrolled once for DKMS and VirtualBox, Canonical's NVIDIA 615
+      modules loading, the Antigravity IDE starting with its sandbox under ALPI's AppArmor profile
+      (`/tmp/.mount_antigr*/antigravity`; if not, the attachment is wrong), Ubuntu's codecs.
 - [ ] **Release:** after `tests/run.sh full` and the VM checklist per distro: Debian 13 as `v1.2.0`,
       Ubuntu 26.04 as `v1.3.0` (or one release if both land together).
 

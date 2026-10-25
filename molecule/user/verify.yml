@@ -130,7 +130,8 @@
         _expected: "{{ ['zshconfig', 'ohmyzsh', 'lls', 'llsa', 'clean-cache', 'claudecli', 'agycli',
                         'antigravity-ide', 'nvidia-run', 'full-update']
                        | reject('in', {'GNOME': ['clean-cache'], 'KDE': ['ohmyzsh', 'claudecli']}[_desktop] | default([]))
-                       | reject('in', [] if _desktop == 'GNOME' else ['nvidia-run']) | list }}"
+                       | reject('in', [] if inventory_hostname in _nvidia_hosts else ['nvidia-run']) | list }}"
+        _nvidia_hosts: [alpi-user-gnome, alpi-user-debian13, alpi-user-ubuntu2604]
 
     # Checked when it runs, not at install time: the same alias everywhere (KDE has no Claude Code)
     - name: Verify | full-update runs each updater when its command is in PATH
@@ -186,6 +187,7 @@
   hosts: all
   gather_facts: false
   vars:
+    _apparmor_profile: /etc/apparmor.d/alpi-antigravity-ide
     # The features under test: defaults (all on), then the instance's host_vars
     _on: "{{ {'claude_code': true, 'antigravity_cli': true, 'antigravity_ide': true} | combine(features | default({})) }}"
     _apps: /home/alpi/.local/share/applications
@@ -295,6 +297,36 @@
           vars:
             _ide_text: "{{ _ide_files.results | map(attribute='content') | map('b64decode') | list }}"
 
+    # Ubuntu only (ai_tools_apparmor_userns); parsed again here as the handler did
+    - name: Verify | Look up the Antigravity IDE's AppArmor profile
+      ansible.builtin.stat:
+        path: "{{ _apparmor_profile }}"
+      register: _aa
+
+    - name: Verify | Parse it
+      ansible.builtin.command: apparmor_parser -Q -K {{ _apparmor_profile }}
+      register: _aa_parse
+      changed_when: false
+      when: _aa.stat.exists
+
+    - name: Verify | Read it
+      ansible.builtin.slurp:
+        src: "{{ _apparmor_profile }}"
+      register: _aa_text
+      when: _aa.stat.exists
+
+    - name: Verify | AppArmor profile with userns for the IDE's mount, on Ubuntu only
+      ansible.builtin.assert:
+        that: >-
+          (_aa.stat.exists and _aa_parse.rc == 0
+           and 'profile alpi-antigravity-ide /tmp/.mount_antigr*/antigravity flags=(unconfined) {' in _aa_body
+           and '  userns,' in _aa_body.splitlines())
+          if inventory_hostname == 'alpi-user-ubuntu2604' else not _aa.stat.exists
+        fail_msg: "{{ _aa_body }}"
+        quiet: true
+      vars:
+        _aa_body: "{{ _aa_text.content | default('') | b64decode }}"
+
 - name: Verify | Steam on the NVIDIA GPU (roles/desktop)
   hosts: all
   gather_facts: false
@@ -313,18 +345,18 @@
       loop: "{{ ([_steam_launcher] if _steam.stat.exists else []) + ['/home/alpi/.zshrc'] }}"
       register: _steam_files
 
-    - name: Verify | GNOME and Debian lost ALPI's old launcher (NVIDIA on), KDE AFPI's; EL kept the user's own
+    - name: Verify | GNOME, Debian and Ubuntu lost ALPI's old launcher (NVIDIA on), KDE AFPI's; EL kept the user's own
       ansible.builtin.assert:
         that:
           - _steam.stat.exists == (inventory_hostname == 'alpi-user-el10')
           - not _steam.stat.exists or 'Name=My Steam' in (_steam_files.results[0].content | b64decode)
         quiet: true
 
-    - name: Verify | The nvidia-run alias only where NVIDIA is on (GNOME, Debian)
+    - name: Verify | The nvidia-run alias only where NVIDIA is on (GNOME, Debian, Ubuntu)
       ansible.builtin.assert:
         that: >-
           ("alias nvidia-run='" ~ _steam_prime ~ "'" in _steam_rc)
-          == (inventory_hostname in ['alpi-user-gnome', 'alpi-user-debian13'])
+          == (inventory_hostname in ['alpi-user-gnome', 'alpi-user-debian13', 'alpi-user-ubuntu2604'])
         fail_msg: "{{ _steam_rc }}"
         quiet: true
       vars:
@@ -356,7 +388,7 @@
       ansible.builtin.assert:
         that:
           - "'ALPI DEPLOYMENT COMPLETED SUCCESSFULLY!' in _final_status.stdout"
-          - _final_status.stdout is search('Your (Fedora|AlmaLinux|Debian) [0-9.]+ workstation is now optimized and ready')
+          - _final_status.stdout is search('Your (Fedora|AlmaLinux|Debian|Ubuntu) [0-9.]+ workstation is now optimized and ready')
         fail_msg: "{{ _final_status.stdout }}"
         quiet: true
 

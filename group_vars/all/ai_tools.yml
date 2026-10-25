@@ -16,3 +16,11 @@ antigravity_install_script_url: "https://antigravity.google/cli/install.sh"
 # (electron-updater, channel latest-x64 on Linux). The app replaces its own AppImage on updates.
 antigravity_ide_dir: "{{ user_home }}/wks/tools/antigravity"
 antigravity_ide_manifest_url: "https://antigravity-hub-auto-updater-974169037036.us-central1.run.app/manifest/latest-x64-linux.yml"
+
+# The IDE is Electron: its sandbox needs unprivileged user namespaces, which Ubuntu (since 24.04)
+# allows only to programs with an AppArmor profile granting 'userns' (true in group_vars/os_Ubuntu).
+# The AppImage runs from a /tmp/.mount_<first 6 letters of its file name><random> mount, so the
+# profile attaches to the binary there (ai_tools_apparmor_attach).
+ai_tools_apparmor_userns: false
+ai_tools_apparmor_profile: /etc/apparmor.d/alpi-antigravity-ide
+ai_tools_apparmor_attach: /tmp/.mount_antigr*/antigravity

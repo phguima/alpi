@@ -229,7 +229,11 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   manifest via `alpi_appimage_release`: base64 sha512 to hex; icon extracted with
   `--appimage-extract`, menu entry, handler `update-desktop-database` for `antigravity://`).
   Installs its own deps (`curl`, `fuse2_package`: `fuse-libs`, or `libfuse2t64` on apt,
-  `desktop-file-utils`). URLs in
+  `desktop-file-utils`). Ubuntu (`ai_tools_apparmor_userns`): unprivileged user namespaces only
+  for programs with an AppArmor profile granting `userns`, which Electron's sandbox needs: an
+  unconfined profile with `userns,` (`/etc/apparmor.d/alpi-antigravity-ide`) attached to the
+  binary in the AppImage's mount (`/tmp/.mount_antigr*/antigravity`), loaded with
+  `apparmor_parser -r`, or only parsed (`-Q -K`) where the kernel has no AppArmor. URLs in
   `group_vars/all/ai_tools.yml`; the picker's labels come from
   `picker_descriptions` (`group_vars/all/picker.yml`). `tasks/check.yml` (run by `catalog`) checks the upstream URLs without
   downloading. The alias is `antigravity-ide` because `agy install` deletes `alias antigravity=`.
@@ -394,7 +398,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `/etc/locale.conf`; KDE container without one, for the fallback; AlmaLinux 10 container
     without a desktop; Debian 13 container (group `apt`) with GNOME but no Ptyxis, a pt_BR
     `/etc/default/locale`, apt's `full-update` (zsh must parse what it expands to), the AI tools'
-    packages under Debian names. Cedilla on XWayland on KDE: stand-in `kwin` RPMs (rpmbuild) 6.6.4
+    packages under Debian names; Ubuntu 26.04 container without a desktop, where the Antigravity
+    IDE gets its AppArmor profile (parsed, the container's kernel has no AppArmor). Cedilla on XWayland on KDE: stand-in `kwin` RPMs (rpmbuild) 6.6.4
     installed, stand-in Brave/VS Code system entries (`files/xwayland/`, on every container),
     AAPI's leftovers, and `roles/packages/tasks/flatpak_overrides.yml` run alone (flatpak only
     there); `side_effect.yml` keeps the on-state in `/root/alpi-xwayland-on/` and publishes 6.7.5,

@@ -98,3 +98,22 @@
       notify: AI tools | Update the desktop database
   vars:
     _icon: "{{ user_home }}/.local/share/icons/hicolor/512x512/apps/antigravity.png"
+
+# Ubuntu: user namespaces for the sandbox (ai_tools_apparmor_userns, group_vars/all/ai_tools.yml).
+# unconfined: the profile only adds 'userns', as Ubuntu's own profiles for Chrome and VS Code do.
+- name: Antigravity IDE | AppArmor profile for its sandbox
+  ansible.builtin.copy:
+    dest: "{{ ai_tools_apparmor_profile }}"
+    content: |
+      # Managed by ALPI (roles/ai_tools): the Antigravity IDE's Electron sandbox needs user namespaces
+      abi <abi/4.0>,
+      include <tunables/global>
+
+      profile alpi-antigravity-ide {{ ai_tools_apparmor_attach }} flags=(unconfined) {
+        userns,
+
+        include if exists <local/alpi-antigravity-ide>
+      }
+    mode: "0644"
+  when: ai_tools_apparmor_userns
+  notify: AI tools | Load the AppArmor profile

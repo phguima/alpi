@@ -1,0 +1,8 @@
+---
+# No desktop, as on EL
+_desktop: ""
+# In real use, from the vault (group_vars/all/secrets.yml)
+api_keys: |
+  export ALPI_TEST_KEY="secret"
+# gh not selected: the login reminder does not run
+packages_skip: [gh]

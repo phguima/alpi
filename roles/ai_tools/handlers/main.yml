@@ -5,3 +5,11 @@
   ansible.builtin.command: "update-desktop-database {{ user_home }}/.local/share/applications"
   become_user: "{{ user_name }}"
   changed_when: true
+
+# Into the kernel where AppArmor runs; elsewhere (a container) only parsed, which still fails on a
+# profile the kernel would reject
+- name: AI tools | Load the AppArmor profile
+  ansible.builtin.shell: >-
+    if [ -d /sys/kernel/security/apparmor ]; then apparmor_parser -r {{ ai_tools_apparmor_profile | quote }};
+    else apparmor_parser -Q -K {{ ai_tools_apparmor_profile | quote }}; fi
+  changed_when: true

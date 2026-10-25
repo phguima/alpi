@@ -1,7 +1,9 @@
 ---
 # Packages the selected tools need, installed by this role so they do not depend on the base
 # list: curl for the installer scripts; FUSE 2 (fuse2_package, group_vars/family_*) to run the AppImage and desktop-file-utils for the
-# menu entry's URL handler (the IDE's login callback, antigravity://).
+# menu entry's URL handler (the IDE's login callback, antigravity://); apparmor (apparmor_parser) for
+# the IDE's profile where it needs one.
 ai_tools_deps: >-
   {{ (['curl'] if alpi_feature.claude_code or alpi_feature.antigravity_cli else [])
-     + ([fuse2_package, 'desktop-file-utils'] if alpi_feature.antigravity_ide else []) }}
+     + ([fuse2_package, 'desktop-file-utils'] if alpi_feature.antigravity_ide else [])
+     + (['apparmor'] if alpi_feature.antigravity_ide and ai_tools_apparmor_userns else []) }}

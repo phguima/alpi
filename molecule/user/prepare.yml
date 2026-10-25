@@ -6,6 +6,14 @@
   hosts: all
   gather_facts: false
   tasks:
+    # Ubuntu's image has its own user at uid 1000
+    - name: Prepare | Remove the image's ubuntu user
+      ansible.builtin.user:
+        name: ubuntu
+        state: absent
+        remove: true
+      when: inventory_hostname == 'alpi-user-ubuntu2604'
+
     - name: Prepare | User alpi (uid 1000)
       ansible.builtin.user:
         name: alpi

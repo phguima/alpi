@@ -32,3 +32,6 @@ alpi_repos_os:
     components: contrib
     key_url: https://www.virtualbox.org/download/oracle_vbox_2016.asc
     keyring: /usr/share/keyrings/oracle-virtualbox-2016.gpg
+
+# roles/ai_tools: an AppArmor profile lets the Antigravity IDE's sandbox use user namespaces
+ai_tools_apparmor_userns: true

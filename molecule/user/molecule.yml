@@ -11,6 +11,8 @@
 #   alpi-user-debian13: GNOME without Ptyxis (Debian's has gnome-terminal: Ptyxis left alone), the
 #                    locale in /etc/default/locale (pt_BR), apt's full-update, the AI tools' own
 #                    packages under Debian names (group apt)
+#   alpi-user-ubuntu2604: no desktop (as EL); the Antigravity IDE gets its AppArmor profile for
+#                    user namespaces (parsed, not loaded: no AppArmor in the container's kernel)
 # All: ~/wks and the cedilla fix in ~/.XCompose, owned by the user. zsh: root gets the root: true
 # aliases that are on, alpi every alias that is on and installed (GNOME switches one off in its
 # selection, KDE's custom.yml overrides its selection both ways); the API keys block (api_keys in
@@ -52,10 +54,16 @@ platforms:
     command: sleep infinity
     volumes: ["alpi-dnf-user-debian13:/var/cache/apt"]
     groups: [apt]
+  - name: alpi-user-ubuntu2604
+    image: docker.io/library/ubuntu:26.04
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-user-ubuntu2604:/var/cache/apt"]
+    groups: [apt]
 provisioner:
   options:
     # NVIDIA "detected" everywhere (all four listed: this replaces the base config's string);
-    # the driver resolves on Fedora and Debian (not EL), and KDE vetoes it in host_vars
+    # the driver resolves on Fedora, Debian and Ubuntu (not EL), and KDE vetoes it in host_vars
     extra-vars: '{"is_nvidia": true, "is_asus": false, "is_intel": false, "is_amd": false}'
   playbooks:
     prepare: prepare.yml

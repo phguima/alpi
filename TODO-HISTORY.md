@@ -180,6 +180,9 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
 - **2026-10-25** Phase 4: one Secure Boot key on Ubuntu, the `shim` signer:
   `update-secureboot-policy --new-key` before DKMS or Oracle's `vboxdrv.sh` sign anything, so
   one enrollment covers both (`feat(secureboot): one shim-signed key on Ubuntu`).
+- **2026-10-25** Phase 4: an AppArmor profile granting `userns` to the Antigravity IDE on Ubuntu,
+  whose sandbox needs user namespaces (`feat(ai_tools): AppArmor profile for the Antigravity IDE
+  on Ubuntu`). Phase 4 done; the VM checks are in Phase 5.
 
 ## 6. Swap (zram)
 

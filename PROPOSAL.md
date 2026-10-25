@@ -428,3 +428,13 @@ Checked in `debian:13` and `ubuntu:26.04` containers on 2026-10-24: NVIDIA, Virt
    unknown features. Not choices: the cedilla's `code` alias (part of that workaround), and the
    machine's own `luks_volumes`/`zsh_aliases_custom`. Aliases are single-quoted now, so the
    command is expanded when the alias runs.
+4. **Ubuntu 26.04 details** (decisions 3–6 of 2026-10-24 applied, checked in `ubuntu:26.04`):
+   the NVIDIA branch is pinned in the catalog's `ubuntu2604` value rather than a variable in
+   `group_vars/os_Ubuntu` (`pick.py` reads the catalog untemplated): `nvidia-driver-615-open`
+   (615 the newest real branch, 610 transitional) with `linux-modules-nvidia-615-open-generic`,
+   whose Canonical-signed modules provide `nvidia-dkms-615-open`, so nothing is built. Secure Boot
+   key: Ubuntu's own `update-secureboot-policy --new-key` creates `/var/lib/shim-signed/mok/MOK.*`
+   before anything that signs (DKMS, Oracle's `vboxdrv.sh`), one key and one enrollment.
+   Steam's 32-bit NVIDIA libraries (`libnvidia-gl-NNN:i386`; Debian's `nvidia-driver-libs:i386`)
+   are in the catalog, as Fedora's `.i686`. The Antigravity IDE gets an AppArmor profile granting
+   `userns` *(check on the VM: it attaches to the binary in the AppImage's mount)*.
