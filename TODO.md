@@ -19,14 +19,6 @@ container or VM before code relies on them. Consequences to keep in mind:
   Molecule's 2.21; `debian13-personal` resolves with the container's own ansible-core, as
   `el10-work` does (`shared/verify_native_controller.yml`).
 
-### Phase 2 — shared apt layer (`family_Debian`)
-
-- [ ] **Tests:** `shared/prepare.yml` already installs python3/sudo with apt; add removing
-       `/etc/apt/apt.conf.d/docker-clean` (or the apt cache volume keeps nothing) and
-       `/usr/sbin/policy-rc.d` (exit 101: services never start). `shared/verify_installed.yml` gets
-       a dpkg path (`rpm -q --whatprovides` and dnf groups today). systemd scenarios need a
-       Dockerfile, like `asus` (no `-init` images).
-
 ### Phase 3 — Debian 13
 
 - [ ] **Support:** `Debian: {min: 13, max: 13}`; `unsupported` moves to `debian:12`.

@@ -1,10 +1,12 @@
 ---
 # Roles that manage systemd services, alone (env_setup + the role; the packages they need are
 # installed by prepare.yml, not by the packages role). AlmaLinux publishes an init image, Fedora
-# does not; the units have the same names on both.
+# does not; the units have the same names on both. Debian has none either: its instance is built
+# from shared/Dockerfile-systemd-apt.j2 (Debian allowed in its host_vars).
 #   alpi-svc-on:   clamav feature on, freshclam installed: the service is enabled and running
 #   alpi-svc-skip: clamav feature on, clamav-freshclam skipped and not installed: nothing to do
 #                  (AFPI/AAPI enabled freshclam unconditionally and failed here)
+#   alpi-svc-debian13: as alpi-svc-on, on Debian 13
 platforms:
   - name: alpi-svc-on
     image: docker.io/almalinux/10-init
@@ -18,6 +20,13 @@ platforms:
     command: /sbin/init
     systemd: always
     volumes: ["alpi-dnf-svc-skip:/var/cache/dnf"]
+  - name: alpi-svc-debian13
+    image: docker.io/library/debian:13
+    pre_build_image: false
+    dockerfile: ../shared/Dockerfile-systemd-apt.j2
+    command: /sbin/init
+    systemd: always
+    volumes: ["alpi-dnf-svc-debian13:/var/cache/apt"]
 provisioner:
   playbooks:
     prepare: prepare.yml

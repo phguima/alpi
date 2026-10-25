@@ -15,3 +15,13 @@
       ansible.builtin.package:
         name: [clamav, clamav-freshclam]
         state: present
+
+- name: Prepare | Packages the service roles manage (Debian)
+  hosts: alpi-svc-debian13
+  gather_facts: false
+  tasks:
+    - name: Prepare | Install ClamAV and freshclam
+      ansible.builtin.apt:
+        name: [clamav, clamav-freshclam]
+        state: present
+        update_cache: true

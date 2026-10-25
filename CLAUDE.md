@@ -347,7 +347,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     NVIDIA vetoed, Fedora without (and VirtualBox off: a stale `alpi-kvm.conf` removed), EL with;
     fake `mokutil` in `files/`, real `kmodgenca`/openssl),
     `services` (env_setup + service roles on `almalinux/10-init` with systemd; prepare installs
-    the packages: freshclam enabled and running, and skipped cleanly when its id is skipped),
+    the packages: freshclam enabled and running, and skipped cleanly when its id is skipped; on
+    Debian 13 too, built from `shared/Dockerfile-systemd-apt.j2`, the systemd image for any apt
+    instance that needs services: Debian and Ubuntu publish no init image),
     `asus` (env_setup + `roles/asus` on Fedora 44 with systemd, built from the scenario's
     `Dockerfile.j2` since Fedora has no init image; stand-in supergfxd unit and launcher in
     `prepare.yml`: everything selected, and supergfxctl + GUI skipped), `update` (repos +

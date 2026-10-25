@@ -25,7 +25,7 @@
           - _active.stdout == 'active'
         fail_msg: "is-enabled: {{ _enabled.stdout }}, is-active: {{ _active.stdout }}"
         quiet: true
-      when: inventory_hostname == 'alpi-svc-on'
+      when: inventory_hostname in ['alpi-svc-on', 'alpi-svc-debian13']
 
     - name: Verify | Feature on, freshclam skipped - no unit, nothing enabled
       ansible.builtin.assert:

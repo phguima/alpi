@@ -1,0 +1,10 @@
+# Debian and Ubuntu publish no init image: systemd added to the base one, for a platform with
+# 'dockerfile: ../shared/Dockerfile-systemd-apt.j2', 'pre_build_image: false' and
+# 'command: /sbin/init'. As shared/prepare.yml does for the other images: docker-clean removed (the
+# apt cache volume would keep nothing) and policy-rc.d (exit 101: services would never start).
+FROM {{ item.image }}
+RUN rm -f /etc/apt/apt.conf.d/docker-clean /usr/sbin/policy-rc.d \
+    && apt-get update && apt-get install -y --no-install-recommends systemd systemd-sysv python3 sudo \
+    && apt-get clean
+STOPSIGNAL SIGRTMIN+3
+CMD ["/sbin/init"]

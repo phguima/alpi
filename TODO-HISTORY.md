@@ -152,6 +152,11 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
   of Steam, Brave and VS Code have the same names in Debian's packages (checked); `roles/zsh`'s
   `zsh_aliases_family` layer with apt's `full-update`; `roles/ai_tools` installs `libfuse2t64`;
   a Debian GNOME instance in `user` (`feat(user): zsh, desktop and AI tools on apt`).
+- **2026-10-25** Phase 2: tests on apt. `shared/prepare.yml` already removed `docker-clean` and
+  `policy-rc.d`, `verify_installed.yml` got its dpkg path with the packages item; new
+  `shared/Dockerfile-systemd-apt.j2` (systemd for Debian and Ubuntu, which publish no init
+  image), first used by a Debian instance in `services`
+  (`test(services): systemd image for apt, freshclam on Debian`). Phase 2 done.
 
 ## 6. Swap (zram)
 
