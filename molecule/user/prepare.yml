@@ -38,13 +38,13 @@
     # The system Compose files (a desktop install has them)
     - name: Prepare | X11 compose files
       ansible.builtin.package:
-        name: libX11-common
+        name: "{{ 'libx11-data' if 'apt' in group_names else 'libX11-common' }}"
         state: present
 
-# gh logged in on GNOME (hosts.yml as gh writes it with the token in the keyring), not on KDE;
-# gh skipped on EL (host_vars): no check there.
+# gh logged in on GNOME and Debian (hosts.yml as gh writes it with the token in the keyring), not
+# on KDE; gh skipped on EL (host_vars): no check there.
 - name: Prepare | GitHub CLI login
-  hosts: alpi-user-gnome
+  hosts: alpi-user-gnome:alpi-user-debian13
   gather_facts: false
   tasks:
     - name: Prepare | ~/.config/gh, alpi's
@@ -67,16 +67,17 @@
                   alpi:
               user: alpi
 
-# The cedilla step reads the system locale: pt_BR here, none on the KDE container (fallback)
+# The cedilla step reads the system locale: pt_BR on GNOME (/etc/locale.conf) and Debian
+# (/etc/default/locale, as Debian's installer writes it), none on the KDE container (fallback)
 - name: Prepare | System locale
-  hosts: alpi-user-gnome
+  hosts: alpi-user-gnome:alpi-user-debian13
   gather_facts: false
   tasks:
-    - name: Prepare | /etc/locale.conf
+    - name: Prepare | /etc/locale.conf, or /etc/default/locale on Debian
       ansible.builtin.copy:
-        dest: /etc/locale.conf
+        dest: "{{ '/etc/default/locale' if 'apt' in group_names else '/etc/locale.conf' }}"
         content: |
-          LANG="pt_BR.UTF-8"
+          LANG={{ 'pt_BR.UTF-8' if 'apt' in group_names else '"pt_BR.UTF-8"' }}
         mode: "0644"
 
 - name: Prepare | GNOME session bus
@@ -172,8 +173,8 @@
         group: root
         mode: "0755"
 
-# User Steam launchers left behind: on GNOME, the copy ALPI wrote until 2026-10-25 (every Exec
-# with the offload); on KDE, AFPI's (only the main Exec rewritten); on EL, a launcher the user
+# User Steam launchers left behind: on GNOME and Debian, the copy ALPI wrote until 2026-10-25
+# (every Exec with the offload); on KDE, AFPI's (only the main Exec rewritten); on EL, a launcher the user
 # made, without the offload
 - name: Prepare | Steam launchers
   hosts: all
@@ -190,7 +191,7 @@
     - name: Prepare | User launcher
       ansible.builtin.copy:
         dest: /home/alpi/.local/share/applications/steam.desktop
-        content: "{{ _content[inventory_hostname] }}"
+        content: "{{ _content[inventory_hostname] | default(_content['alpi-user-gnome']) }}"
         mode: "0644"
       become: true
       become_user: alpi

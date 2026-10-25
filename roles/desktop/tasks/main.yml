@@ -19,9 +19,18 @@
       when: is_kde
       tags: [konsole]
 
+    # GNOME's terminal on Fedora and Ubuntu; Debian's GNOME has gnome-terminal, and gsettings
+    # fails on a schema that is not installed
+    - name: Desktop | Look for Ptyxis
+      ansible.builtin.stat:
+        path: /usr/share/glib-2.0/schemas/org.gnome.Ptyxis.gschema.xml
+      register: _ptyxis_schema
+      when: is_gnome
+      tags: [ptyxis]
+
     - name: Desktop | Ptyxis (GNOME)
       ansible.builtin.import_tasks: ptyxis.yml
-      when: is_gnome
+      when: is_gnome and _ptyxis_schema.stat.exists
       tags: [ptyxis]
 
     - name: Desktop | Cedilla

@@ -417,7 +417,7 @@ Checked in `debian:13` and `ubuntu:26.04` containers on 2026-10-24: NVIDIA, Virt
    gone), padded to the box, which may be up to 160 columns wide.
 3. **zsh aliases are a choice.** Not everyone wants every alias, and some run programs that may
    not be installed (`agycli` without the Antigravity CLI). Every alias in the repository is a
-   named definition (`zsh_aliases`, the distro's `zsh_aliases_os`) with a description, `root: true`
+   named definition (`zsh_aliases`, the family's `zsh_aliases_family`, the distro's `zsh_aliases_os`) with a description, `root: true`
    for root's `.zshrc` too, and `requires:` (a catalog id or feature). The picker lists them as
    its last group, showing the command, with a "needs …" note. An alias is hidden while what it
    needs (zsh, and its `requires`) is listed and unchecked, its own check kept for when it comes

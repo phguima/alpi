@@ -55,7 +55,7 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   resolve on the running distro/desktop; hardware features are not listed (vetoes in
   `custom.yml`). Groups by purpose and labels in `group_vars/all/picker.yml` (`picker_groups`,
   `picker_descriptions`): a new catalog id or feature goes in a group there with a description
-  (a unit test fails otherwise). The zsh aliases (`zsh_aliases` + `zsh_aliases_os`) are the last
+  (a unit test fails otherwise). The zsh aliases (`zsh_aliases` + `zsh_aliases_family` + `zsh_aliases_os`) are the last
   group, "Shell aliases (zsh)", their commands rendered with jinja2 (`show_command`: the user's
   home as `~`, unknown names as `<name>`), saved as `zsh_aliases_selection`. `visible()`: an
   item is hidden while an id in its `requires` (aliases: zsh and their own) is listed and
@@ -179,7 +179,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - `roles/zsh`: Oh My Zsh, theme (`files/kali-like-alt.zsh-theme`), plugins, login shell and the
   managed aliases block for `zsh_users` (root + the user); only when `zsh` is selected. Aliases
   are named definitions (decided 2026-10-25): `zsh_aliases` in `group_vars/all/zsh.yml` plus the
-  distro's `zsh_aliases_os` (`full-update`, which runs `zsh_full_update_tools`: each update in
+  family's `zsh_aliases_family` and the distro's `zsh_aliases_os`, a later layer winning a name
+  (`full-update`, per distro on dnf and per family on apt, where it ends with `roles/update`'s
+  reboot signals; it runs `zsh_full_update_tools`: each update in
   `zsh_full_update_cmds` (npm, claude, agy) whose command is in `PATH` when it runs), each
   `{cmd, description, root, requires}`. All on, unless switched off by name in
   `zsh_aliases_selection` (picker) or `zsh_aliases_enabled` (`custom.yml`, wins), merged into
@@ -196,8 +198,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
 - `roles/desktop` (after `zsh`; skipped when the user is root): `~/wks`, Konsole on KDE (profile
   and color scheme in `files/`, `konsolerc`), Ptyxis on GNOME (gsettings/dconf as the user, with
   `XDG_RUNTIME_DIR`/`DBUS_SESSION_BUS_ADDRESS` set from the user's uid; changed only when the
-  read-back value differs), cedilla (`~/.XCompose` from the Compose file of the locale in
-  `/etc/locale.conf`, fallback `en_US.UTF-8`). Ansible runs modules with `LANG=C.utf8`, so
+  read-back value differs; only when Ptyxis's schema is installed: Debian's GNOME has
+  gnome-terminal), cedilla (`~/.XCompose` from the Compose file of the locale in
+  `/etc/locale.conf` or Debian's and Ubuntu's `/etc/default/locale`, fallback `en_US.UTF-8`). Ansible runs modules with `LANG=C.utf8`, so
   `ansible_facts['env']['LANG']` never shows the session's locale (AFPI/AAPI's lookup found
   nothing because of that). Steam needs no launcher of ALPI's: its own `PrefersNonDefaultGPU`
   gets switcheroo-control's NVIDIA offload from the desktop (checked on noir, 2026-10-25), so
@@ -220,7 +223,8 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   `antigravity_ide` (AppImage into `antigravity_ide_dir` only when missing, from the update
   manifest via `alpi_appimage_release`: base64 sha512 to hex; icon extracted with
   `--appimage-extract`, menu entry, handler `update-desktop-database` for `antigravity://`).
-  Installs its own deps (`curl`, `fuse-libs`, `desktop-file-utils`). URLs in
+  Installs its own deps (`curl`, `fuse2_package`: `fuse-libs`, or `libfuse2t64` on apt,
+  `desktop-file-utils`). URLs in
   `group_vars/all/ai_tools.yml`; the picker's labels come from
   `picker_descriptions` (`group_vars/all/picker.yml`). `tasks/check.yml` (run by `catalog`) checks the upstream URLs without
   downloading. The alias is `antigravity-ide` because `agy install` deletes `alias antigravity=`.
@@ -369,7 +373,9 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     and XDG_CURRENT_DESKTOP, which fact gathering sees too, and becomes alpi through sudo; GNOME
     container with Ptyxis and a session bus started as alpi at `/run/user/1000/bus` and a pt_BR
     `/etc/locale.conf`; KDE container without one, for the fallback; AlmaLinux 10 container
-    without a desktop. Cedilla on XWayland on KDE: stand-in `kwin` RPMs (rpmbuild) 6.6.4
+    without a desktop; Debian 13 container (group `apt`) with GNOME but no Ptyxis, a pt_BR
+    `/etc/default/locale`, apt's `full-update` (zsh must parse what it expands to), the AI tools'
+    packages under Debian names. Cedilla on XWayland on KDE: stand-in `kwin` RPMs (rpmbuild) 6.6.4
     installed, stand-in Brave/VS Code system entries (`files/xwayland/`, on every container),
     AAPI's leftovers, and `roles/packages/tasks/flatpak_overrides.yml` run alone (flatpak only
     there); `side_effect.yml` keeps the on-state in `/root/alpi-xwayland-on/` and publishes 6.7.5,

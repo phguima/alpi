@@ -167,9 +167,11 @@ def show_command(cmd, data):
 
 
 def zsh_choices(data):
-    """The zsh aliases (zsh_aliases + the distro's zsh_aliases_os), all on by default. Each needs
-    zsh, and its requires (the playbook leaves it out without them)."""
-    definitions = {**(data.get("zsh_aliases") or {}), **(data.get("zsh_aliases_os") or {})}
+    """The zsh aliases (zsh_aliases + the family's zsh_aliases_family + the distro's
+    zsh_aliases_os), all on by default. Each needs zsh, and its requires (the playbook leaves it
+    out without them)."""
+    definitions = {**(data.get("zsh_aliases") or {}), **(data.get("zsh_aliases_family") or {}),
+                   **(data.get("zsh_aliases_os") or {})}
     out = []
     for name, d in definitions.items():
         notes = (["root too"] if d.get("root") else []) + ([f"needs {d['requires']}"] if d.get("requires") else [])

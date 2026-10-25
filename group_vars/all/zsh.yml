@@ -1,7 +1,8 @@
 ---
 # Zsh + Oh My Zsh (roles/zsh, ported from AFPI/AAPI). Runs only when the 'zsh' catalog id is
 # selected. Aliases go in a managed block of each .zshrc:
-#   zsh_aliases (here) + zsh_aliases_os (per distro, group_vars/os_*): name -> definition, each
+#   zsh_aliases (here) + zsh_aliases_family (per family, group_vars/family_*) + zsh_aliases_os
+#     (per distro, group_vars/os_*), the later layer winning a name: name -> definition, each
 #     listed by pick.py and on unless switched off by name: zsh_aliases_selection (pick.py,
 #     selection.yml) then zsh_aliases_enabled (custom.yml), {name: bool}
 #   zsh_aliases_cedilla: user only, part of the cedilla workaround (not a choice)
@@ -63,7 +64,7 @@ zsh_aliases_cedilla: |
   alias code='code {{ cedilla_ozone_flag }}'
   {% endif %}
 
-# Updaters that full-update (zsh_aliases_os) runs between Flatpak and dnf, in this order: command
+# Updaters that full-update (zsh_aliases_os/_family) runs between Flatpak and dnf/apt, in this order: command
 # -> its update, each only when the command is in PATH at that moment (installed by ALPI or not,
 # removed later; nodejs can be skipped). The Antigravity IDE has no updater outside the app.
 zsh_full_update_cmds:

@@ -41,7 +41,9 @@
     fail_msg: "Unknown zsh aliases: {{ _unknown | join(', ') }}. Known: {{ _known | join(', ') }}."
     quiet: true
   vars:
-    _known: "{{ zsh_aliases.keys() | list + (zsh_aliases_os | default({})).keys() | list }}"
+    _known: >-
+      {{ zsh_aliases.keys() | list + (zsh_aliases_family | default({})).keys() | list
+         + (zsh_aliases_os | default({})).keys() | list }}
     _unknown: "{{ alpi_zsh_aliases_on.keys() | difference(_known) }}"
 
 - name: Resolve | Select package ids

@@ -147,6 +147,11 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
   `[zram0]` file in one package; default size min(ram / 2, 4096)), found through `dpkg-query`
   (`zram_generator_query`, `zram_package` per family); two Debian instances in `memory`
   (`feat(memory): zram on apt`).
+- **2026-10-25** Phase 2: the user roles on apt. `roles/desktop` reads the locale from
+  `/etc/default/locale` too and sets Ptyxis only where its schema is installed; the menu entries
+  of Steam, Brave and VS Code have the same names in Debian's packages (checked); `roles/zsh`'s
+  `zsh_aliases_family` layer with apt's `full-update`; `roles/ai_tools` installs `libfuse2t64`;
+  a Debian GNOME instance in `user` (`feat(user): zsh, desktop and AI tools on apt`).
 
 ## 6. Swap (zram)
 

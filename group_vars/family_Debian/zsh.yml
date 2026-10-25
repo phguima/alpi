@@ -1,0 +1,11 @@
+---
+# Aliases both apt distros share (roles/zsh: zsh_aliases, then this layer, then the distro's
+# zsh_aliases_os). full-update ends with roles/update's reboot signals: Ubuntu's
+# /run/reboot-required, or a kernel image newer than the running one (Debian writes no flag).
+zsh_aliases_family:
+  full-update:
+    cmd: >-
+      flatpak update -y; {{ zsh_full_update_tools }}sudo apt update && sudo apt full-upgrade -y;
+      { [ -e /run/reboot-required ] || [ "$(ls /boot/vmlinuz-* 2>/dev/null | sort -V | tail -n 1)" != "/boot/vmlinuz-$(uname -r)" ]; }
+      && echo "Reboot needed: the update installed a new kernel or core library"
+    description: Update the flatpaks, the AI tools and the system

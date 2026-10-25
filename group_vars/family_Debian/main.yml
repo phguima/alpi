@@ -1,0 +1,4 @@
+---
+# FUSE 2, what AppImages run on (roles/ai_tools: the Antigravity IDE); the t64 name since Debian
+# 13 and Ubuntu 24.04 (64-bit time_t transition)
+fuse2_package: libfuse2t64

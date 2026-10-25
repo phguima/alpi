@@ -76,14 +76,14 @@
         DBUS_SESSION_BUS_ADDRESS: unix:path=/run/user/1000/bus
       register: _ptyxis
       changed_when: false
-      when: _desktop == 'GNOME'
+      when: _desktop == 'GNOME' and _test_ptyxis | default(true)
 
     - name: Verify | Ptyxis settings (GNOME)
       ansible.builtin.assert:
         that: _ptyxis.results | map(attribute='stdout') | list == ['uint32 120', 'false', "'underline'", "'Fira Code 10'"]
         fail_msg: "{{ _ptyxis.results | map(attribute='stdout') | list | to_json }}"
         quiet: true
-      when: _desktop == 'GNOME'
+      when: _desktop == 'GNOME' and _test_ptyxis | default(true)
 
     - name: Verify | Read both .zshrc files
       ansible.builtin.command: "cat {{ item }}"
@@ -145,7 +145,24 @@
         _expected: >-
           alias full-update='flatpak update -y; command -v npm >/dev/null && sudo npm update -g;
           command -v claude >/dev/null && claude update; command -v agy >/dev/null && agy update;
-          sudo dnf upgrade
+          {{ 'sudo apt update && sudo apt full-upgrade -y;' if 'apt' in group_names else 'sudo dnf upgrade' }}
+
+    # apt's full-update has a shell test of its own: zsh must parse what the alias expands to
+    - name: Verify | Parse apt's full-update as alpi's zsh would run it
+      ansible.builtin.shell: >-
+        zsh -fc "$(grep '^alias full-update=' /home/alpi/.zshrc)"'; zsh -n -c "${aliases[full-update]}" && print -r -- "${aliases[full-update]}"'
+      register: _fu_apt
+      changed_when: false
+      when: "'apt' in group_names"
+
+    - name: Verify | full-update ends with the reboot signals
+      ansible.builtin.assert:
+        that:
+          - "'[ -e /run/reboot-required ]' in _fu_apt.stdout"
+          - "'/boot/vmlinuz-$(uname -r)' in _fu_apt.stdout"
+        fail_msg: "{{ _fu_apt.stdout }} {{ _fu_apt.stderr }}"
+        quiet: true
+      when: "'apt' in group_names"
 
     # The guards as the alias runs them, in alpi's zsh (PATH pinned to the user's ~/.local/bin):
     # on KDE the stand-in agy runs, the missing npm and claude are skipped without stopping the chain
@@ -296,18 +313,18 @@
       loop: "{{ ([_steam_launcher] if _steam.stat.exists else []) + ['/home/alpi/.zshrc'] }}"
       register: _steam_files
 
-    - name: Verify | GNOME lost ALPI's old launcher (NVIDIA on), KDE AFPI's; EL kept the user's own
+    - name: Verify | GNOME and Debian lost ALPI's old launcher (NVIDIA on), KDE AFPI's; EL kept the user's own
       ansible.builtin.assert:
         that:
           - _steam.stat.exists == (inventory_hostname == 'alpi-user-el10')
           - not _steam.stat.exists or 'Name=My Steam' in (_steam_files.results[0].content | b64decode)
         quiet: true
 
-    - name: Verify | The nvidia-run alias only where NVIDIA is on (GNOME)
+    - name: Verify | The nvidia-run alias only where NVIDIA is on (GNOME, Debian)
       ansible.builtin.assert:
         that: >-
           ("alias nvidia-run='" ~ _steam_prime ~ "'" in _steam_rc)
-          == (inventory_hostname == 'alpi-user-gnome')
+          == (inventory_hostname in ['alpi-user-gnome', 'alpi-user-debian13'])
         fail_msg: "{{ _steam_rc }}"
         quiet: true
       vars:
@@ -322,7 +339,7 @@
       register: _gh_fact
       changed_when: false
 
-    - name: Verify | Logged in on GNOME, reminded on KDE, not checked on EL (gh skipped)
+    - name: Verify | Logged in on GNOME and Debian, reminded on KDE, not checked on EL (gh skipped)
       ansible.builtin.assert:
         that: _gh_fact.stdout == _gh_expected[_desktop]
         fail_msg: "{{ _desktop }}: {{ _gh_fact.stdout }}"
@@ -339,7 +356,7 @@
       ansible.builtin.assert:
         that:
           - "'ALPI DEPLOYMENT COMPLETED SUCCESSFULLY!' in _final_status.stdout"
-          - _final_status.stdout is search('Your (Fedora|AlmaLinux) [0-9.]+ workstation is now optimized and ready')
+          - _final_status.stdout is search('Your (Fedora|AlmaLinux|Debian) [0-9.]+ workstation is now optimized and ready')
         fail_msg: "{{ _final_status.stdout }}"
         quiet: true
 

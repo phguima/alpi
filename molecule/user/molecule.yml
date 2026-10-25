@@ -8,6 +8,9 @@
 #   alpi-user-kde:   Konsole profile, color scheme and konsolerc; no Ptyxis settings
 #   alpi-user-el10:  no desktop (C.utf8 locale: the cedilla falls back to en_US.UTF-8); the AI
 #                    tools' own packages under EL names
+#   alpi-user-debian13: GNOME without Ptyxis (Debian's has gnome-terminal: Ptyxis left alone), the
+#                    locale in /etc/default/locale (pt_BR), apt's full-update, the AI tools' own
+#                    packages under Debian names (group apt; Debian allowed in its host_vars)
 # All: ~/wks and the cedilla fix in ~/.XCompose, owned by the user. zsh: root gets the root: true
 # aliases that are on, alpi every alias that is on and installed (GNOME switches one off in its
 # selection, KDE's custom.yml overrides its selection both ways); the API keys block (api_keys in
@@ -16,8 +19,8 @@
 # AI tools (roles/ai_tools) from local stand-ins (prepare.yml): installed for alpi only, once;
 # the IDE's AppImage checked against the manifest, its icon and menu entry, the URL handler in
 # mimeinfo.cache. GNOME and EL: every tool; KDE: the Antigravity CLI and IDE (features in host_vars).
-# Steam (roles/desktop): a user launcher with the PRIME offload goes, ALPI's old one on GNOME
-# (NVIDIA on, which also gets the nvidia-run alias) and AFPI's on KDE (NVIDIA vetoed); on EL a
+# Steam (roles/desktop): a user launcher with the PRIME offload goes, ALPI's old one on GNOME and
+# Debian (NVIDIA on, which also gets the nvidia-run alias) and AFPI's on KDE (NVIDIA vetoed); on EL a
 # user's own launcher stays.
 # Cedilla on XWayland (KDE, stand-in kwin package): with KWin 6.6.4 the Brave and VS Code menu
 # entries are copied with --ozone-platform=x11 (AAPI's copy taken over, the user's own only
@@ -25,8 +28,8 @@
 # (roles/packages' override step, run alone; Bitwarden's KDE Wayland flags replaced);
 # side_effect.yml keeps that state and publishes KWin 6.7.5; the next run reads 6.6.4 in
 # env_setup, upgrades in converge's stand-in for roles/update, decides again and undoes it all in
-# that same run (Slack's and Bitwarden's files reset, AAPI's flags and the hand-set one gone). GNOME and EL have
-# the same system entries and get nothing.
+# that same run (Slack's and Bitwarden's files reset, AAPI's flags and the hand-set one gone). GNOME, EL and
+# Debian have the same system entries and get nothing.
 platforms:
   - name: alpi-user-gnome
     image: registry.fedoraproject.org/fedora:44
@@ -43,10 +46,16 @@ platforms:
     pre_build_image: true
     command: sleep infinity
     volumes: ["alpi-dnf-user-el10:/var/cache/dnf"]
+  - name: alpi-user-debian13
+    image: docker.io/library/debian:13
+    pre_build_image: true
+    command: sleep infinity
+    volumes: ["alpi-dnf-user-debian13:/var/cache/apt"]
+    groups: [apt]
 provisioner:
   options:
     # NVIDIA "detected" everywhere (all four listed: this replaces the base config's string);
-    # the driver resolves on Fedora only, and KDE vetoes it in host_vars
+    # the driver resolves on Fedora and Debian (not EL), and KDE vetoes it in host_vars
     extra-vars: '{"is_nvidia": true, "is_asus": false, "is_intel": false, "is_amd": false}'
   playbooks:
     prepare: prepare.yml

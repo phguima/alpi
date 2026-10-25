@@ -1,13 +1,13 @@
 ---
 # Dead-key accents on a US-international layout give "ć" for ' + c; Brazilian Portuguese wants
 # "ç". The user's ~/.XCompose (a copy of the locale's system Compose file) gets the mapping fixed.
-# The system locale (/etc/locale.conf, what the user's session uses): Ansible runs modules with
-# LANG=C.utf8, so the environment does not tell. Falls back to en_US.UTF-8 when it is missing or
-# has no Compose file. compose.dir lists "<file>:<tabs><locale>" (plus an older form without the
+# The system locale (/etc/locale.conf, or /etc/default/locale on Debian and Ubuntu: what the
+# user's session uses): Ansible runs modules with LANG=C.utf8, so the environment does not tell.
+# Falls back to en_US.UTF-8 when neither sets LANG or its locale has no Compose file. compose.dir lists "<file>:<tabs><locale>" (plus an older form without the
 # colon): exact match on the locale, no regex.
 - name: Cedilla | Find the locale's Compose file
   ansible.builtin.shell: |
-    lang=$(sed -n 's/^LANG=["]\{0,1\}\([^"]*\)["]\{0,1\}$/\1/p' /etc/locale.conf 2>/dev/null)
+    lang=$(cat /etc/locale.conf /etc/default/locale 2>/dev/null | sed -n 's/^LANG=["]\{0,1\}\([^"]*\)["]\{0,1\}$/\1/p' | head -n 1)
     for l in "$lang" en_US.UTF-8; do
         [ -n "$l" ] || continue
         f=$(awk -F ':[ \t]*' -v l="$l" 'NF == 2 && $2 == l {print $1; exit}' /usr/share/X11/locale/compose.dir)

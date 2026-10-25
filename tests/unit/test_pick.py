@@ -113,12 +113,14 @@ def test_a_name_the_picker_cannot_know_shows_as_a_placeholder():
     assert pick.show_command("{{ nope }}/x {{ 'a' | upper }}", {}) == "<nope>/x A"
 
 
-@pytest.mark.parametrize("distro, major", [("Fedora", "44"), ("AlmaLinux", "10")])
+@pytest.mark.parametrize("distro, major", [("Fedora", "44"), ("AlmaLinux", "10"), ("Debian", "13")])
 def test_zsh_alias_names_clash_with_nothing_and_require_known_ids(distro, major):
     # The picker toggles packages, features and aliases by name in one list
     data = pick.load_data(ROOT, distro, major)
     known = set(data["alpi_catalog"]) | set(data["features_default"])
-    definitions = {**data["zsh_aliases"], **data["zsh_aliases_os"]}
+    definitions = {c.id: c for c in pick.zsh_choices(data)}
+    assert "full-update" in definitions
+    definitions = {**data["zsh_aliases"], **data.get("zsh_aliases_family", {}), **data.get("zsh_aliases_os", {})}
     assert not set(definitions) & known
     assert {d["requires"] for d in definitions.values() if "requires" in d} <= known
     assert all(d.get("description") and d.get("cmd") for d in definitions.values())

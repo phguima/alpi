@@ -21,14 +21,6 @@ container or VM before code relies on them. Consequences to keep in mind:
 
 ### Phase 2 — shared apt layer (`family_Debian`)
 
-- [ ] **`roles/desktop`:**
-      - Cedilla: locale from `/etc/default/locale` (Debian/Ubuntu), not `/etc/locale.conf`, or pt_BR
-        users silently get the en_US Compose file.
-      - Ptyxis tasks only when Ptyxis is installed (Debian GNOME uses gnome-terminal; `gsettings get
-        org.gnome.Ptyxis` fails without the schema), or a `ptyxis` catalog id.
-      - `.desktop` paths for Steam, Brave and VS Code *(check)*.
-- [ ] **`roles/zsh`:** `zsh_aliases_os` per distro (`full-update` with apt and the reboot hint).
-- [ ] **`roles/ai_tools`:** `libfuse2t64` instead of `fuse-libs`.
 - [ ] **Tests:** `shared/prepare.yml` already installs python3/sudo with apt; add removing
        `/etc/apt/apt.conf.d/docker-clean` (or the apt cache volume keeps nothing) and
        `/usr/sbin/policy-rc.d` (exit 101: services never start). `shared/verify_installed.yml` gets
@@ -45,6 +37,9 @@ container or VM before code relies on them. Consequences to keep in mind:
       plain `su` lacks `/usr/sbin`), then log in again.
 - [ ] **`pick.py`:** `"debian": "Debian"` (its unit test's fake Debian changes from unsupported).
 - [ ] **NVIDIA:** DKMS key created and enrolled before `nvidia-driver` installs, then `nvidia.conf`.
+      Debian's `steam.desktop` (steam-installer, checked 2026-10-25) has no `PrefersNonDefaultGPU`,
+      unlike Fedora's: on a hybrid laptop Steam starts on the integrated GPU. Decide (a user copy
+      with the key added, or nothing) after checking on a VM.
 
 ### Phase 4 — Ubuntu 26.04 LTS
 
