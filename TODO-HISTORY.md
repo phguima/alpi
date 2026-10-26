@@ -203,6 +203,9 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
 - **2026-10-25** `v1.3.0` tagged on `64351c8` (full green): `wl-clipboard`; Debian and Ubuntu
   still a preview. Their VM-checked release is now "the next minor one" in `TODO.md`, so new tags
   stop renumbering it (`docs(todo): v1.3.0 tagged`).
+- **2026-10-25** `v1.3.1` tagged on `8d492c9` (full green): `open-thevoid`/`close-thevoid` are
+  repository aliases (a fresh noir had lost them), and no stray `None` line in the user's alias
+  block (`docs(todo): v1.3.1 tagged`).
 
 ## 6. Swap (zram)
 
