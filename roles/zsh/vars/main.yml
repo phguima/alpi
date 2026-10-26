@@ -9,8 +9,11 @@ zsh_selected: "{{ 'zsh' in alpi_ids_selected }}"
 zsh_alias_definitions: "{{ zsh_aliases | combine(zsh_aliases_family | default({}), zsh_aliases_os | default({})) }}"
 zsh_installed: "{{ alpi_ids_selected + (alpi_feature | dict2items | selectattr('value') | map(attribute='key') | list) }}"
 zsh_block_root: "{{ zsh_alias_definitions | alpi_zsh_aliases(alpi_zsh_aliases_on, zsh_installed, true) }}"
-# Double-quoted: YAML turns the \n into a newline. In a folded (>-) scalar Jinja got a literal
-# backslash-n and wrote every layer after the first on the previous one's last line.
+# reject('none'): a layer can be null, which trim would write as "None": the cedilla template
+# when it outputs nothing (ansible-core 2.19+ evaluates an empty template to None) or a
+# custom.yml key left empty (its example commented out). Double-quoted: YAML turns the \n into
+# a newline. In a folded (>-) scalar Jinja got a literal backslash-n and wrote every layer
+# after the first on the previous one's last line.
 zsh_block_user: "{{ [zsh_alias_definitions | alpi_zsh_aliases(alpi_zsh_aliases_on, zsh_installed),
     zsh_aliases_cedilla, luks_volumes | alpi_luks_aliases, zsh_aliases_custom]
-  | map('trim') | select | join('\n') }}"
+  | reject('none') | map('trim') | select | join('\n') }}"

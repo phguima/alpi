@@ -5,6 +5,10 @@ api_keys: |
   export ALPI_TEST_KEY="secret"
 # As in custom.yml: no Claude Code (the Antigravity CLI and IDE only), and NVIDIA vetoed
 features: {claude_code: false, nvidia: false}
-# The picker switched llsa off, custom.yml (applied last) turns it back on and ohmyzsh off
-zsh_aliases_selection: {llsa: false}
-zsh_aliases_enabled: {llsa: true, ohmyzsh: false}
+# The picker switched llsa and both thevoid aliases off, custom.yml (applied last) turns llsa and
+# close-thevoid back on and ohmyzsh off
+zsh_aliases_selection: {llsa: false, open-thevoid: false, close-thevoid: false}
+zsh_aliases_enabled: {llsa: true, ohmyzsh: false, close-thevoid: true}
+# A volume of this machine's own, after the repository's aliases
+luks_volumes:
+  backup: 0f1e2d3c-4b5a-6978-8a9b-0c1d2e3f4a5b

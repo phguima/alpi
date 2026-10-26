@@ -148,15 +148,17 @@
     that:
       - system_hostname | length == 0 or system_hostname is regex('^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$')
       - git_user_email | length == 0 or git_user_email is regex('^[^\\s@]+@[^\\s@]+$')
+      - luks_volumes is not defined or luks_volumes is none or luks_volumes is mapping
       - _bad_luks | length == 0
+      - zsh_aliases_custom is not defined or zsh_aliases_custom is none or zsh_aliases_custom is string
     fail_msg: >-
       Invalid machine settings (host_vars/127.0.0.1/): system_hostname '{{ system_hostname }}'
       (letters, digits and '-', max 63 chars), git_user_email '{{ git_user_email }}',
-      luks_volumes {{ _bad_luks | join(', ') }} (name: letters, digits, '-', '_'; value: the LUKS
-      UUID, as in /dev/mapper/luks-<UUID>).
+      luks_volumes {{ _bad_luks | join(', ') }} (a mapping; name: letters, digits, '-', '_'; value:
+      the LUKS UUID, as in /dev/mapper/luks-<UUID>), zsh_aliases_custom (a string).
     quiet: true
   vars:
-    _bad_luks: "{{ luks_volumes | default({}) | alpi_invalid_luks }}"
+    _bad_luks: "{{ luks_volumes | alpi_invalid_luks if luks_volumes | default({}, true) is mapping else [] }}"
   tags: [always]
 
 - name: Env Setup | Resolve packages and features

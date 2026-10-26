@@ -34,9 +34,10 @@ zsh_aliases_enabled: {}
 
 # Zsh aliases for this machine only (roles/zsh, user's .zshrc). luks_volumes: name -> LUKS UUID
 # (as in /dev/mapper/luks-<UUID>, or 'lsblk -o NAME,UUID'), giving open-<name> (unlock + mount) and
-# close-<name> (unmount + lock) through udisksctl.
+# close-<name> (unmount + lock) through udisksctl. noir's thevoid is a repository alias already
+# (open-thevoid/close-thevoid above): this is for other volumes.
 luks_volumes: {}
-#  thevoid: ad99f7e6-cf3a-4581-9c46-de99119b00d4
+#  backup: 0f1e2d3c-4b5a-6978-8a9b-0c1d2e3f4a5b
 zsh_aliases_custom: ""
 #  alias vpn-on="nmcli connection up work-vpn"
 

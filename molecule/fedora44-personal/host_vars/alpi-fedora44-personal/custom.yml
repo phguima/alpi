@@ -13,9 +13,9 @@ flatpak_filesystem_overrides:
 flatpak_overrides:
   com.bitwarden.desktop: [--env=ALPI_TEST=1]
   us.zoom.Zoom: [--env=ALPI_TEST=1]
-# Machine's own aliases (AFPI's open/close-thevoid): generated from the LUKS UUID, plus free-form
+# Machine's own aliases: a LUKS volume (open/close-thevoid are repository aliases), plus free-form
 luks_volumes:
-  thevoid: ad99f7e6-cf3a-4581-9c46-de99119b00d4
+  backup: 0f1e2d3c-4b5a-6978-8a9b-0c1d2e3f4a5b
 zsh_aliases_custom: |
   alias alpi-test="echo custom"
 # No system_hostname: hostnamectl needs systemd (scenario 'common' covers it).

@@ -24,7 +24,7 @@ apart. For example, AAPI did not get the icon-ownership fix (`af80a16`) nor seve
 | Behavior | dnf5 × dnf4 (`repo list --json` × `repolist`), VirtualBox akmod + kmodgenca × Oracle + own key, `@groups`, `.i686`, `allowerasing` | tasks per distro |
 | Tooling | `ansible` × `ansible-core`, `community.general <12` on EL10 (ansible-core 2.16) | bootstrap |
 | Hardware | NVIDIA, ASUS, AMD freeworld | detected |
-| Machine/user | hostname, `open/close-thevoid` aliases with `noir`'s LUKS UUID | per machine |
+| Machine/user | hostname, LUKS volume aliases (`noir`'s `open/close-thevoid`: repository aliases since 2026-10-25) | per machine |
 
 ## Chosen approach: unification (B)
 
@@ -40,7 +40,8 @@ keeps the duplication, and every new distro would become a whole repository.
    (`bootstrap.yml`), the package and feature choice (`selection.yml`, written by the picker) and
    hand-written settings (`custom.yml`). The thevoid UUID leaves the repository and comes here
    (2026-10-08: `luks_volumes: {thevoid: <UUID>}` in `custom.yml` generates `open-thevoid` /
-   `close-thevoid`, addressing the partition by UUID instead of `/dev/nvme1n1p3`).
+   `close-thevoid`, addressing the partition by UUID instead of `/dev/nvme1n1p3`; back in the
+   repository as two aliases on 2026-10-25, decision 6 of that day).
 
 There are no profiles (removed on 2026-10-08). What a profile used to decide is a choice made on
 the machine: the hostname is managed only when one is given, and packages and features are picked
@@ -444,3 +445,13 @@ Checked in `debian:13` and `ubuntu:26.04` containers on 2026-10-24: NVIDIA, Virt
    it with `PrefersNonDefaultGPU` and `X-KDE-RunOnDiscreteGpu` and no variables, the mechanism
    decision 1 checked on noir, rebuilt on every run and removed when NVIDIA or Steam goes. Not
    checked on real NVIDIA hardware with Debian's or Ubuntu's driver yet (TODO, Phase 5).
+6. **open/close-thevoid are repository aliases.** A fresh install on noir had no `custom.yml`, so
+   it lost AFPI's `open-thevoid` / `close-thevoid` (decision of 2026-10-08 moved the UUID there).
+   noir's UUID was already public in the repository, and the aliases do nothing harmful where no
+   partition has it (udisksctl: no such device), so they return as two named definitions in
+   `zsh_aliases` (`thevoid_uuid` in `group_vars/all/zsh.yml`): on by default, listed by the
+   picker with "(noir's LUKS disk)" in their description, and switched off by name like any
+   alias. `custom.yml`'s `luks_volumes` stays for a machine's other volumes. Same day: an empty
+   layer of the user's aliases block (the cedilla template when off, which ansible-core 2.19+
+   evaluates to None, or an empty `custom.yml` key) was written as a `None` line; null layers
+   are now dropped.

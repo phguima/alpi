@@ -57,6 +57,16 @@ zsh_aliases:
     cmd: "{{ nvidia_prime_env }}"
     description: Run a program on the NVIDIA GPU
     requires: nvidia-driver
+  open-thevoid:
+    cmd: "udisksctl unlock -b /dev/disk/by-uuid/{{ thevoid_uuid }}; udisksctl mount -b /dev/mapper/luks-{{ thevoid_uuid }}"
+    description: Unlock and mount thevoid (noir's LUKS disk)
+  close-thevoid:
+    cmd: "udisksctl unmount -b /dev/mapper/luks-{{ thevoid_uuid }}; udisksctl lock -b /dev/disk/by-uuid/{{ thevoid_uuid }}"
+    description: Unmount and lock thevoid (noir's LUKS disk)
+
+# noir's data disk (AFPI's open/close-thevoid), found by its LUKS UUID: on a machine without it,
+# udisksctl only says the device does not exist. Untick them in the picker where they mean nothing.
+thevoid_uuid: ad99f7e6-cf3a-4581-9c46-de99119b00d4
 
 # VS Code on XWayland from the shell, with the cedilla workaround (group_vars/all/desktop.yml)
 zsh_aliases_cedilla: |

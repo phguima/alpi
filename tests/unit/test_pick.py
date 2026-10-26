@@ -108,6 +108,11 @@ def test_zsh_aliases_are_listed_with_their_commands_rendered(distro, major, upda
     # the cedilla flag only with the workaround on, which the picker cannot know: off
     assert zsh["antigravity-ide"].detail == '"~/wks/tools/antigravity/antigravity"'
     assert zsh["nvidia-run"].detail == data["nvidia_prime_env"]
+    # noir's LUKS disk, a choice like any other alias
+    uuid = data["thevoid_uuid"]
+    assert zsh["open-thevoid"].detail == (f"udisksctl unlock -b /dev/disk/by-uuid/{uuid}; "
+                                          f"udisksctl mount -b /dev/mapper/luks-{uuid}")
+    assert zsh["close-thevoid"].label == "Unmount and lock thevoid (noir's LUKS disk)"
     assert not any("{" in c.detail or "<" in c.detail for c in zsh.values())
 
 

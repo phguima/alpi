@@ -76,8 +76,9 @@
           - "'alias lls=' in _rc"
           - "'alias claudecli=' in _rc"
           - "\"dnf needs-restarting'\" in _rc"
-          - "'alias open-thevoid=\"udisksctl unlock -b /dev/disk/by-uuid/ad99f7e6-cf3a-4581-9c46-de99119b00d4; udisksctl mount -b /dev/mapper/luks-ad99f7e6-cf3a-4581-9c46-de99119b00d4\"' in _rc"
-          - "'alias close-thevoid=' in _rc"
+          - "\"alias open-thevoid='udisksctl unlock -b /dev/disk/by-uuid/ad99f7e6-cf3a-4581-9c46-de99119b00d4; udisksctl mount -b /dev/mapper/luks-ad99f7e6-cf3a-4581-9c46-de99119b00d4'\" in _rc"
+          - "\"alias close-thevoid='udisksctl unmount -b\" in _rc"
+          - "'alias open-backup=\"udisksctl unlock -b /dev/disk/by-uuid/0f1e2d3c-4b5a-6978-8a9b-0c1d2e3f4a5b' in _rc"
           - "'alias alpi-test=\"echo custom\"' in _rc"
           - "'nvidia-run' not in _rc"
           - _rc.count('# BEGIN ANSIBLE MANAGED ALIASES') == 1

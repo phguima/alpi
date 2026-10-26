@@ -76,12 +76,13 @@
       register: _zshrc
       changed_when: false
 
+    # open/close-thevoid (noir's disk) are repository aliases, on unless unticked
     - name: Verify | EL's full-update (dnf4 needs -r); no nvidia-run (driver unavailable on EL)
       ansible.builtin.assert:
         that:
           - "\"dnf needs-restarting -r'\" in _zshrc.stdout"
           - "'nvidia-run' not in _zshrc.stdout"
-          - "'open-' not in _zshrc.stdout"
+          - "'alias open-thevoid=' in _zshrc.stdout and 'alias close-thevoid=' in _zshrc.stdout"
         fail_msg: "{{ _zshrc.stdout }}"
         quiet: true
 

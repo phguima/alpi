@@ -195,7 +195,12 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   root's `.zshrc` only the `root: true` ones. An alias name must not be a catalog id or feature
   (unit test). The user also gets `zsh_aliases_cedilla` (VS Code on XWayland, not a choice) and
   the machine's `luks_volumes` + `zsh_aliases_custom` from `custom.yml`, joined in a
-  double-quoted scalar: in a folded one (`>-`) `join('\n')` gets a literal backslash-n. API keys block (`api_keys`, from the
+  double-quoted scalar: in a folded one (`>-`) `join('\n')` gets a literal backslash-n. Null layers
+  are rejected before `trim`, which writes them as "None": since ansible-core 2.19 a template that
+  outputs nothing (the cedilla layer when off) is None, as is an empty `custom.yml` key;
+  `luks_volumes` and `zsh_aliases_custom` must otherwise be a mapping and a string (`env_setup`).
+  `open-thevoid` / `close-thevoid` (noir's LUKS disk, `thevoid_uuid`) are ordinary `zsh_aliases`
+  definitions, so the picker toggles them; `luks_volumes` is for a machine's other volumes. API keys block (`api_keys`, from the
   optional vault `group_vars/all/secrets.yml`; never defaulted in `group_vars/all/zsh.yml`, which
   loads after `secrets.yml` and would override it) in the user's `.zshrc` only, removed when
   empty; AFPI's legacy `NVIDIA AND API CONFIGURATION` block removed. `luks_volumes` is validated in

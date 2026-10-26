@@ -117,6 +117,7 @@
         that:
           - _names == _expected
           - "\"alias lls='ls --color -lh --group-directories-first'\" in _user.splitlines()"
+          - "'None' not in _user.splitlines()"
           - _user.count('# BEGIN API CONFIGURATION') == 1
           - "'export ALPI_TEST_KEY=\"secret\"' in _user"
           - "'NVIDIA AND API CONFIGURATION' not in _user and 'ALPI_LEGACY_NVIDIA_BLOCK' not in _user"
@@ -127,9 +128,10 @@
         # the managed block only (the Antigravity CLI's own setup adds lines after it)
         _names: "{{ _user | regex_search('(?s)# BEGIN ANSIBLE MANAGED ALIASES.*# END ANSIBLE MANAGED ALIASES') | default('', true)
                     | regex_findall('(?m)^alias ([^=]+)=') }}"
-        _expected: "{{ ['zshconfig', 'ohmyzsh', 'lls', 'llsa', 'clean-cache', 'claudecli', 'agycli',
-                        'antigravity-ide', 'nvidia-run', 'full-update']
-                       | reject('in', {'GNOME': ['clean-cache'], 'KDE': ['ohmyzsh', 'claudecli']}[_desktop] | default([]))
+        _expected: "{{ (['zshconfig', 'ohmyzsh', 'lls', 'llsa', 'clean-cache', 'claudecli', 'agycli',
+                         'antigravity-ide', 'nvidia-run', 'open-thevoid', 'close-thevoid', 'full-update']
+                        + (['open-backup', 'close-backup'] if _desktop == 'KDE' else []))
+                       | reject('in', {'GNOME': ['clean-cache'], 'KDE': ['ohmyzsh', 'claudecli', 'open-thevoid']}[_desktop] | default([]))
                        | reject('in', [] if inventory_hostname in _nvidia_hosts else ['nvidia-run']) | list }}"
         _nvidia_hosts: [alpi-user-gnome, alpi-user-debian13, alpi-user-ubuntu2604]
 
