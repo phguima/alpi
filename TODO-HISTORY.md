@@ -206,6 +206,9 @@ final wording; the VM checklist steps live in `tests/vm-checklist.md`).
 - **2026-10-25** `v1.3.1` tagged on `8d492c9` (full green): `open-thevoid`/`close-thevoid` are
   repository aliases (a fresh noir had lost them), and no stray `None` line in the user's alias
   block (`docs(todo): v1.3.1 tagged`).
+- **2026-10-28** `v1.4.0` tagged on `a57929b` (full green): `tea` and `fj` (`forgejo-cli`), the
+  Gitea and Forgejo CLIs, from their releases on every distro through `roles/upstream`'s new
+  `release_binary` type (`docs(todo): v1.4.0 tagged`).
 
 ## 6. Swap (zram)
 
