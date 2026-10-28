@@ -5,7 +5,7 @@
 # Two releases in the GitHub API's shape. Each zip has what the role must take (hinted/static
 # TTFs) and what it must leave (macOS resource forks, unhinted copies, a README). v2 drops
 # Roboto-Bold and adds Roboto-Black.
-- name: Prepare | Stand-in GitHub releases
+- name: Prepare | Stand-in GitHub, Gitea and Forgejo releases
   hosts: alpi-up-install
   gather_facts: false
   tasks:
@@ -38,6 +38,51 @@
           PY
         creates: /srv/alpi-up/release-v2.json
 
+    # Two programs in the Gitea/Forgejo API's shape (no digests), stand-in scripts that print
+    # their version. tea: an .xz next to the bare program and a .sha256 file, as Gitea publishes;
+    # v1 and v2, side_effect.yml publishes v2. fj: a .tar.gz holding fj and a README, v1 only
+    # (side_effect.yml deletes the installed program instead). The bare tea is a decoy: the role
+    # must take the .xz.
+    - name: Prepare | Programs and release JSON (tea v1 published, v2 kept for side_effect.yml; fj v1)
+      ansible.builtin.shell:
+        cmd: |
+          python3 - <<'PY'
+          import hashlib, io, json, lzma, pathlib, tarfile
+          root = pathlib.Path("/srv/alpi-up")
+          url = "http://127.0.0.1:8766"
+          def program(name, tag):
+              return f"#!/bin/sh\necho '{name} {tag}'\n".encode()
+          tea_api = root / "api/v1/repos/gitea/tea/releases"
+          tea_api.mkdir(parents=True, exist_ok=True)
+          for tag in ("v1", "v2"):
+              d = root / "dl/tea" / tag
+              d.mkdir(parents=True, exist_ok=True)
+              base = f"tea-{tag[1:]}.0-linux-amd64"
+              (d / base).write_bytes(b"#!/bin/sh\necho 'bare tea, not the .xz'\n")
+              (d / f"{base}.xz").write_bytes(lzma.compress(program("tea", tag)))
+              digest = hashlib.sha256((d / f"{base}.xz").read_bytes()).hexdigest()
+              (d / f"{base}.xz.sha256").write_text(f"{digest}  {base}.xz\n")
+              release = {"tag_name": tag, "assets": [
+                  {"name": n, "browser_download_url": f"{url}/dl/tea/{tag}/{n}"}
+                  for n in (base, f"{base}.xz", f"{base}.xz.sha256")]}
+              (root / f"tea-release-{tag}.json").write_text(json.dumps(release))
+          (tea_api / "latest").write_text((root / "tea-release-v1.json").read_text())
+          fj_api = root / "api/v1/repos/forgejo-contrib/forgejo-cli/releases"
+          fj_api.mkdir(parents=True, exist_ok=True)
+          d = root / "dl/fj/v1"
+          d.mkdir(parents=True, exist_ok=True)
+          with tarfile.open(d / "forgejo-cli-x86_64-linux.tar.gz", "w:gz") as tar:
+              for name, data in (("fj", program("fj", "v1")), ("README.md", b"not the program\n")):
+                  info = tarfile.TarInfo(name)
+                  info.size, info.mode = len(data), 0o755
+                  tar.addfile(info, io.BytesIO(data))
+          (fj_api / "latest").write_text(json.dumps({"tag_name": "v1", "assets": [
+              {"name": "forgejo-cli-x86_64-windows.zip", "browser_download_url": f"{url}/none.zip"},
+              {"name": "forgejo-cli-x86_64-linux.tar.gz",
+               "browser_download_url": f"{url}/dl/fj/v1/forgejo-cli-x86_64-linux.tar.gz"}]}))
+          PY
+        creates: /srv/alpi-up/tea-release-v2.json
+
     # Detached, or the exec never returns
     - name: Prepare | HTTP server on 127.0.0.1:8766
       ansible.builtin.shell:
@@ -53,7 +98,7 @@
         timeout: 30
 
 # What an earlier run left: v0 installed
-- name: Prepare | Roboto already installed
+- name: Prepare | Roboto, tea and fj already installed
   hosts: alpi-up-offline:alpi-up-absent
   gather_facts: false
   tasks:
@@ -73,3 +118,22 @@
         - { name: .version, content: "v0\n" }
       loop_control:
         label: "{{ item.name }}"
+
+    - name: Prepare | Version directory
+      ansible.builtin.file:
+        path: /var/lib/alpi/upstream
+        state: directory
+        mode: "0755"
+
+    - name: Prepare | Installed programs and versions
+      ansible.builtin.copy:
+        dest: "{{ item.dest }}"
+        content: "{{ item.content }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - { dest: /usr/local/bin/tea, content: "#!/bin/sh\necho 'tea v0'\n", mode: "0755" }
+        - { dest: /var/lib/alpi/upstream/tea.version, content: "v0\n", mode: "0644" }
+        - { dest: /usr/local/bin/fj, content: "#!/bin/sh\necho 'fj v0'\n", mode: "0755" }
+        - { dest: /var/lib/alpi/upstream/forgejo-cli.version, content: "v0\n", mode: "0644" }
+      loop_control:
+        label: "{{ item.dest }}"

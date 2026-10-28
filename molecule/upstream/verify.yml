@@ -61,3 +61,58 @@
         that: not _up_stat.stat.exists
         quiet: true
       when: inventory_hostname == 'alpi-up-absent'
+
+- name: Verify | roles/upstream (tea and fj, release_binary)
+  hosts: all
+  gather_facts: false
+  vars:
+    _bin_expected:
+      alpi-up-install: {tea: tea v2, fj: fj v1, tea_version: v2, fj_version: v1}
+      alpi-up-offline: {tea: tea v0, fj: fj v0, tea_version: v0, fj_version: v0}
+  tasks:
+    - name: Verify | Programs and versions
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop: [/usr/local/bin/tea, /usr/local/bin/fj, /var/lib/alpi/upstream/tea.version,
+             /var/lib/alpi/upstream/forgejo-cli.version]
+      register: _bin_stat
+
+    - name: Verify | packages_absent removed the programs and their versions
+      ansible.builtin.assert:
+        that: _bin_stat.results | selectattr('stat.exists') | list | length == 0
+        fail_msg: "{{ _bin_stat.results | selectattr('stat.exists') | map(attribute='item') | list }}"
+        quiet: true
+      when: inventory_hostname == 'alpi-up-absent'
+
+    - name: Verify | Run the installed stand-ins
+      ansible.builtin.command: "{{ item }}"
+      loop: [/usr/local/bin/tea, /usr/local/bin/fj]
+      register: _bin_run
+      changed_when: false
+      when: inventory_hostname != 'alpi-up-absent'
+
+    - name: Verify | Read the recorded versions
+      ansible.builtin.slurp:
+        src: "/var/lib/alpi/upstream/{{ item }}.version"
+      loop: [tea, forgejo-cli]
+      register: _bin_versions
+      when: inventory_hostname != 'alpi-up-absent'
+
+    # install: tea updated to v2 from the .xz (not the bare decoy), fj put back at v1 from the
+    # archive (not its README); offline: v0 kept
+    - name: Verify | The expected programs, root 0755, versions recorded
+      ansible.builtin.assert:
+        that:
+          - _bin_run.results | map(attribute='stdout') | list == [_exp.tea, _exp.fj]
+          - _bin_versions.results | map(attribute='content') | map('b64decode') | list
+            == [_exp.tea_version ~ '\n', _exp.fj_version ~ '\n']
+          - _bin_stat.results[:2] | map(attribute='stat.pw_name') | unique | list == ['root']
+          - _bin_stat.results[:2] | map(attribute='stat.mode') | unique | list == ['0755']
+        fail_msg: >-
+          {{ _bin_run.results | map(attribute='stdout') | list }}
+          {{ _bin_versions.results | map(attribute='content') | map('b64decode') | list }}
+          {{ _bin_stat.results[:2] | map(attribute='stat.mode') | list }}
+        quiet: true
+      vars:
+        _exp: "{{ _bin_expected[inventory_hostname] }}"
+      when: inventory_hostname != 'alpi-up-absent'

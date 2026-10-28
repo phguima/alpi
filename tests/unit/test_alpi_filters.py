@@ -646,10 +646,36 @@ def test_github_release_errors(release, pattern, error):
     assert error in alpi.alpi_github_release(release, pattern)["error"]
 
 
+# Gitea's shape (gitea/tea v0.16.0, 2026-10-28): no digests, a .sha256 file per archive
+GITEA_RELEASE = {"tag_name": "v0.16.0", "assets": [
+    {"name": "tea-0.16.0-linux-amd64", "browser_download_url": "https://example.org/tea-0.16.0-linux-amd64"},
+    {"name": "tea-0.16.0-linux-amd64.xz", "browser_download_url": "https://example.org/tea-0.16.0-linux-amd64.xz"},
+    {"name": "tea-0.16.0-linux-amd64.xz.sha256",
+     "browser_download_url": "https://example.org/tea-0.16.0-linux-amd64.xz.sha256"},
+]}
+
+
+def test_github_release_checksum_from_a_checksum_asset():
+    assert alpi.alpi_github_release(GITEA_RELEASE, "-linux-amd64[.]xz$", "-linux-amd64[.]xz[.]sha256$") == {
+        "tag": "v0.16.0", "name": "tea-0.16.0-linux-amd64.xz",
+        "url": "https://example.org/tea-0.16.0-linux-amd64.xz",
+        "checksum": "sha256:https://example.org/tea-0.16.0-linux-amd64.xz.sha256"}
+    # Without the pattern, no checksum; GitHub's digest wins over a checksum asset
+    assert alpi.alpi_github_release(GITEA_RELEASE, "-linux-amd64[.]xz$")["checksum"] == ""
+    assert alpi.alpi_github_release(RELEASE, "[.]zip$", "notes")["checksum"] == DIGEST
+
+
+def test_github_release_missing_checksum_asset_is_an_error():
+    assert "no asset matching" in alpi.alpi_github_release(GITEA_RELEASE, "xz$", "[.]sha512$")["error"]
+    assert "bad asset pattern" in alpi.alpi_github_release(GITEA_RELEASE, "xz$", "(")["error"]
+
+
 def test_upstream_missing_decides_only_on_answers():
     import json
     sources = {"ok": {"asset": "zip$"}, "moved": {"asset": "zip$"}, "noasset": {"asset": "tar$"},
-               "down": {"asset": "zip$"}, "limited": {"asset": "zip$"}, "garbled": {"asset": "zip$"}}
+               "down": {"asset": "zip$"}, "limited": {"asset": "zip$"}, "garbled": {"asset": "zip$"},
+               "sums": {"asset": "xz$", "checksum_asset": "xz[.]sha256$"},
+               "nosums": {"asset": "xz$", "checksum_asset": "xz[.]sha512$"}}
     results = [
         {"item": "ok", "status": 200, "content": json.dumps(RELEASE)},
         {"item": "moved", "status": 404},
@@ -657,8 +683,10 @@ def test_upstream_missing_decides_only_on_answers():
         {"item": "down", "status": -1},
         {"item": "limited", "status": 403, "content": "{}"},
         {"item": "garbled", "status": 200, "content": "<html>"},
+        {"item": "sums", "status": 200, "content": json.dumps(GITEA_RELEASE)},
+        {"item": "nosums", "status": 200, "content": json.dumps(GITEA_RELEASE)},
     ]
-    assert alpi.alpi_upstream_missing(results, sources) == ["moved", "noasset", "garbled"]
+    assert alpi.alpi_upstream_missing(results, sources) == ["moved", "noasset", "garbled", "nosums"]
     assert alpi.alpi_upstream_missing(None, {}) == []
 
 

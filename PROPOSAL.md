@@ -455,3 +455,21 @@ Checked in `debian:13` and `ubuntu:26.04` containers on 2026-10-24: NVIDIA, Virt
    layer of the user's aliases block (the cedilla template when off, which ansible-core 2.19+
    evaluates to None, or an empty `custom.yml` key) was written as a `None` line; null layers
    are now dropped.
+
+## Decisions (2026-10-28)
+
+1. **Gitea and Forgejo CLIs from upstream everywhere.** `tea` (Gitea's CLI, works with Forgejo
+   too) and `fj` (`forgejo-cli`) are defaults next to `gh`. Fedora 44 and AlmaLinux 10 (EPEL
+   included) package neither; Debian 13 and Ubuntu 26.04 package `tea-cli` (0.9.2 and 0.11.1,
+   installed as `/usr/bin/tea-cli`; Debian's `tea` is a text editor) and Ubuntu `forgejo-cli`
+   (0.3.0), against 0.16.0 and 0.7.0 upstream (checked 2026-10-28). Old enough to miss commands
+   and the same command name nowhere, so both come from their own releases on every distro,
+   bending "upstream only where the distro has no package" on purpose.
+2. **`release_binary` source type.** One program from the latest release on GitHub, Gitea or
+   Forgejo, whose release APIs share GitHub's shape (`alpi_github_release` parses all three).
+   Gitea and Forgejo publish no digests: `checksum_asset` names the release's sha256 file, which
+   get_url reads (`sha256:<url>`; tea publishes one per `.xz`); fj publishes none, so HTTPS is its
+   only check. Installed by root in `/usr/local/bin` (fj's binary needs glibc 2.39, EL10's
+   exactly), the tag in `/var/lib/alpi/upstream/<id>.version`; replaced when the tag differs or
+   the program is gone; forge unreachable keeps what is installed, as for the fonts. x86_64
+   assets only, like every target machine.

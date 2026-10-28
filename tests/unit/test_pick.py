@@ -65,6 +65,14 @@ def test_el10_hides_unavailable_ids_and_empty_features():
     assert rows["vim"] == ("Vim editor", "vim-enhanced")
 
 
+@pytest.mark.parametrize("distro, major", [("Fedora", "44"), ("AlmaLinux", "10"), ("Debian", "13"), ("Ubuntu", "26")])
+def test_forge_clis_come_from_upstream_everywhere(distro, major):
+    _, (_, packages) = real_choices(distro, major)
+    rows = {c.id: (c.detail, c.default) for c in packages}
+    assert rows["tea"] == ("upstream tea", True)
+    assert rows["forgejo-cli"] == ("upstream forgejo-cli", True)
+
+
 @pytest.mark.parametrize("xdg, shown, hidden", [
     ("KDE", "ktorrent", "gnome-tweaks"),
     ("ubuntu:GNOME", "gnome-tweaks", "ktorrent"),

@@ -246,15 +246,22 @@ parity; code comes in step by step, ported from them. Changes made there in the 
   `group_vars/all/ai_tools.yml`; the picker's labels come from
   `picker_descriptions` (`group_vars/all/picker.yml`). `tasks/check.yml` (run by `catalog`) checks the upstream URLs without
   downloading. The alias is `antigravity-ide` because `agy install` deletes `alias antigravity=`.
-- `roles/upstream` (after `packages`): catalog values `{upstream: <source id>}` (Roboto on EL),
-  sources in `group_vars/all/upstream.yml` (`upstream_sources`, each with a `type` handled by
-  `tasks/<type>.yml`; an undefined id stops the run in `resolve.yml`). `github_fonts`: latest
-  GitHub release, asset by regex (`alpi_github_release`: asset + its `sha256:` digest for
-  get_url), the members matching `files` flat into `dest`, replaced wholesale when the tag differs
-  from `<dest>/.version`; GitHub unreachable keeps what is installed; `packages_absent` removes
+- `roles/upstream` (after `packages`): catalog values `{upstream: <source id>}` (Roboto on EL,
+  `tea` and `forgejo-cli` everywhere: PROPOSAL "Decisions (2026-10-28)"), sources in
+  `group_vars/all/upstream.yml` (`upstream_sources`, each with a `type` handled by
+  `tasks/<type>.yml`; an undefined id stops the run in `resolve.yml`). Latest release on GitHub,
+  Gitea or Forgejo (same API shape), asset by regex (`alpi_github_release`: asset + GitHub's
+  `sha256:` digest for get_url, or `sha256:<url>` of the asset matching `checksum_asset`).
+  `github_fonts`: the members matching `files` flat into `dest`, replaced wholesale when the tag
+  differs from `<dest>/.version`. `release_binary`: one program into `dest` (`/usr/local/bin`,
+  root 0755), unpacked by the asset's name (`.tar.gz`: its `member`; `.xz`: decompressed, with
+  `xz_package` from `group_vars/family_*/main.yml`; else as is), the tag in
+  `<upstream_version_dir>/<id>.version` (`/var/lib/alpi/upstream`), replaced when the tag differs
+  or the program is gone. Forge unreachable keeps what is installed; `packages_absent` removes
   it. The release body is parsed whatever its Content-Type. Name check in
-  `roles/packages/tasks/check.yml` (`alpi_upstream_missing`: a 404 or no matching asset fails,
-  no answer only warns). Installed by root, so it runs for root-only runs too.
+  `roles/packages/tasks/check.yml` (`alpi_upstream_missing`: a 404 or no matching asset or
+  checksum asset fails, no answer only warns). Installed by root, so it runs for root-only runs
+  too.
 - Catalog values per distro may be `{native: …, repo: …}`: a repository only that distro needs
   (Oracle VirtualBox on EL). Catalog keys (`alpi_catalog_keys` per distro): Fedora
   `fedora, rpm, all`, EL `el10, el, rpm, all`, Debian 13 `debian13, debian, deb, all`, Ubuntu
@@ -367,10 +374,11 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     `shared/verify_native_controller.yml`, as `el10-work` does with 2.16),
     `ubuntu2604` (as `debian13`, with its playbooks: each instance's sources file, components and
     candidates in its host_vars), `unsupported` (Debian 12, Ubuntu 26.10), `upstream` (`roles/upstream` on
-    AlmaLinux 10 against a stand-in GitHub served by `http.server` on 127.0.0.1:8766: install v1,
-    `side_effect.yml` publishes v2 and runs again (Molecule's side_effect step, added to the
-    scenario's test_sequence), GitHub unreachable keeps v0, `packages_absent` removes it;
-    `el10-work` installs the real release), `bootstrap`
+    AlmaLinux 10 against stand-in GitHub, Gitea and Forgejo releases served by `http.server` on
+    127.0.0.1:8766: Roboto, tea (.xz + .sha256) and fj (.tar.gz) install v1, `side_effect.yml`
+    publishes Roboto and tea v2, deletes fj and runs again (Molecule's side_effect step, added to
+    the scenario's test_sequence): replaced, fj v1 back; forges unreachable keep v0,
+    `packages_absent` removes them; the personal and work scenarios install the real releases), `bootstrap`
     (bootstrap.sh with scripted answers, picker in text mode, on Fedora 44, Debian 13 and Ubuntu 26.04; a Debian
     13 without sudo must stop before installing anything and print the `su -` command), `common` (env_setup +
     `roles/common` on `almalinux/10-init` with systemd: static hostname via hostnamectl, git),

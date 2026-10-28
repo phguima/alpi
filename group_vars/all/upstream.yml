@@ -7,6 +7,15 @@
 # (a regex), checked against the digest GitHub publishes for it; the archive members matching
 # 'files' go flat into 'dest'. Replaced wholesale when the release tag differs from the one
 # recorded in <dest>/.version. If GitHub cannot be reached, what is installed stays.
+#
+# release_binary: one program from the latest release on GitHub, Gitea or Forgejo (release_api;
+# their APIs share GitHub's shape), the asset matching 'asset', checked against GitHub's digest
+# or, where the forge publishes none, the asset matching 'checksum_asset' (a sha256 file). The
+# asset is unpacked by its name: .tar.gz gives up its 'member', .xz is decompressed, anything
+# else is the program. Installed as 'dest' (root, 0755), replaced when the release tag differs
+# from <upstream_version_dir>/<id>.version or the program is gone. x86_64 assets.
+upstream_version_dir: /var/lib/alpi/upstream
+
 upstream_sources:
   # Ported from AAPI (EL10 has no Roboto package). Static hinted TTFs only, as distro packages
   # ship: adding the variable font too would show duplicate families in font pickers.
@@ -16,3 +25,22 @@ upstream_sources:
     asset: '[.]zip$'
     files: "hinted/static/*.ttf"
     dest: /usr/local/share/fonts/roboto
+
+  # Gitea's CLI (works with Forgejo too). Debian 13 and Ubuntu 26.04 package it as tea-cli, years
+  # behind (0.9.2 and 0.11.1 against 0.16.0 on 2026-10-28), so it comes from upstream everywhere.
+  # A static Go program; Gitea publishes a .sha256 per archive, none for the bare program.
+  tea:
+    type: release_binary
+    release_api: "https://gitea.com/api/v1/repos/gitea/tea/releases/latest"
+    asset: '^tea-[0-9.]+-linux-amd64[.]xz$'
+    checksum_asset: '^tea-[0-9.]+-linux-amd64[.]xz[.]sha256$'
+    dest: /usr/local/bin/tea
+  # Forgejo's CLI (fj). Ubuntu 26.04 packages 0.3.0 (0.7.0 upstream on 2026-10-28), the others
+  # nothing. Needs glibc 2.39 (EL10 has exactly that), libssl3 and zlib; no checksum published,
+  # so HTTPS is the only check.
+  forgejo-cli:
+    type: release_binary
+    release_api: "https://codeberg.org/api/v1/repos/forgejo-contrib/forgejo-cli/releases/latest"
+    asset: '^forgejo-cli-x86_64-linux[.]tar[.]gz$'
+    member: fj
+    dest: /usr/local/bin/fj

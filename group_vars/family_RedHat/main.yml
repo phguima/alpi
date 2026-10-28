@@ -1,6 +1,7 @@
 ---
 # FUSE 2, what AppImages run on (roles/ai_tools: the Antigravity IDE)
 fuse2_package: fuse-libs
+xz_package: xz
 
 # roles/nvidia: the driver's options file (AFPI's name, so its file is rewritten) and module name
 nvidia_modprobe_conf: /etc/modprobe.d/nvidia.conf

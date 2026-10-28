@@ -1,12 +1,14 @@
 ---
-# roles/upstream on AlmaLinux 10 (no Roboto package), against a stand-in GitHub served by
-# python3 -m http.server in the container (prepare.yml: release JSON in the API's shape, zips
-# with the real archive's traps: __MACOSX resource forks, unhinted copies, a non-font file):
-#   alpi-up-install: installs v1 (only hinted/static/*.ttf, root-owned, version recorded);
-#                    side_effect.yml publishes v2 (a font dropped, one added) and runs again:
-#                    replaced wholesale
-#   alpi-up-offline: the API does not answer: the installed version stays, the run goes on
-#   alpi-up-absent:  google-roboto-fonts in packages_absent: the installed fonts are removed
+# roles/upstream on AlmaLinux 10 (no Roboto package), against stand-in forges served by
+# python3 -m http.server in the container (prepare.yml: release JSON in the APIs' shape, zips
+# with the real archive's traps: __MACOSX resource forks, unhinted copies, a non-font file; tea
+# as Gitea publishes it, .xz + .sha256 next to a bare decoy; fj in a .tar.gz with a README):
+#   alpi-up-install: installs v1 (only hinted/static/*.ttf, root-owned, version recorded; tea and
+#                    fj in /usr/local/bin, root 0755, versions in /var/lib/alpi/upstream);
+#                    side_effect.yml publishes v2 (a font dropped, one added; tea v2), deletes
+#                    fj and runs again: fonts replaced wholesale, tea v2, fj v1 back
+#   alpi-up-offline: the API does not answer: the installed versions stay, the run goes on
+#   alpi-up-absent:  google-roboto-fonts, tea and forgejo-cli in packages_absent: removed
 platforms:
   - name: alpi-up-install
     image: docker.io/library/almalinux:10

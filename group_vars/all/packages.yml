@@ -11,6 +11,7 @@ packages_base:
   - 7zip
   - curl
   - fastfetch
+  - forgejo-cli
   - git
   - htop
   - hwinfo
@@ -22,6 +23,7 @@ packages_base:
   - potrace
   - python3-pip
   - shellcheck
+  - tea
   - testdisk
   - tmux
   - tuptime

@@ -1,0 +1,147 @@
+---
+# One program from the latest release of a source on GitHub, Gitea or Forgejo (their release
+# APIs share GitHub's shape): the matching asset, checked against GitHub's digest or the
+# release's own checksum file (checksum_asset), unpacked by its name (.tar.gz: the archive
+# member 'member'; .xz: decompressed; anything else: the program itself) into upstream.dest.
+# Replaced when the release tag differs from the one recorded in
+# <upstream_version_dir>/<id>.version, or the program is gone. If the forge cannot be reached,
+# what is installed stays. Vars: upstream_id, upstream, upstream_state (present | absent).
+
+- name: Upstream | {{ upstream_id }}
+  when: upstream_state == 'present'
+  vars:
+    _up_version_file: "{{ upstream_version_dir }}/{{ upstream_id }}.version"
+  block:
+    # The body is parsed whatever the Content-Type
+    - name: Upstream | {{ upstream_id }}, latest release
+      ansible.builtin.uri:
+        url: "{{ upstream.release_api }}"
+        headers:
+          Accept: application/vnd.github+json
+        return_content: true
+      register: _up_api
+      failed_when: false
+      check_mode: false
+
+    - name: Upstream | {{ upstream_id }}, forge unreachable
+      ansible.builtin.debug:
+        msg: >-
+          Could not query {{ upstream.release_api }} (status {{ _up_api.status | default('n/a') }});
+          keeping the installed {{ upstream_id }}, if any.
+      when: _up_api.status | default(0) != 200
+
+    - name: Upstream | {{ upstream_id }}, update
+      when: _up_api.status | default(0) == 200
+      block:
+        - name: Upstream | {{ upstream_id }}, pick the asset
+          ansible.builtin.set_fact:
+            _up_release: "{{ _up_api.content | from_json | alpi_github_release(upstream.asset, upstream.checksum_asset | default('')) }}"
+
+        - name: Upstream | {{ upstream_id }}, check the release
+          ansible.builtin.assert:
+            that: _up_release.error is not defined
+            fail_msg: "{{ upstream_id }}: {{ _up_release.error | default('') }} ({{ upstream.release_api }}); fix upstream_sources in group_vars/all/upstream.yml."
+            quiet: true
+
+        - name: Upstream | {{ upstream_id }}, installed version
+          ansible.builtin.slurp:
+            src: "{{ _up_version_file }}"
+          register: _up_installed
+          failed_when: false
+
+        - name: Upstream | {{ upstream_id }}, installed program
+          ansible.builtin.stat:
+            path: "{{ upstream.dest }}"
+          register: _up_program
+
+        - name: Upstream | {{ upstream_id }}, install {{ _up_release.tag }}
+          when: >-
+            (_up_installed.content | default('') | b64decode | trim) != _up_release.tag
+            or not _up_program.stat.exists
+          block:
+            # --check cannot download into a directory it never creates
+            - name: Upstream | {{ upstream_id }}, would install (check mode)
+              ansible.builtin.debug:
+                msg: "Would install {{ upstream_id }} {{ _up_release.tag }} (installed: {{ _up_installed.content | default('') | b64decode | trim | default('none', true) }})"
+              changed_when: true
+              when: ansible_check_mode
+
+            - name: Upstream | {{ upstream_id }}, download and install
+              when: not ansible_check_mode
+              block:
+                - name: Upstream | {{ upstream_id }}, xz
+                  ansible.builtin.package:
+                    name: "{{ xz_package }}"
+                    state: present
+                  when: _up_release.name is search('[.]xz$')
+
+                - name: Upstream | {{ upstream_id }}, temporary directory
+                  ansible.builtin.tempfile:
+                    state: directory
+                    suffix: "{{ upstream_id }}"
+                  register: _up_tmp
+
+                - name: Upstream | {{ upstream_id }}, download {{ _up_release.name }}
+                  ansible.builtin.get_url:
+                    url: "{{ _up_release.url }}"
+                    dest: "{{ _up_tmp.path }}/{{ _up_release.name }}"
+                    checksum: "{{ _up_release.checksum | default(omit, true) }}"
+                    mode: "0644"
+
+                - name: Upstream | {{ upstream_id }}, extract {{ upstream.member | default('') }}
+                  ansible.builtin.unarchive:
+                    src: "{{ _up_tmp.path }}/{{ _up_release.name }}"
+                    dest: "{{ _up_tmp.path }}"
+                    remote_src: true
+                    include: ["{{ upstream.member }}"]
+                  when: _up_release.name is search('[.](tar[.]gz|tgz)$')
+
+                - name: Upstream | {{ upstream_id }}, decompress
+                  ansible.builtin.command:
+                    argv: [sh, -c, 'xz -dc -- "$1" > "$2"', sh,
+                           "{{ _up_tmp.path }}/{{ _up_release.name }}", "{{ _up_tmp.path }}/alpi-program"]
+                  changed_when: true
+                  when: _up_release.name is search('[.]xz$')
+
+                - name: Upstream | {{ upstream_id }}, install {{ upstream.dest }}
+                  ansible.builtin.copy:
+                    src: >-
+                      {{ _up_tmp.path }}/{{ upstream.member if _up_release.name is search('[.](tar[.]gz|tgz)$')
+                         else 'alpi-program' if _up_release.name is search('[.]xz$') else _up_release.name }}
+                    dest: "{{ upstream.dest }}"
+                    remote_src: true
+                    owner: root
+                    group: root
+                    mode: "0755"
+
+                - name: Upstream | {{ upstream_id }}, version directory
+                  ansible.builtin.file:
+                    path: "{{ upstream_version_dir }}"
+                    state: directory
+                    owner: root
+                    group: root
+                    mode: "0755"
+
+                - name: Upstream | {{ upstream_id }}, record the version
+                  ansible.builtin.copy:
+                    content: "{{ _up_release.tag }}\n"
+                    dest: "{{ _up_version_file }}"
+                    owner: root
+                    group: root
+                    mode: "0644"
+
+              always:
+                - name: Upstream | {{ upstream_id }}, remove the temporary directory
+                  ansible.builtin.file:
+                    path: "{{ _up_tmp.path }}"
+                    state: absent
+                  when: _up_tmp.path is defined
+
+- name: Upstream | {{ upstream_id }}, remove
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ upstream.dest }}"
+    - "{{ upstream_version_dir }}/{{ upstream_id }}.version"
+  when: upstream_state == 'absent'

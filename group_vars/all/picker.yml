@@ -19,8 +19,8 @@ picker_groups:
     ids: [inkscape, drawy, imagemagick, potrace, argyllcms, displaycal, gpu-screen-recorder,
           spotify]
   - title: Development
-    ids: [git, gh, vscode, nodejs, python3-pip, pipx, uv, shellcheck, claude_code, antigravity_cli,
-          antigravity_ide]
+    ids: [git, gh, tea, forgejo-cli, vscode, nodejs, python3-pip, pipx, uv, shellcheck, claude_code,
+          antigravity_cli, antigravity_ide]
   - title: Gaming & virtualization
     ids: [steam, virtualbox]
   # Only the running desktop's ids are listed
@@ -83,6 +83,8 @@ picker_descriptions:
   # Development
   git: Git version control
   gh: GitHub CLI
+  tea: Gitea CLI (tea), works with Forgejo too
+  forgejo-cli: Forgejo CLI (fj)
   vscode: Visual Studio Code
   nodejs: Node.js
   python3-pip: pip, Python package installer

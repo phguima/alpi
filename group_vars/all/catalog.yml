@@ -23,6 +23,7 @@ alpi_catalog:
   7zip:          {all: [7zip, 7zip-standalone]}   # Fedora 44: p7zip and p7zip-plugins are only provides of these
   curl:          {all: curl}
   fastfetch:     {all: fastfetch}
+  forgejo-cli:   {all: {upstream: forgejo-cli}}     # fj; packaged by Ubuntu only, and old
   git:           {all: git}
   htop:          {all: htop}
   hwinfo:        {all: hwinfo}
@@ -34,6 +35,7 @@ alpi_catalog:
   potrace:       {all: potrace}                     # EPEL on EL
   python3-pip:   {all: python3-pip}
   shellcheck:    {rpm: ShellCheck, deb: shellcheck}
+  tea:           {all: {upstream: tea}}             # Gitea CLI; apt's tea-cli is years behind
   testdisk:      {all: testdisk}
   tmux:          {all: tmux}
   tuptime:       {all: tuptime}

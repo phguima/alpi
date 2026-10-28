@@ -495,35 +495,51 @@ def alpi_appimage_release(manifest):
     return {"version": str(manifest.get("version", "")), "url": str(entry["url"]), "sha512": digest.hex()}
 
 
-def alpi_github_release(release, pattern):
-    """The asset of a GitHub release (the API's JSON, parsed) whose name matches 'pattern' (regex).
-
-    Returns {"tag", "name", "url", "checksum"}: checksum is the asset's digest as get_url takes it
-    ("sha256:<hex>"), or "" when GitHub publishes none (older assets). {"error": <message>} when
-    the release has no tag or no matching asset.
-    """
-    if not isinstance(release, dict) or not release.get("tag_name"):
-        return {"error": "not a release (no tag_name)"}
+def _release_asset(release, pattern):
+    """The first asset of a release whose name matches 'pattern' (regex), or an error message."""
     try:
         regex = re.compile(str(pattern))
     except re.error as exc:
-        return {"error": f"bad asset pattern {pattern!r}: {exc}"}
+        return None, f"bad asset pattern {pattern!r}: {exc}"
     asset = next((a for a in release.get("assets") or [] if isinstance(a, dict)
                   and regex.search(str(a.get("name", ""))) and a.get("browser_download_url")), None)
     if asset is None:
-        return {"error": f"no asset matching {pattern!r} in {release['tag_name']}"}
+        return None, f"no asset matching {pattern!r} in {release['tag_name']}"
+    return asset, None
+
+
+def alpi_github_release(release, pattern, checksum_pattern=""):
+    """The asset of a release (the API's JSON, parsed) whose name matches 'pattern' (regex).
+
+    GitHub, Gitea and Forgejo answer in the same shape (tag_name, assets[].browser_download_url);
+    only GitHub publishes digests. Returns {"tag", "name", "url", "checksum"}: checksum is what
+    get_url takes, the asset's digest ("sha256:<hex>"), else, with 'checksum_pattern', the URL
+    of the asset holding its sha256 ("sha256:<url>", Gitea's .sha256 files), else "" (older
+    GitHub assets, releases with no checksum). {"error": <message>} when the release has no tag,
+    or no asset (or checksum asset) matching.
+    """
+    if not isinstance(release, dict) or not release.get("tag_name"):
+        return {"error": "not a release (no tag_name)"}
+    asset, error = _release_asset(release, pattern)
+    if error:
+        return {"error": error}
     digest = str(asset.get("digest") or "")
+    checksum = digest if re.fullmatch(r"sha256:[0-9a-f]{64}", digest) else ""
+    if not checksum and checksum_pattern:
+        sums, error = _release_asset(release, checksum_pattern)
+        if error:
+            return {"error": error}
+        checksum = "sha256:" + str(sums["browser_download_url"])
     return {"tag": str(release["tag_name"]), "name": str(asset["name"]),
-            "url": str(asset["browser_download_url"]),
-            "checksum": digest if re.fullmatch(r"sha256:[0-9a-f]{64}", digest) else ""}
+            "url": str(asset["browser_download_url"]), "checksum": checksum}
 
 
 def alpi_upstream_missing(results, sources):
     """Upstream source ids whose release lookup shows the source is wrong.
 
     results: the uri loop results of the release lookups (item = source id); sources:
-    upstream_sources. A 404, or a 200 whose release has no asset matching the source's pattern,
-    is missing; any other status (offline, rate limit) is not decided here.
+    upstream_sources. A 404, or a 200 whose release has no asset matching the source's pattern
+    (or its checksum_asset pattern), is missing; any other status (offline, rate limit) is not decided here.
     """
     missing = []
     for res in results or []:
@@ -535,7 +551,9 @@ def alpi_upstream_missing(results, sources):
                 release = json.loads(res.get("content") or "")
             except ValueError:
                 release = None
-            if "error" in alpi_github_release(release, (sources.get(sid) or {}).get("asset", "")):
+            source = sources.get(sid) or {}
+            if "error" in alpi_github_release(release, source.get("asset", ""),
+                                              source.get("checksum_asset", "")):
                 missing.append(sid)
     return missing
 

@@ -1,5 +1,5 @@
 ---
-# Nothing listens on port 9: GitHub "unreachable"
+# Nothing listens on port 9: the forges "unreachable"
 upstream_sources:
   roboto:
     type: github_fonts
@@ -7,3 +7,15 @@ upstream_sources:
     asset: '[.]zip$'
     files: "hinted/static/*.ttf"
     dest: /usr/local/share/fonts/roboto
+  tea:
+    type: release_binary
+    release_api: http://127.0.0.1:9/api/v1/repos/gitea/tea/releases/latest
+    asset: '^tea-[0-9.]+-linux-amd64[.]xz$'
+    checksum_asset: '^tea-[0-9.]+-linux-amd64[.]xz[.]sha256$'
+    dest: /usr/local/bin/tea
+  forgejo-cli:
+    type: release_binary
+    release_api: http://127.0.0.1:9/api/v1/repos/forgejo-contrib/forgejo-cli/releases/latest
+    asset: '^forgejo-cli-x86_64-linux[.]tar[.]gz$'
+    member: fj
+    dest: /usr/local/bin/fj

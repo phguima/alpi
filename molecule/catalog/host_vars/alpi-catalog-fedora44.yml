@@ -21,7 +21,8 @@ _golden:
   repos: [rpmfusion-free, rpmfusion-nonfree, brave-browser, gh-cli, code, asus-linux]
   unavailable: []
   pipx: ["markitdown[all]", "notebooklm-py[browser]", pdf2docx]
-  upstream: []
+  # The Gitea and Forgejo CLIs, from their releases everywhere (roles/upstream)
+  upstream: [forgejo-cli, tea]
   extra: []
   absent: []
   # KDE forced with KWin 6.6.4 (molecule.yml): ZapZap first (flatpak_overrides_common: ~/wks), the repository's KDE overrides, the cedilla layer

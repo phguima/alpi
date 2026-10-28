@@ -90,15 +90,19 @@
     _missing_flatpak: "{{ (alpi_pkgs.flatpak + alpi_pkgs_extra.flatpak) | difference(_flatpak_list.stdout_lines | default([])) }}"
 
 # Upstream sources (roles/upstream): the recorded version and the files are there, removed ones
-# gone. github_fonts is the only type so far.
-- name: Verify | Upstream sources
+# gone. github_fonts: a font directory with its .version; release_binary: an executable with
+# its version in upstream_version_dir.
+- name: Verify | Upstream fonts
   ansible.builtin.find:
     paths: "{{ upstream_sources[item].dest }}"
     hidden: true
-  loop: "{{ (alpi_pkgs.upstream + alpi_pkgs_extra.upstream + alpi_pkgs_absent.upstream) | unique }}"
+  loop: "{{ _upstream_ids | select('in', _upstream_fonts) | list }}"
   register: _upstream_found
+  vars:
+    _upstream_ids: "{{ (alpi_pkgs.upstream + alpi_pkgs_extra.upstream + alpi_pkgs_absent.upstream) | unique }}"
+    _upstream_fonts: "{{ upstream_sources | dict2items | selectattr('value.type', 'eq', 'github_fonts') | map(attribute='key') | list }}"
 
-- name: Verify | Upstream sources installed, absent ones removed
+- name: Verify | Upstream fonts installed, absent ones removed
   ansible.builtin.assert:
     that: >-
       ((item.files | map(attribute='path') | map('basename') | select('eq', '.version') | list | length == 1
@@ -109,3 +113,32 @@
   loop: "{{ _upstream_found.results }}"
   loop_control:
     label: "{{ item.item }}"
+
+- name: Verify | Upstream programs
+  ansible.builtin.stat:
+    path: "{{ upstream_sources[item].dest }}"
+  loop: "{{ _upstream_ids | select('in', _upstream_programs) | list }}"
+  register: _upstream_program_found
+  vars: &upstream_program_vars
+    _upstream_ids: "{{ (alpi_pkgs.upstream + alpi_pkgs_extra.upstream + alpi_pkgs_absent.upstream) | unique }}"
+    _upstream_programs: "{{ upstream_sources | dict2items | selectattr('value.type', 'eq', 'release_binary') | map(attribute='key') | list }}"
+
+- name: Verify | Upstream program versions
+  ansible.builtin.stat:
+    path: "{{ upstream_version_dir }}/{{ item }}.version"
+  loop: "{{ _upstream_ids | select('in', _upstream_programs) | list }}"
+  register: _upstream_version_found
+  vars: *upstream_program_vars
+
+- name: Verify | Upstream programs installed (root, 0755, version recorded), absent ones removed
+  ansible.builtin.assert:
+    that: >-
+      (item.0.stat.exists and item.0.stat.executable and item.0.stat.pw_name == 'root'
+       and item.0.stat.mode == '0755' and item.1.stat.exists)
+      if item.0.item not in alpi_pkgs_absent.upstream else
+      (not item.0.stat.exists and not item.1.stat.exists)
+    fail_msg: "{{ item.0.item }}: {{ upstream_sources[item.0.item].dest }} {{ item.0.stat }}, version file {{ item.1.stat.exists }}"
+    quiet: true
+  loop: "{{ _upstream_program_found.results | zip(_upstream_version_found.results) | list }}"
+  loop_control:
+    label: "{{ item.0.item }}"

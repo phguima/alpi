@@ -61,12 +61,14 @@
         # The default set already has ids unavailable on EL (codecs, security, argyllcms)
         expect: ["Not available on AlmaLinux: gstreamer1-plugins-bad-free-extras,
                   chkrootkit, unhide, argyllcms, steam", "alpi_strict is on"]
-      # The catalog names an upstream source (Roboto on EL) that upstream_sources lacks
+      # The catalog names upstream sources (the forge CLIs, Roboto on EL) that upstream_sources lacks
       - name: upstream source not defined
         only: AlmaLinux
         upstream_sources: {}
-        expect: ["Catalog bug, upstream sources with no definition", "roboto"]
-      # Roboto's real GitHub release, asked for an asset it does not have
+        # Each id on its own: resolve.yml lists them through difference, which keeps no order
+        expect: ["Catalog bug, upstream sources with no definition", "roboto", "tea", "forgejo-cli"]
+      # The real releases, Roboto's (GitHub) asked for an asset it does not have, tea's (Gitea)
+      # for a checksum file it does not have; fj's (Forgejo) as in group_vars/all/upstream.yml
       - name: upstream release without the asset
         only: AlmaLinux
         packages_role: true
@@ -77,7 +79,19 @@
             asset: '[.]alpi-nope$'
             files: "hinted/static/*.ttf"
             dest: /usr/local/share/fonts/roboto
-        expect: ["Upstream sources (no such release or asset): roboto."]
+          tea:
+            type: release_binary
+            release_api: "https://gitea.com/api/v1/repos/gitea/tea/releases/latest"
+            asset: '^tea-[0-9.]+-linux-amd64[.]xz$'
+            checksum_asset: '[.]alpi-nope$'
+            dest: /usr/local/bin/tea
+          forgejo-cli:
+            type: release_binary
+            release_api: "https://codeberg.org/api/v1/repos/forgejo-contrib/forgejo-cli/releases/latest"
+            asset: '^forgejo-cli-x86_64-linux[.]tar[.]gz$'
+            member: fj
+            dest: /usr/local/bin/fj
+        expect: ["Upstream sources (no such release or asset): tea, roboto."]
       - name: names not found
         # Like a real run, repos first: every real name resolves, only the bad ones are reported
         packages_add: ["pkg:nope-xyz", "flatpak:org.nope.App", "pipx:alpi-nope-not-on-pypi-xyz"]

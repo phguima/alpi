@@ -22,7 +22,8 @@ _golden:
     org.zotero.Zotero, org.gtk.Gtk3theme.Breeze, com.markopejic.downloader, com.mattjakeman.ExtensionManager,
     de.haeckerfelix.Fragments, com.github.unrud.VideoDownloader]
   pipx: [uv, "markitdown[all]", "notebooklm-py[browser]", pdf2docx]
-  upstream: []
+  # The Gitea and Forgejo CLIs, from their releases everywhere (roles/upstream)
+  upstream: [forgejo-cli, tea]
   extra: []
   absent: []
   unavailable: [gstreamer1-plugins-bad-free-extras, vlc-plugins-freeworld, asusctl, supergfxctl, asusctl-rog-gui,

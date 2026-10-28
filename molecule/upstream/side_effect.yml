@@ -1,15 +1,24 @@
 ---
-# A new release is published after converge + idempotence; the next run must replace v1
-- name: Side effect | Publish v2
+# New releases are published after converge + idempotence (Roboto and tea), and fj is deleted
+# while its release stays v1: the next run must replace Roboto and tea and put fj v1 back
+- name: Side effect | Publish v2, delete fj
   hosts: alpi-up-install
   gather_facts: false
   tasks:
     - name: Side effect | latest -> v2
       ansible.builtin.copy:
-        src: /srv/alpi-up/release-v2.json
-        dest: /srv/alpi-up/repos/googlefonts/roboto-3-classic/releases/latest
+        src: "/srv/alpi-up/{{ item.src }}"
+        dest: "/srv/alpi-up/{{ item.dest }}"
         remote_src: true
         mode: "0644"
+      loop:
+        - { src: release-v2.json, dest: repos/googlefonts/roboto-3-classic/releases/latest }
+        - { src: tea-release-v2.json, dest: api/v1/repos/gitea/tea/releases/latest }
+
+    - name: Side effect | fj gone
+      ansible.builtin.file:
+        path: /usr/local/bin/fj
+        state: absent
 
 - name: Side effect | Run again
   ansible.builtin.import_playbook: converge.yml

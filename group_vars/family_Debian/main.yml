@@ -2,6 +2,7 @@
 # FUSE 2, what AppImages run on (roles/ai_tools: the Antigravity IDE); the t64 name since Debian
 # 13 and Ubuntu 24.04 (64-bit time_t transition)
 fuse2_package: libfuse2t64
+xz_package: xz-utils
 
 # roles/nvidia: ALPI's options in a file of its own. Debian links its files into /etc/modprobe.d
 # (nvidia.conf; nvidia-options.conf through alternatives), Ubuntu ships nvidia-graphics-drivers-
