@@ -20,3 +20,21 @@
       ansible.builtin.user:
         name: alpi
         shell: /bin/bash
+
+# A first user with a password and sudo rights, as an installer makes it: the become test in
+# converge runs the playbook's inventory and ansible.cfg as this user
+- name: Prepare | Admin user with a password
+  hosts: all:!alpi-bootstrap-debian13-nosudo
+  gather_facts: false
+  tasks:
+    - name: Prepare | User alpi in the admin group
+      ansible.builtin.user:
+        name: alpi
+        shell: /bin/bash
+        groups: "{{ 'wheel' if 'fedora' in inventory_hostname else 'sudo' }}"
+        append: true
+
+    - name: Prepare | Password for alpi
+      ansible.builtin.shell:
+        cmd: echo 'alpi:alpi-test' | chpasswd
+      changed_when: false

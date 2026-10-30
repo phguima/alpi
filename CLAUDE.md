@@ -380,7 +380,7 @@ parity; code comes in step by step, ported from them. Changes made there in the 
     the scenario's test_sequence): replaced, fj v1 back; forges unreachable keep v0,
     `packages_absent` removes them; the personal and work scenarios install the real releases), `bootstrap`
     (bootstrap.sh with scripted answers, picker in text mode, on Fedora 44, Debian 13 and Ubuntu 26.04; a Debian
-    13 without sudo must stop before installing anything and print the `su -` command), `common` (env_setup +
+    13 without sudo must stop before installing anything and print the `su -` command; on each of the three a user with a password then runs a become task through the repo's `inventory.ini` and `ansible.cfg`: Ubuntu's `sudo` is sudo-rs, which wraps become's prompt so Ansible times out, so the inventory picks `sudo.ws` where it exists), `common` (env_setup +
     `roles/common` on `almalinux/10-init` with systemd: static hostname via hostnamectl, git),
     `secureboot` (env_setup + `akmods_mok`, `virtualbox`, `nvidia`, nothing downloaded; converge
     renames EL's VirtualBox and Fedora's NVIDIA native packages, so the roles must gate on ids; Secure Boot

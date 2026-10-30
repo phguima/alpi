@@ -37,7 +37,7 @@
         src: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/{{ item }}"
         dest: "{{ _dir }}/"
         mode: preserve
-      loop: [bootstrap.sh, pick.py, filter_plugins, site.yml, group_vars, custom.yml.example]
+      loop: [bootstrap.sh, pick.py, filter_plugins, site.yml, group_vars, custom.yml.example, inventory.ini, ansible.cfg]
 
     # bootstrap.sh still runs its 'ansible-galaxy collection install'; with the collection in place
     # it answers "Nothing to do" without contacting Galaxy.
@@ -112,6 +112,39 @@
           - "'Settings saved to' in _run2.stdout"
           - "'2 skipped, features changed: steam=False; zsh aliases changed: clean-cache=False' in _run2.stdout"
         fail_msg: "{{ _run2.stdout }}"
+        quiet: true
+
+# become as a user with a password, through the repo's inventory.ini and ansible.cfg and the
+# ansible-core bootstrap.sh installed. Ubuntu's sudo is sudo-rs, which wraps become's prompt so
+# Ansible times out on it: the inventory must pick sudo.ws there, and plain sudo where it is absent.
+- name: Bootstrap | become with a password
+  hosts: all:!alpi-bootstrap-debian13-nosudo
+  tasks:
+    - name: Bootstrap | Run a become task as alpi
+      ansible.builtin.command:
+        cmd: >-
+          su alpi -c "ANSIBLE_BECOME_ASK_PASS=False ansible all -m command -a id
+          -e ansible_become_password=alpi-test"
+        chdir: /opt/alpi
+      register: _become
+      changed_when: false
+      failed_when: false
+
+    - name: Bootstrap | Read the become executable the inventory picked
+      ansible.builtin.command:
+        cmd: su alpi -c "ansible all -m debug -a var=ansible_become_exe"
+        chdir: /opt/alpi
+      register: _become_exe
+      changed_when: false
+
+    - name: Bootstrap | Reached root, with sudo.ws on Ubuntu and sudo on Fedora
+      ansible.builtin.assert:
+        that:
+          - _become.rc == 0
+          - "'uid=0(root)' in _become.stdout"
+          - "'ubuntu' not in inventory_hostname or '\"ansible_become_exe\": \"sudo.ws\"' in _become_exe.stdout"
+          - "'fedora' not in inventory_hostname or '\"ansible_become_exe\": \"sudo\"' in _become_exe.stdout"
+        fail_msg: "rc {{ _become.rc }}: {{ _become.stdout }} {{ _become.stderr }} / {{ _become_exe.stdout }}"
         quiet: true
 
 # No sudo at all (Debian with a root password set at install): stop before anything is installed,
