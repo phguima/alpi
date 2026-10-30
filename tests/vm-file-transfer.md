@@ -31,7 +31,16 @@ VBoxManage controlvm fedora44-alpi natpf1 "ssh,tcp,127.0.0.1,2222,,22"
 In the VM:
 
 ```bash
-sudo systemctl enable --now sshd
+sudo systemctl enable --now sshd    # Fedora, AlmaLinux
+```
+
+On Debian and Ubuntu the unit is `ssh` (`sshd` is only an alias, which `systemctl enable`
+refuses), and the server may be missing: the netinst installs it only with tasksel's "SSH
+server", the Ubuntu and Kubuntu desktop images never.
+
+```bash
+sudo apt install openssh-server
+sudo systemctl enable --now ssh
 ```
 
 On the host:
