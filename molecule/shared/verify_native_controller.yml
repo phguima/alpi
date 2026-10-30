@@ -1,7 +1,7 @@
 ---
 # Runs `site.yml --tags resolve` with the distro's own ansible-core inside the container (EL10's
 # 2.16, older than Molecule's controller; Debian 13's 2.19 and Ubuntu 26.04's 2.20, with Data
-# Tagging), with the same settings as the scenario.
+# Tagging), with the same settings as the scenario, then one package task (`--tags git`).
 - name: Verify | Install the distro's ansible-core
   ansible.builtin.package:
     name: ansible-core
@@ -49,6 +49,21 @@
     ANSIBLE_NOCOLOR: "1"
   register: _native
   changed_when: false
+  vars:
+    _hardware: {is_nvidia: "{{ is_nvidia }}", is_asus: "{{ is_asus }}", is_intel: "{{ is_intel }}", is_amd: "{{ is_amd }}"}
+
+# A package task through site.yml's module_defaults (git, already installed): ansible-core 2.20
+# passed the apt defaults through ansible.builtin.package untemplated, and apt failed on them.
+- name: Verify | Run a package task with the native controller
+  ansible.builtin.command:
+    argv: [ansible-playbook, site.yml, --tags, git, -e, ansible_become=false, -e, "{{ _hardware | to_json }}"]
+    chdir: /opt/alpi
+  environment:
+    ANSIBLE_BECOME_ASK_PASS: "False"
+    ANSIBLE_NOCOLOR: "1"
+  register: _native_git
+  changed_when: false
+  failed_when: _native_git.rc != 0 or 'Git | Ensure git is installed' not in _native_git.stdout
   vars:
     _hardware: {is_nvidia: "{{ is_nvidia }}", is_asus: "{{ is_asus }}", is_intel: "{{ is_intel }}", is_amd: "{{ is_amd }}"}
 

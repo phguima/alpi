@@ -12,6 +12,12 @@
   module_defaults:
     ansible.builtin.apt:
       lock_timeout: "{{ apt_lock_timeout | default(60) }}"
+    # ansible-core 2.20 (Ubuntu 26.04's) hands the apt defaults above to apt through
+    # ansible.builtin.package without templating them, and apt rejects the raw string. The
+    # package's own defaults are templated: lock_timeout given here wins over apt's, and is
+    # omitted on dnf, which has no apt_lock_timeout.
+    ansible.builtin.package:
+      lock_timeout: "{{ apt_lock_timeout | default(omit) }}"
 
   pre_tasks:
     - name: ALPI | Environment Setup
